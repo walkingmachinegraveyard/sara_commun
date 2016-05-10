@@ -1,0 +1,4 @@
+<launch>
+	<node name="interpreter" pkg="wm_interpreter" type="wm_interpreter_YOLO.py" output="screen">
+	</node>
+</launch>

@@ -1,0 +1,45 @@
+TrajectoryPlannerROS:
+ # robot configuration parameters
+  max_vel_x: 1.0
+  min_vel_x: -1.0
+  max_vel_y: 1.0
+  min_vel_y: -1.0
+  max_vel_theta: 1.0
+  min_vel_theta: -1.0
+  min_in_place_vel_theta: 0.4
+
+  acc_lim_theta: 3.2
+  acc_lim_x: 0.2
+  acc_lim_y: 0.2
+
+  escape_vel: -0.3
+
+  holonomic_robot: true
+  y_vels: [-4.0, -0.1, 0.1, 4.0]
+
+ # goal tolerance parameters
+  yaw_goal_tolerance: 0.10
+  xy_goal_tolerance: 0.10
+  latch_xy_goal_tolerance: true
+
+  #The amount of time to forward-simulate trajectories in seconds
+  sim_time: 1.6
+  #The step size, in radians, to take between angular samples on a given trajectory
+  angular_sim_granularity: 0.06
+  sim_granularity: 0.05
+  #The weighting for how much the controller should stay close to the path it was given. default 0.6
+  pdist_scale: 0.6
+  # The weighting for how much the controller should attempt to avoid obstacles. default 0.01
+  occdist_scale: 0.01
+  # The weighting for how much the controller should attempt to reach its local goal, also controls speed. default 0.8
+  gdist_scale: 0.9
+
+  vx_samples: 8
+  vtheta_samples: 12
+
+  prune_plan: true
+
+  meter_scoring: true
+  publish_cost_grid_pc: false
+   
+  

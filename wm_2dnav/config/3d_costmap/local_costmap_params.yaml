@@ -1,0 +1,45 @@
+local_costmap:
+  global_frame: odom
+  robot_base_frame: base_link
+  update_frequency: 2.0
+  publish_frequency: 2.0
+  static_map: true
+  rolling_window: true
+  width: 6.0
+  height: 6.0
+  resolution: 0.025
+  origin_x: -3.0
+  origin_y: -3.0
+
+  observation_sources: point_cloud_sensor_obstacles point_cloud_sensor_ground base_scan
+
+  base_scan: {
+  data_type: LaserScan,
+  topic: base_scan,
+  expected_update_rate: 0.4,
+  observation_persistence: 0.0,
+  marking: true,
+  clearing: true,
+  max_obstacle_height: 0.5,
+  min_obstacle_height: -0.08}
+
+  # assuming receiving a cloud from rtabmap_ros/obstacles_detection node
+  point_cloud_sensor_obstacles: {
+    sensor_frame: camera_link,
+    data_type: PointCloud2,
+    topic: obstacles_cloud,
+    expected_update_rate: 0.5,
+    marking: true,
+    clearing: true,
+    min_obstacle_height: -99999.0,
+    max_obstacle_height: 99999.0}
+
+  point_cloud_sensor_ground: {
+    sensor_frame: camera_link,
+    data_type: PointCloud2,
+    topic: ground_cloud,
+    expected_update_rate: 0.5,
+    clearing: true,
+    marking: false,
+    min_obstacle_height: -99999.0,
+    max_obstacle_height: 99999.0}

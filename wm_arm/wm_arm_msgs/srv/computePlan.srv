@@ -1,0 +1,7 @@
+geometry_msgs/Pose targetPose
+---
+int8 planningResult
+int8 PLANNING_SUCCESS=1
+int8 PLANNING_FAILURE=0
+moveit_msgs/RobotState startState
+moveit_msgs/RobotTrajectory trajectory

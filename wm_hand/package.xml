@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<package>
+  <name>wm_hand</name>
+  <version>0.0.1</version>
+  <description>The wm_hand package</description>
+  <maintainer email="me@maximest-pierre.me">maximest-pierre</maintainer>
+  <license>MIT</license>
+  
+  <buildtool_depend>catkin</buildtool_depend>
+  
+  <build_depend>robotiq_s_model_control</build_depend>
+  <build_depend>actionlib</build_depend>
+  <build_depend>actionlib_msg</build_depend>
+  <build_depend>message_generation</build_depend> 
+  <build_depend>rospy</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>robotiq_ethercat</build_depend>
+
+  <run_depend>actionlib</run_depend>
+  <run_depend>actionlib_msg</run_depend>
+  <run_depend>rospy</run_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>message_generation</run_depend>
+  <run_depend>robotiq_ethercat</run_depend>
+  <run_depend>robotiq_s_model_control</run_depend>
+
+  <export>
+  </export>
+</package>

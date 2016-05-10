@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>cob_image_flip</name>
+  <version>0.6.6</version>
+  
+  <description>
+     Flips the image of Care-O-bots kinect in dependence of the viewing direction of the cameras to receive an upright image all the time.
+  </description>
+  
+  <license>LGPL</license>
+  
+  <maintainer email="richard.bormann@ipa.fraunhofer.de">Richard Bormann</maintainer>
+  <author>Richard Bormann</author>
+  
+  <url>http://wiki.ros.org/cob_image_flip</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>boost</depend>
+  <depend>cmake_modules</depend>  
+  <depend>cv_bridge</depend>
+  <depend>geometry_msgs</depend>
+  <depend>image_transport</depend>
+  <depend>libopencv-dev</depend>
+  <depend>nodelet</depend>
+  <depend>pcl_conversions</depend>
+  <depend>pcl_ros</depend>
+  <depend>roscpp</depend>
+  <depend>sensor_msgs</depend>
+  <depend>stereo_msgs</depend>
+  <depend>tf</depend>
+
+  <export>
+    <nodelet plugin="${prefix}/nodelet_plugins.xml" />
+  </export>
+	
+</package>
+

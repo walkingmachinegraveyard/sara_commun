@@ -1,0 +1,7 @@
+<launch>
+	<node name="recognizer_1" pkg="pocketsphinx" type="recognizer.py">
+		<param name="mic_name" value="alsa_input.pci-0000_00_1b.0.analog-stereo"/>
+		<param name="lm" value="$(find pocketsphinx)/sara_vocab/sara_vocab.lm"/>
+		<param name="dict" value="$(find pocketsphinx)/sara_vocab/sara_vocab.dic"/>
+	</node>
+</launch>

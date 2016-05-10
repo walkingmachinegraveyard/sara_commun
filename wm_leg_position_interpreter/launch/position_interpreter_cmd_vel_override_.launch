@@ -1,0 +1,4 @@
+<launch>
+	<node pkg="wm_leg_position_interpreter" type="Position_Interpreter_cmd_vel_override.py" name="Position_Interpreter_cmd_vel_override">
+  </node>
+</launch>

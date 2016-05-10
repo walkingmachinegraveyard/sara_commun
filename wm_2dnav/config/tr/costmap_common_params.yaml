@@ -1,0 +1,34 @@
+#Set the tolerance we're willing to have for tf transforms
+transform_tolerance: 0.3
+
+#Obstacle marking parameters
+obstacle_range: 3.0
+max_obstacle_height: 2.0
+raytrace_range: 3.0
+
+# footprint: [[front left corner], [front right corner], 
+#             [rear right corner], [rear left corner]]
+
+footprint: [[0.19, 0.325], [0.19, -0.325], [-0.59, -0.325], [-0.59, 0.325]]
+
+planner_patience: 1.5
+controller_patience: 1.5
+recovery_behavior_enabled: true
+
+#observation_sources: laser_scan_sensor
+observation_sources: laser_scan_sensor
+
+laser_scan_sensor: {
+  data_type: LaserScan,
+  topic: base_scan,
+  expected_update_rate: 0.3,
+  marking: true,
+  clearing: true,
+  max_obstacle_height: 0.5,
+  min_obstacle_height: -1.0,
+  observation_persistence: 2.0}
+
+track_unknown_space: false
+
+
+

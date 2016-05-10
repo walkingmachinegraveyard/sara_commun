@@ -1,0 +1,107 @@
+<?xml version="1.0"?>
+<manipulator numberOfJoints="5">
+
+    <!-- define angle unit (degree or radian) -->   
+    <angle unit="degree" />
+
+    <!-- Denavit-Hartenberg method allows to get homogeneous transform matrix -->
+    <!-- Denavit-Hartenberg parameters should represent the manipulator at start up pose (home pose) -->
+    <!-- theta = rotational_angle
+         d = link_offset
+         alpha = offset_distance
+         t = twist_angle -->
+
+   <!--
+	|	joint	||	theta	||	d	||	alpha	||	t	|
+	#################################################################################
+	|	1	||	theta1	||	0	||	0	||	pi/2	|
+	#################################################################################
+	|	2	||  theta2-pi/2	||	-d1	||	0	||	pi/2	|
+	#################################################################################
+	|	3	||	theta3	||	-d2	||	0	||	pi/2	|
+	#################################################################################
+	|	4	||	theta4	||	0	||	0	||	-pi/2	|
+	#################################################################################
+	|	5	||	theta5	||	-d3	||	0	||	pi/2	|
+
+	d1 = link length from inner shoulder to outer shoulder =  3 inch
+	d2 = link length from should to elbow = 15 inch
+	d3 = link length from elbow to wrist = 8 inch
+   -->
+
+    <!-- 1st joint frame in world frame defined as homogeneous transformation matrix-->
+    <!-- RPY convention, rotation around rotating axis (Z - Y - X)
+         Roll = X axis rotation
+         Pitch = Y axis rotation
+         Yaw = Z axis rotation
+         tx = X translation
+         ty = Y translation
+         tz = Z translation -->         
+    <world_transform>
+         <roll value="180" />
+         <pitch value="90" />
+         <yaw value="0" />
+         <tx value="0.08255"/>
+         <ty value="-0.1397" />
+         <tz value="1.1176" />         
+    </world_transform>
+
+    <!-- from joint 1 to joint n -->  
+    <joint type="rotation">	<!-- type can be "rotation" or "translation" -->
+         <!-- ith+1 joint frame in ith joint frame -->
+         <dh_param rotational_angle="0" link_length="0" offset_length="0" twist_angle="90" />
+         <!-- joint limits -->
+         <limits lower="0" upper="120" />
+		 <home position="0"  />
+    </joint>
+
+    <joint type="rotation">	<!-- type can be "rotation" or "translation" -->
+         <!-- ith+1 joint frame in ith joint frame -->
+         <dh_param rotational_angle="-90" link_length="-0.0762" offset_length="0" twist_angle="90" />
+         <!-- joint limits -->
+         <limits lower="-360" upper="360" />
+		 <home position="0"  />
+    </joint>
+
+    <joint type="rotation">	<!-- type can be "rotation" or "translation" --> 
+         <!-- ith+1 joint frame in ith joint frame -->
+         <dh_param rotational_angle="0" link_length="-0.381" offset_length="0" twist_angle="90" />
+         <!-- joint limits -->
+         <limits lower="-360" upper="360" />
+		 <home position="0"  />
+    </joint>
+
+    <joint type="rotation">	<!-- type can be "rotation" or "translation" --> 
+         <!-- ith+1 joint frame in ith joint frame -->
+         <dh_param rotational_angle="0" link_length="0" offset_length="0" twist_angle="-90" />
+         <!-- joint limits -->
+         <limits lower="0" upper="120" />
+		 <home position="0"  />
+    </joint>
+
+   <joint type="rotation">	<!-- type can be "rotation" or "translation" --> 
+         <!-- ith+1 joint frame in ith joint frame -->
+         <dh_param rotational_angle="0" link_length="-0.2032" offset_length="0" twist_angle="90" />
+         <!-- joint limits -->
+         <limits lower="-360" upper="360" />
+		 <home position="0"  />
+    </joint>
+
+    <!-- effector frame in wrist frame defined as homogeneous transformation matrix-->
+    <!-- RPY convention, rotation around rotating axis (Z - Y - X)
+         Roll = X axis rotation
+         Pitch = Y axis rotation
+         Yaw = Z axis rotation
+         tx = X translation
+         ty = Y translation
+         tz = Z translation -->         
+    <effector_transform>
+         <roll value="0" />
+         <pitch value="0" />
+         <yaw value="90" />
+         <tx value="0" />
+         <ty value="0" />
+         <tz value="0" />         
+    </effector_transform>
+
+</manipulator>

@@ -1,0 +1,4 @@
+<launch>
+	<node name="interpreter" pkg="cob_people_detection" type="test_comm.py" output="screen">
+	</node>
+</launch>

@@ -1,0 +1,3 @@
+<launch>
+	<node name="interpreter" pkg="wm_interpreter" type="wm_interpreter_node.py" output="screen"/>
+</launch>

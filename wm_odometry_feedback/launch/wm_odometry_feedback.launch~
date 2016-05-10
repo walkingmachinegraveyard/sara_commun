@@ -1,0 +1,10 @@
+<launch>
+    <node name="wm_odometry_feedback_node" pkg="wm_odometry_feedback" type="wm_odometry_feedback.py"  output="screen">
+    <param name="alpha" value="0.31" />
+    <param name="beta" value="0.30" />
+    <param name="wheel_radius" value="0.075" />
+    <param name="child_id" value="sara_base" />
+    <param name="frame_id" value="odom" />
+    </node>
+</launch>
+

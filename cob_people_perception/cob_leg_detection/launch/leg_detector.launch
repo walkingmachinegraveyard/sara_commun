@@ -1,0 +1,16 @@
+<launch>
+  <node pkg="cob_leg_detection" type="leg_detection" name="leg_detection" args="laser_scan:=/scan
+ $(find cob_leg_detection)/config/trained_leg_detector.yaml" output="screen"/>
+ 
+	<!--include file="$(find cob_scan_unifier)/launch/scan_unifier.launch"/-->
+	
+	 
+	<!--include file="$(find cob_leg_detection)/launch/filtered_leg_detector.launch" /-->
+	
+    <arg name="limit" default="0.2" />
+    <param name="/cob_leg_detector/leg_reliability_limit" value="$(arg limit)" type="double"/>
+    <param name="frame_id" value="/sara_base"/>
+   <node pkg="wm_leg_position_interpreter" type="Position_Interpreter_cmd_vel_override.py"  name="Position_Interpreter_to_cmd_vel"/>
+
+</launch>
+
