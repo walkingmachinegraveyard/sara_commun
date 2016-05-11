@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   slam_gmapping
   smach
   zbar_ros
+  cob_perception_common
 )
 
 ## System dependencies are found with CMake's conventions
