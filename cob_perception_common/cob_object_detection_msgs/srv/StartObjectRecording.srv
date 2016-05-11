@@ -1,7 +1,0 @@
-# this service starts the object data recording procedure
-
-# request message
-string object_label		# the name of the object that shall be recorded
----
-# response message
-

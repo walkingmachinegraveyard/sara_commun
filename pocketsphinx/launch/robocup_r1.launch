@@ -1,7 +1,0 @@
-<launch>
-	<node name="recognizer_1" pkg="pocketsphinx" type="recognizer.py" output="screen">
-		<param name="mic_name" value="alsa_input.pci-0000_00_1b.0.analog-stereo"/>
-		<param name="lm" value="$(find pocketsphinx)/demo/robocup.lm"/>
-		<param name="dict" value="$(find pocketsphinx)/demo/robocup.dic"/>
-	</node>
-</launch>
