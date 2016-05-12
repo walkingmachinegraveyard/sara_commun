@@ -1,8 +1,0 @@
-#goal definition
-string Action
----
-#result definition
-string result
----
-#feedback
-string word
