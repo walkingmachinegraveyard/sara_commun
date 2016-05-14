@@ -1,3 +1,4 @@
+
 <?xml version="1.0"?>
 <robot name="sara">
 <!-- LINKS -->
@@ -358,7 +359,7 @@
         <child link="gripper_link"/>
         <origin xyz="0 0 0.2" rpy="0 0 0" />
     </joint>
-    -->		
+    -->
     <joint name="torsoNeck_joint" type="fixed">  <!-- normaly revolute -->
         <parent link="torso_link"/>
         <child link="neck_link"/>
