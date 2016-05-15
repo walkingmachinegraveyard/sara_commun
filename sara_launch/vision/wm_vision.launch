@@ -1,0 +1,4 @@
+<launch>
+	<include file="$(find openni2_launch)/launch/openni2.launch"/>
+	<include file="$(find cob_people_detection)ros/launch/people_detection.launch"/>
+</launch>

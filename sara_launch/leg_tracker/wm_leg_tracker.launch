@@ -1,0 +1,9 @@
+<launch>
+	<include file="$(find urg_node)/launch/wm_urg_node.launch"/>
+	<include file="$(find map_laser)/lfilter.launch"/>
+	<include file="$(find wm_static_tf)/launch/wm_static_tf.launch"/>
+	<include file="$(find wm_leg_position_interpreter)/launch/position_interpreter_cmd_vel_override_.launch"/>
+	<include file="$(find wm_mecanum_cmd)/launch/wm_mecanum_auto.launch"/>
+	<include file="$(find roboteq_driver)/launch/example.launch"/>
+	<include file="$(find cob_leg_detection)/launch/wm_leg_detector.launch"/>
+</launch>

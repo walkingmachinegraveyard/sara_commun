@@ -1,0 +1,5 @@
+<launch>
+  <include file="$(find wm_interpreter)/launch/interpreter.launch"/>
+  <include file="$(find wm_tts)/launch/wm_tts.launch"/>
+  <include file="$(find pocketsphinx)/launch/sara_vocab.launch"/>
+</launch>
