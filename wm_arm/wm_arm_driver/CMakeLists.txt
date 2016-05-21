@@ -72,7 +72,7 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(DEPENDENCIES wm_arm_driver)
+generate_messages(DEPENDENCIES wm_arm_msgs)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
