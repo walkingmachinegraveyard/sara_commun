@@ -1,0 +1,5 @@
+<launch>
+  <node name="TcpNodeHand" pkg="robotiq_s_model_control" type="SModelTcpNode.py" args="192.168.1.11"/>
+  <node name="KeyboardControl" pkg="robotiq_s_model_control" type="SModelSimpleController.py" launch-prefix="gnome-terminal"/>
+  <node name="StatusListener" pkg="robotiq_s_model_contol" type="SModelStatusListener.py" launch-prefix="gnome-terminal"/>
+</launch>
