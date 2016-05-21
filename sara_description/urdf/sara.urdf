@@ -1,8 +1,34 @@
-
 <?xml version="1.0"?>
 <robot name="sara">
 <!-- LINKS -->
-    <link name="sara_base">
+
+	<link name="sara_base">
+		<visual>
+			<geometry>
+				<box size="0.7637 0.64311 0.14" />
+			</geometry>
+			<origin xyz="0.0 0.0 0.07" rpy="0.0 0.0 0.0" />
+		</visual>
+	</link>
+
+	<link name="base_x_trans_link">
+		<visual>
+			<geometry>
+				<box size="0.10 0.64311 0.14" />
+			</geometry>
+			<origin origin="0.0 0.0 0.07" rpy="0 0 0" />
+		</visual>
+	</link>
+
+	<link name="base_y_trans_link">
+		<visual>
+			<geometry>
+				<box size="0.7637 0.10 0.14" />
+			</geometry>
+		</visual>
+	</link>
+
+    <link name="base_link">
         <visual>
             <geometry>
                 <box size="0.7637 0.64311 0.14"/>
@@ -46,6 +72,13 @@
             </geometry>
             <origin xyz="0 0 0.49" rpy="0 0 0"/>
         </visual>
+
+		<collision>
+            <geometry>
+                <cylinder length="0.9" radius="0.04"/>
+            </geometry>
+            <origin xyz="0 0 0.49" rpy="0 0 0"/>
+        </collision>
 
         <inertial>
             <mass value="10"/>
@@ -120,6 +153,12 @@
                 <box size="0.04 0.38 0.075"/>
             </geometry>
             <origin xyz="-0.06 0 0" rpy="0 0 0"/>
+        </collision>
+		<collision>
+            <geometry>
+                <cylinder length="0.5" radius="0.04"/>
+            </geometry>
+            <origin xyz="0 0 -0.4" rpy="0 0 0"/>
         </collision>
 
         <inertial>
@@ -214,7 +253,7 @@
             <geometry>
                 <mesh filename="package://sara_description/meshes/1-epaule.STL" scale="0.001 0.001 0.001"/>
             </geometry>
-             <origin xyz="0 0 0" rpy="0 0 1.57"/>
+             <origin xyz="0 0 0" rpy="0 0 0"/>
         </collision>
     </link>
 
@@ -278,7 +317,7 @@
             <geometry>
                 <mesh filename="package://sara_description/meshes/5-pince-avant-bras.STL" scale="0.001 0.001 0.001"/>
             </geometry>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
         </collision>
     </link>
 
@@ -293,14 +332,39 @@
     </link>
     -->
   <!-- JOINTS -->
+
+	<joint name="base_x_trans_joint" type="prismatic" >
+		<parent link="sara_base" type="prismatic" />
+		<child link="base_x_trans_link" />
+		<origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+		<limit effort="1000.0" lower="-0.10" upper="4.0" velocity="1.0"/>
+		<axis xyz="1 0 0" />
+	</joint>
+
+	<joint name="base_y_trans_joint" type="prismatic" >
+		<parent link="base_x_trans_link" type="prismatic" />
+		<child link="base_y_trans_link" />
+		<origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+		<limit effort="1000.0" lower="-4.0" upper="4.0" velocity="1.0"/>
+		<axis xyz="0 1 0" />
+	</joint>
+		
+	<joint name="base_revolute_joint" type="revolute" >
+		<parent link="base_y_trans_link" />
+		<child link="base_link" />
+		<limit effort="1000.0" lower="-1.5708" upper="1.5708" velocity="0.5"/>
+		<origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+		<axis xyz="0 0 1" />
+	</joint>
+
     <joint name="laser_joint" type="fixed">
-        <parent link="sara_base"/>
+        <parent link="base_link"/>
         <child link="base_laser_link"/>
         <origin xyz="0.34 0 0.19" rpy="0 0 0" />
     </joint>
 
     <joint name="base_spine_joint" type="fixed">
-        <parent link="sara_base"/>
+        <parent link="base_link"/>
         <child link="spine_link"/>
         <origin xyz="0.2 0 0" rpy="0 0 0" />
         <axis xyz="0 0 1" />
@@ -317,7 +381,7 @@
     <joint name="sternoclavicular_joint" type="revolute">
         <parent link="torso_link"/>
         <child link="clavicule_link"/>
-        <limit effort="1000.0" lower="-1.57" upper="1.57" velocity="0.5"/>
+        <limit effort="1000.0" lower="-0.18" upper="1.21" velocity="0.5"/>
         <origin xyz="0 -0.145 0" rpy="0 -1.57 0" />
         <axis xyz="0 0 1" />
     </joint>
@@ -325,7 +389,7 @@
     <joint name="shoulder_joint" type="revolute">
         <parent link="clavicule_link"/>
         <child link="fixUpperArm_link"/>
-        <limit effort="1000.0" lower="-3.1416" upper="3.1416" velocity="0.5"/>
+        <limit effort="1000.0" lower="-3.29" upper="0.37" velocity="0.5"/>
         <origin xyz="0 -0.085 0" rpy="-1.57 0 0" />
         <axis xyz="0 0 1" />
     </joint>
@@ -333,7 +397,7 @@
     <joint name="shoulderRot_joint" type="revolute">
         <parent link="fixUpperArm_link"/>
         <child link="rotUpperArm_link"/>
-        <limit effort="1000.0" lower="-3.1416" upper="3.1416" velocity="0.5"/>
+        <limit effort="1000.0" lower="-2.14" upper="1.00" velocity="0.5"/>
         <origin xyz="-0.085 0 0" rpy="1.5708 0 1.5708" />
         <axis xyz="0 0 1" />
     </joint>
@@ -341,7 +405,7 @@
     <joint name="elbow_joint" type="revolute">
         <parent link="rotUpperArm_link"/>
         <child link="fixLowerArm_link"/>
-        <limit effort="1000.0" lower="-2.23" upper="2" velocity="0.5"/>
+        <limit effort="1000.0" lower="-2.20" upper="1.90" velocity="0.5"/>
         <origin xyz="0 0 -0.31" rpy="-1.5708 0 0" />
         <axis xyz="0 0 1" />
     </joint>
@@ -359,7 +423,7 @@
         <child link="gripper_link"/>
         <origin xyz="0 0 0.2" rpy="0 0 0" />
     </joint>
-    -->
+    -->		
     <joint name="torsoNeck_joint" type="fixed">  <!-- normaly revolute -->
         <parent link="torso_link"/>
         <child link="neck_link"/>
