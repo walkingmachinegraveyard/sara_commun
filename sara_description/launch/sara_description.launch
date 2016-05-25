@@ -1,7 +1,4 @@
 <launch>
-    <arg name="show_rviz" default="true"/>
-    <arg name="gui" default="true" />
-
     <!-- CAM SETUP -->
     <arg name="camera_name" default="camera"/>
 
@@ -19,12 +16,4 @@
     <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
         <rosparam command="load" file="$(find sara_description)/config/neckHead.yaml"/>
     </node>
-
-    <param name="use_gui" value="$(arg gui)"/>
-
-    <!-- robot visualization in Rviz -->
-    <group if="$(arg show_rviz)">
-        <node name="rviz" pkg="rviz" type="rviz" output="screen"/>
-    </group>
 </launch>
-

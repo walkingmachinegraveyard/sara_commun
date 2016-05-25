@@ -2,7 +2,7 @@
 <robot name="sara">
 <!-- LINKS -->
 
-	<link name="sara_base">
+	<link name="base_link">
 		<visual>
 			<geometry>
 				<box size="0.7637 0.64311 0.14" />
@@ -28,7 +28,7 @@
 		</visual>
 	</link>
 
-    <link name="base_link">
+    <link name="real_base_link">
         <visual>
             <geometry>
                 <box size="0.7637 0.64311 0.14"/>
@@ -87,7 +87,7 @@
         </inertial>
     </link>
 
-    <link name="base_laser_link">
+    <link name="laser_link">
         <visual>
             <geometry>
                 <cylinder length="0.1" radius="0.03"/>
@@ -115,95 +115,58 @@
     <link name="torso_link">
         <visual>
             <geometry>
-                <box size="0.18 0.18 0.28"/>
+                <mesh filename="package://sara_description/meshes/torse.STL" scale="0.001 0.001 0.001"/>
             </geometry>
-            <origin xyz="0.01 0 -0.05" rpy="0 0 0"/>
+            <origin xyz="0 0 0" rpy="1.5708 0 1.5708"/>
             <material name="black">
                 <color rgba="0.12 0.12 0.12 1"/>
             </material>
         </visual>
-        <visual>
-            <geometry>
-                <box size="0.04 0.38 0.075"/>
-            </geometry>
-            <origin xyz="-0.06 0 0" rpy="0 0 0"/>
-        </visual>
-        <visual>
-            <geometry>
-                <cylinder length="0.5" radius="0.04"/>
-            </geometry>
-            <origin xyz="0 0 -0.4" rpy="0 0 0"/>
-            <material name="grey"/>
-        </visual>
-        <visual>
-            <geometry>
-                <cylinder length="0.04" radius="0.042"/>
-            </geometry>
-            <origin xyz="-0.02 -0.145 0" rpy="0 1.57 3.1416" />
-        </visual>
 
         <collision>
             <geometry>
-                <box size="0.18 0.18 0.28"/>
+                <mesh filename="package://sara_description/meshes/torse.STL" scale="0.001 0.001 0.001"/>
             </geometry>
-            <origin xyz="0.01 0 -0.05" rpy="0 0 0"/>
-        </collision>
-        <collision>
-            <geometry>
-                <box size="0.04 0.38 0.075"/>
-            </geometry>
-            <origin xyz="-0.06 0 0" rpy="0 0 0"/>
-        </collision>
-		<collision>
-            <geometry>
-                <cylinder length="0.5" radius="0.04"/>
-            </geometry>
-            <origin xyz="0 0 -0.4" rpy="0 0 0"/>
+            <origin xyz="0.01 0 -0.05" rpy="1.5708 0 1.5708"/>
         </collision>
 
         <inertial>
             <mass value="10"/>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <origin xyz="0 0 0" rpy="1.5708 0 1.5708"/>
             <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
         </inertial>
+    </link>
+
+    <link name="neckHead_dynamixel_link">
+        <visual>
+            <geometry>
+                <cylinder length="0.015" radius="0.02"/>
+            </geometry>
+            <origin xyz="0 0 -0.01" rpy="0 0 0"/>
+            <material name="blue">
+                <color rgba="0 0 1 1"/>
+            </material>
+        </visual>
     </link>
 
     <link name="head_link">
         <visual>
             <geometry>
-                <box size="0.02 0.16 0.31"/>
+                <mesh filename="package://sara_description/meshes/tete.STL" scale="0.001 0.001 0.001"/>
             </geometry>
-            <origin xyz="0.07 -0.05 0" rpy="0 0 0"/>
-            <material name="red">
-                <color rgba="1 0 0 1"/>
-            </material>
-        </visual>
-        <visual>
-            <geometry>
-                <sphere radius="0.1"/>
-            </geometry>
-            <origin xyz="0 -0.04 0" rpy="0 0 0"/>
+            <origin xyz="0 0 0" rpy="1.5708 -1.5708 1.5708"/>
         </visual>
 
         <collision>
             <geometry>
-                <box size="0.02 0.16 0.31"/>
-            </geometry>
-            <origin xyz="0.07 -0.05 0" rpy="0 0 0"/>
-            <material name="red">
-                <color rgba="1 0 0 1"/>
-            </material>
-        </collision>
-        <collision>
-            <geometry>
                 <sphere radius="0.1"/>
             </geometry>
-            <origin xyz="0 -0.04 0" rpy="0 0 0"/>
+            <origin xyz="0 0 0" rpy="1.5708 0 1.5708"/>
         </collision>
 
         <inertial>
             <mass value="5"/>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <origin xyz="0 0 0" rpy="1.5708 0 1.5708"/>
             <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
         </inertial>
     </link>
@@ -211,15 +174,14 @@
     <link name="neck_link">
          <visual>
              <geometry>
-                 <box size="0.11 0.11 0.11"/>
+                 <mesh filename="package://sara_description/meshes/cou.STL" scale="0.001 0.001 0.001"/>
              </geometry>
-             <origin xyz="0 0 0.05" rpy="0 0 0"/>
-             <material name="grey"/>
+             <origin xyz="0 0 0" rpy="1.5708 0 1.5708"/>
         </visual>
 
         <inertial>
             <mass value="2"/>
-            <origin xyz="0 0 0.1" rpy="0 0 0"/>
+            <origin xyz="0 0 0" rpy="1.5708 0 1.5708"/>
             <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
         </inertial>
     </link>
@@ -227,15 +189,15 @@
     <link name="camera_link">
         <visual>
             <geometry>
-                <box size="0.02 0.2 0.01"/>
+                <mesh filename="package://sara_description/meshes/xtion.STL" scale="0.001 0.001 0.001"/>
             </geometry>
-            <origin xyz="0 0 0" rpy="-1.57 0 0"/>
+            <origin xyz="0 0 0" rpy="1.5708 0 1.5708"/>
             <material name="black"/>
         </visual>
 
         <inertial>
             <mass value="0.5"/>
-            <origin xyz="0 0 0" rpy="0 -1.57 0"/>
+            <origin xyz="0 0 0" rpy="1.5708 0 1.5708"/>
             <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
         </inertial>
     </link>
@@ -244,14 +206,14 @@
     <link name="clavicule_link">
          <visual>
              <geometry>
-                 <mesh filename="package://sara_description/meshes/1-epaule.STL" scale="0.001 0.001 0.001"/>
+                 <mesh filename="package://sara_description/meshes/epaule.STL" scale="0.001 0.001 0.001"/>
              </geometry>
-             <origin xyz="0 0 0" rpy="0 0 0"/>
+             <origin xyz="0 0 0" rpy="0 3.1416 0"/>
          </visual>
 
         <collision>
             <geometry>
-                <mesh filename="package://sara_description/meshes/1-epaule.STL" scale="0.001 0.001 0.001"/>
+                <mesh filename="package://sara_description/meshes/epaule.STL" scale="0.001 0.001 0.001"/>
             </geometry>
              <origin xyz="0 0 0" rpy="0 0 0"/>
         </collision>
@@ -260,14 +222,14 @@
     <link name="fixUpperArm_link">
          <visual>
             <geometry>
-                <mesh filename="package://sara_description/meshes/1-epaule.STL" scale="0.001 0.001 0.001"/>
+                <mesh filename="package://sara_description/meshes/epaule.STL" scale="0.001 0.001 0.001"/>
             </geometry>
             <origin xyz="0 0 0" rpy="3.1416 0 1.5708"/>
         </visual>
 
         <collision>
             <geometry>
-                <mesh filename="package://sara_description/meshes/1-epaule.STL" scale="0.001 0.001 0.001"/>
+                <mesh filename="package://sara_description/meshes/epaule.STL" scale="0.001 0.001 0.001"/>
             </geometry>
             <origin xyz="0 0 0" rpy="3.1416 0 1.5708"/>
         </collision>
@@ -276,14 +238,14 @@
     <link name="rotUpperArm_link">
         <visual>
             <geometry>
-                <mesh filename="package://sara_description/meshes/3-bras_haut.STL" scale="0.001 0.001 0.001"/>
+                <mesh filename="package://sara_description/meshes/bras_haut.STL" scale="0.001 0.001 0.001"/>
             </geometry>
             <origin xyz="0 0 0" rpy="1.5708 3.1416 3.1416"/>
         </visual>
 
         <collision>
             <geometry>
-                <mesh filename="package://sara_description/meshes/3-bras_haut.STL" scale="0.001 0.001 0.001"/>
+                <mesh filename="package://sara_description/meshes/bras_haut.STL" scale="0.001 0.001 0.001"/>
             </geometry>
             <origin xyz="0 0 0" rpy="1.5708 3.1416 3.1416"/>
         </collision>
@@ -292,14 +254,14 @@
     <link name="fixLowerArm_link">
         <visual>
             <geometry>
-                <mesh filename="package://sara_description/meshes/4-coude.STL" scale="0.001 0.001 0.001"/>
+                <mesh filename="package://sara_description/meshes/coude.STL" scale="0.001 0.001 0.001"/>
             </geometry>
             <origin xyz="0 0 -0.0005" rpy="3.1416 0 0"/>
         </visual>
 
         <collision>
              <geometry>
-                <mesh filename="package://sara_description/meshes/4-coude.STL" scale="0.001 0.001 0.001"/>
+                <mesh filename="package://sara_description/meshes/coude.STL" scale="0.001 0.001 0.001"/>
             </geometry>
             <origin xyz="0 0 -0.0005" rpy="3.1416 0 0"/>
         </collision>
@@ -308,14 +270,14 @@
     <link name="rotLowerArm_link">
         <visual>
             <geometry>
-                <mesh filename="package://sara_description/meshes/5-pince-avant-bras.STL" scale="0.001 0.001 0.001"/>
+                <mesh filename="package://sara_description/meshes/pince-avant-bras.STL" scale="0.001 0.001 0.001"/>
             </geometry>
             <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
         </visual>
 
         <collision>
             <geometry>
-                <mesh filename="package://sara_description/meshes/5-pince-avant-bras.STL" scale="0.001 0.001 0.001"/>
+                <mesh filename="package://sara_description/meshes/pince-avant-bras.STL" scale="0.001 0.001 0.001"/>
             </geometry>
             <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
         </collision>
@@ -334,7 +296,7 @@
   <!-- JOINTS -->
 
 	<joint name="base_x_trans_joint" type="prismatic" >
-		<parent link="sara_base" type="prismatic" />
+		<parent link="base_link" type="prismatic" />
 		<child link="base_x_trans_link" />
 		<origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
 		<limit effort="1000.0" lower="-0.10" upper="4.0" velocity="1.0"/>
@@ -351,20 +313,20 @@
 		
 	<joint name="base_revolute_joint" type="revolute" >
 		<parent link="base_y_trans_link" />
-		<child link="base_link" />
+		<child link="real_base_link" />
 		<limit effort="1000.0" lower="-1.5708" upper="1.5708" velocity="0.5"/>
 		<origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
 		<axis xyz="0 0 1" />
 	</joint>
 
     <joint name="laser_joint" type="fixed">
-        <parent link="base_link"/>
-        <child link="base_laser_link"/>
+        <parent link="real_base_link"/>
+        <child link="laser_link"/>
         <origin xyz="0.34 0 0.19" rpy="0 0 0" />
     </joint>
 
     <joint name="base_spine_joint" type="fixed">
-        <parent link="base_link"/>
+        <parent link="real_base_link"/>
         <child link="spine_link"/>
         <origin xyz="0.2 0 0" rpy="0 0 0" />
         <axis xyz="0 0 1" />
@@ -382,7 +344,7 @@
         <parent link="torso_link"/>
         <child link="clavicule_link"/>
         <limit effort="1000.0" lower="-0.18" upper="1.21" velocity="0.5"/>
-        <origin xyz="0 -0.145 0" rpy="0 -1.57 0" />
+        <origin xyz="0.008948 -0.145 0.155" rpy="0 -1.57 0" />
         <axis xyz="0 0 1" />
     </joint>
 
@@ -428,26 +390,34 @@
         <parent link="torso_link"/>
         <child link="neck_link"/>
         <limit effort="1000.0" lower="-3.1416" upper="3.1416" velocity="0.5"/>
-        <origin xyz="0 0 0.09" rpy="0 0 0" />
+        <origin xyz="0.032295 0 0.2437" rpy="0 0 0" />
         <axis xyz="0 0 1" />
     </joint>
 
-    <joint name="neckHead_joint" type="fixed">  <!-- normaly revolute -->
+    <joint name="neckHead_dynamixel_joint" type="revolute">
+        <parent link="head_link"/>
+        <child link="neckHead_dynamixel_link"/>
+        <limit effort="1000.0" lower="-1.5" upper="1.5" velocity="0.5"/>
+        <origin xyz="0 -0.054 0" rpy="0 0 0" />
+        <axis xyz="0 0 1" />
+    </joint>
+
+    <joint name="neckHead_joint" type="revolute">
         <parent link="neck_link"/>
         <child link="head_link"/>
         <limit effort="1000.0" lower="-0.40" upper="1.04" velocity="0.5"/>
-        <origin xyz="0 0 0.11" rpy="-1.57 0 0" />
+        <origin xyz="0 0 0.0927" rpy="-1.57 0 0" />
         <axis xyz="0 0 1" />
     </joint>
 
     <joint name="camera_joint" type="fixed">
         <parent link="head_link"/>
         <child link="camera_link"/>
-        <origin xyz="0.075 -0.09 0" rpy="1.57 0 0" />
+        <origin xyz="0.0776104 -0.13 0" rpy="1.57 0 0" />
         <axis xyz="0 1 0" />
     </joint>
 
-    <gazebo reference="sara_base">
+    <gazebo reference="base_link">
         <gravity>false</gravity>
     </gazebo>
 
@@ -464,7 +434,7 @@
     </gazebo>
 
     <!-- hokuyo -->
-    <gazebo reference="base_laser_link">
+    <gazebo reference="laser_link">
         <gravity>false</gravity>
         <sensor type="ray" name="base_hokuyo_sensor">
             <pose>0 0 0 0 0 0</pose>
@@ -496,7 +466,7 @@
             </ray>
             <plugin name="gazebo_ros_base_hokuyo_controller" filename="libgazebo_ros_laser.so">
                 <topicName>/laser/scan</topicName>
-                <frameName>base_laser_link</frameName>
+                <frameName>laser_link</frameName>
             </plugin>
         </sensor>
     </gazebo>
@@ -546,7 +516,7 @@
             <odometryTopic>/odom</odometryTopic>
             <odometryFrame>odom</odometryFrame>
             <odometryRate>20.0</odometryRate>
-            <robotBaseFrame>sara_base</robotBaseFrame>
+            <robotBaseFrame>base_link</robotBaseFrame>
         </plugin>
     </gazebo>
 </robot>

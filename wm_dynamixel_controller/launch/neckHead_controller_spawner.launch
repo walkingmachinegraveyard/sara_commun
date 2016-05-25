@@ -1,0 +1,11 @@
+<!-- -*- mode: XML -*- -->
+
+<launch>
+    <!-- Start tilt joint controller -->
+    <rosparam file="$(find wm_dynamixel_controller)/config/neckHead_dynamixel.yaml" command="load"/>
+    <node name="neckHead_controller_spawner" pkg="dynamixel_controllers" type="controller_spawner.py"
+          args="--manager=dxl_manager
+                --port neckHead_port
+                neckHead_controller"
+          output="screen"/>
+</launch>
