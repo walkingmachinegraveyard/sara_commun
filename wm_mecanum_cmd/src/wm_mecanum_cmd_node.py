@@ -101,7 +101,7 @@ class MecanumCmd:
         w = [0., 0., 0., 0.]
 
         for k in range(len(w)):
-            w[k] = -self.gb_ratio / 5.0 * ((-1)**k) * (1/self.radius) * (J[k][0]*xVel + J[k][1]*yVel + J[k][2]*yawVel)
+            w[k] = -self.gb_ratio / 2.0 * ((-1)**k) * (1/self.radius) * (J[k][0]*xVel + J[k][1]*yVel + J[k][2]*yawVel)
 
         return w
 
