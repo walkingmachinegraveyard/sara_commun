@@ -1,15 +1,12 @@
-obstacle_range: 3.0
+obstacle_range: 4.0
 raytrace_range: 5.0
 
 # footprint: [[front left corner], [front right corner], 
 #             [rear right corner], [rear left corner]]
-footprint: [[0.31, -0.30], [0.31, 0.30], [-0.31, 0.30], [-0.31, -0.30]]
+footprint: [[0.40, -0.33], [0.40, 0.33], [-0.40, 0.33], [-0.40, -0.33]]
 
-inflation_radius: 0.60
+inflation_radius: 0.40
 
-observation sources: laser_scan_sensor
+observation_sources: laser_scan_sensor
 
-laser_scan_sensor: {sensor_frame: sara_lidar, data_type: LaserScan, topic: /scan, marking: true, clearing: true,
-					 expected_update_rate: 50.0, inf_is_valid: true}
-
-track_unknown_space: true
+laser_scan_sensor: {sensor_frame: base_laser_link, data_type: LaserScan, topic: /scan, marking: true, clearing: true, expected_update_rate: 32.0, inf_is_valid: false}
