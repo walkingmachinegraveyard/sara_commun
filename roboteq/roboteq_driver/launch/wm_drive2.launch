@@ -1,9 +1,0 @@
-<launch>
- 
-  <arg name="port_FLW" default="/dev/ttyACM1" />
-  <node pkg="roboteq_driver" type="driver_node" name="roboteq_driver_FLW" output="screen">
-    <param name="port" value="$(arg port_FLW)" />
-    <param name="value" value="115200" />
-  </node>
-
-</launch>
