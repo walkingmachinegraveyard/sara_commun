@@ -1,0 +1,27 @@
+<launch>
+ 
+  <arg name="port_FLW" default="/dev/ttyACM1" />
+  <node pkg="roboteq_driver" type="driver_node" name="roboteq_driver_FLW">
+    <param name="port" value="$(arg port_FLW)" />
+    <param name="value" value="115200" />
+  </node>
+
+  <arg name="port_FRW" default="/dev/ttyACM2" />
+  <node pkg="roboteq_driver" type="driver_node" name="roboteq_driver_FRW">
+    <param name="port" value="$(arg port_FRW)" />
+    <param name="value" value="115200" />
+  </node>
+
+  <arg name="port_RLW" default="/dev/ttyACM3" />
+  <node pkg="roboteq_driver" type="driver_node" name="roboteq_driver_RLW">
+    <param name="port" value="$(arg port_RLW)" />
+    <param name="value" value="115200" />
+  </node>
+
+  <arg name="port_RRW" default="/dev/ttyACM4" />
+  <node pkg="roboteq_driver" type="driver_node" name="roboteq_driver_RRW">
+    <param name="port" value="$(arg port_RRW)" />
+    <param name="value" value="115200" />
+  </node> 
+
+</launch>
