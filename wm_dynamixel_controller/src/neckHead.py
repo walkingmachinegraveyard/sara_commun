@@ -6,8 +6,9 @@ from std_msgs.msg import Float64
 import dynamixel_msgs.msg
 import sensor_msgs.msg
 
-class neckHead:
+class dynamixelState:
     def __init__(self):
+        self.pub = rospy.Publisher('/neckHead/state', sensor_msgs.msg.JointState)
         self.sub = rospy.Subscriber('/neckHead_controller/state', dynamixel_msgs.msg.JointState, self.callback)
         self.msg = sensor_msgs.msg.JointState()
 
@@ -17,13 +18,16 @@ class neckHead:
         self.msg.velocity = data.velocity
         self.msg.effort = 0
 
-def main(self):
+    def publish(self):
+        self.pub.publish(self.msg)
+
+def main():
     rospy.init_node('dynamixel_publisher')
     rate = rospy.Rate(10)  # 10hz
-    dynamixel = neckHead
-    dynamixel.pub.publish(self.msg)
-    rate.sleep()
-    rospy.spin()
+    neckHeadDynamixel = dynamixelState()
+    while not rospy.is_shutdown():
+        neckHeadDynamixel.publish()
+        rate.sleep()
 
 if __name__ == '__main__':
     main()
