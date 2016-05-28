@@ -1,0 +1,48 @@
+<launch>
+    <!-- ODOM -->
+    <include file="$(find wm_odometry_feedback)/launch/wm_odometry_feedback.launch"/>
+
+    <!-- SLAM -->
+    <include file="$(find wm_launch)/gmapping/wm_slam_gmapping.launch"/>
+
+    <!-- LIDAR -->
+    <include file="$(find map_laser)/lfilter.launch"/>
+    <include file="$(find wm_launch)/urg_node/wm_urg_node.launch"/>
+
+    <!-- CAM SETUP -->
+    <include file="$(find openni2_launch)/launch/openni2.launch"/>
+
+    <!-- TELEOP -->
+    <include file="$(find wm_mecanum_cmd)/launch/wm_mecanum_teleop.launch"/>
+
+    <!-- NAV -->
+    <arg name="odom_topic" default="/odom" />
+
+    <remap from="/odom" to="$(arg odom_topic)" />
+    <remap from="base_scan" to="/scan_filtered"/>
+
+    <node pkg="move_base" type="move_base" respawn="false" name="move_base" clear_params="true" >
+        <rosparam file="$(find wm_2dnav)/config/dwa/costmap_common_params.yaml" command="load" ns="global_costmap" />
+        <rosparam file="$(find wm_2dnav)/config/dwa/costmap_common_params.yaml" command="load" ns="local_costmap" />
+        <rosparam file="$(find wm_2dnav)/config/dwa/local_costmap_params.yaml" command="load" />
+        <rosparam file="$(find wm_2dnav)/config/dwa/global_costmap_params.yaml" command="load" />
+        <rosparam file="$(find wm_2dnav)/config/dwa/base_local_planner_params.yaml" command="load" />
+        <rosparam file="$(find wm_2dnav)/config/dwa/base_global_planner_params.yaml" command="load" />
+
+        <param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS" />
+    </node>
+
+    <include file="$(find wm_launch)/roboteq_driver/wm_roboteq_driver.launch"/>
+
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
+
+    <!-- RVIZ  -->
+    <arg name="gui" default="true" />
+    <arg name="rvizconfig" default="$(find sara_gazebo)/../../rviz_cfg/urdf.rviz"/>
+
+    <param name="robot_description" command="cat $(find sara_description)/urdf/sara.urdf" />
+    <param name="use_gui" value="$(arg gui)"/>
+
+    <node name="rviz" pkg="rviz" type="rviz" args="$(arg rvizconfig)" required="true" />
+</launch>

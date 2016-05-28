@@ -1,0 +1,146 @@
+<launch>
+    <!-- ODOM -->
+    <include file="$(find wm_odometry_feedback)/launch/wm_odometry_feedback.launch"/>
+
+    <!-- LIDAR -->
+    <include file="$(find map_laser)/lfilter.launch"/>
+    <include file="$(find wm_launch)/urg_node/wm_urg_node.launch"/>
+
+    <!-- CAM SETUP -->
+    <include file="$(find openni2_launch)/launch/openni2.launch"/>
+
+    <!-- TELEOP -->
+    <include file="$(find wm_mecanum_cmd)/launch/wm_mecanum_teleop.launch"/>
+
+    <!-- NAV -->
+    <arg name="odom_topic" default="/odom" />
+
+    <remap from="/odom" to="$(arg odom_topic)" />
+    <remap from="base_scan" to="/scan_filtered"/>
+
+    <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen" clear_params="true" >
+        <rosparam file="$(find wm_2dnav)/config/tr/costmap_common_params.yaml" command="load" ns="global_costmap" />
+        <rosparam file="$(find wm_2dnav)/config/tr/costmap_common_params.yaml" command="load" ns="local_costmap" />
+        <rosparam file="$(find wm_2dnav)/config/tr/local_costmap_params.yaml" command="load" />
+        <rosparam file="$(find wm_2dnav)/config/tr/global_costmap_params.yaml" command="load" />
+        <rosparam file="$(find wm_2dnav)/config/tr/base_local_planner_params.yaml" command="load" />
+        <rosparam file="$(find wm_2dnav)/config/tr/base_global_planner_params.yaml" command="load" />
+
+        <param name="base_local_planner" value="eband_local_planner/EBandPlannerROS" />
+    </node>
+    <include file="$(find wm_launch)/roboteq_driver/wm_roboteq_driver.launch"/>
+
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
+
+    <!-- RVIZ  -->
+    <arg name="gui" default="true" />
+    <arg name="rvizconfig" default="$(find sara_gazebo)/../../rviz_cfg/urdf.rviz"/>
+
+    <param name="robot_description" command="cat $(find sara_description)/urdf/sara.urdf" />
+    <param name="use_gui" value="$(arg gui)"/>
+
+    <node name="rviz" pkg="rviz" type="rviz" args="$(arg rvizconfig)" required="true" />
+
+    <!-- SLAM -->
+    <group ns="rtabmap">
+        <node name="rtabmap" pkg="rtabmap_ros" type="rtabmap" args="--delete_db_on_start">
+              <param name="frame_id" type="string" value="base_link"/>
+
+              <param name="subscribe_depth" type="bool" value="true"/>
+              <param name="subscribe_laserScan" type="bool" value="true"/>
+              <param name="use_action_for_goal" type="bool" value="true"/>
+
+              <remap from="odom" to="/odom"/>
+              <remap from="scan" to="/scan_filtered"/>
+              <remap from="mapData" to="mapData"/>
+
+              <remap from="rgb/image" to="/camera/rgb/image_raw"/>
+              <remap from="depth/image" to="/camera/depth/image_raw"/>
+              <remap from="rgb/camera_info" to="/camera/rgb/camera_info"/>
+
+              <remap from="goal_out" to="current_goal"/>
+              <remap from="move_base" to="/planner/move_base"/>
+              <remap from="grid_map" to="/map"/>
+
+              <param name="queue_size" type="int" value="10"/>
+
+            <!-- RTAB-Map's parameters -->
+            <param name="RGBD/PoseScanMatching" type="string" value="true"/>
+            <param name="RGBD/LocalLoopDetectionSpace" type="string" value="true"/>
+
+            <param name="LccIcp/Type" type="string" value="2"/>
+
+            <param name="RGBD/AngularUpdate" type="string" value="0.1"/>             <!-- Update map only if the robot is moving -->
+            <param name="RGBD/LinearUpdate" type="string" value="0.1"/>              <!-- Update map only if the robot is moving -->
+            <param name="RGBD/LocalRadius" type="string" value="5"/>
+
+            <param name="Mem/RehearsalSimilarity" type="string" value="0.45"/>
+            <param name="Mem/NotLinkedNodesKept" type="string" value="false"/>
+            <param name="Mem/ImageDecimation" type="string" value="4"/>
+
+            <param name="Rtabmap/StartNewMapOnLoopClosure" type="string" value="true"/>
+            <param name="Rtabmap/TimeThr" type="string" value="600"/>
+            <param name="Rtabmap/DetectionRate" type="string" value="1"/>
+
+            <param name="Bayes/PredictionLC" type="string" value="0.1 0.36 0.30 0.16 0.062 0.0151 0.00255 0.00035"/>
+
+            <param name="RGBD/OptimizeSlam2d" type="string" value="true"/>
+            <param name="RGBD/OptimizeIterations" type="string" value="100"/>
+            <param name="RGBD/OptimizeFromGraphEnd" type="string" value="true"/>
+
+            <param name="Kp/DetectorStrategy" type="string" value="0"/>
+            <param name="Kp/WordsPerImage" type="string" value="200"/>
+            <param name="Kp/NNStrategy" type="string" value="1"/>
+
+            <param name="SURF/HessianThreshold" type="string" value="500"/>
+
+            <param name="LccBow/Force2D" type="string" value="true"/>
+            <param name="LccReextract/MaxDepth" type="string" value="5"/>
+            <param name="LccBow/MinInliers" type="string" value="5"/>
+            <param name="LccBow/InlierDistance" type="string" value="0.1"/>
+        </node>
+    </group>
+
+
+    <group ns="camera">
+        <!-- Nodelet manager for the sim -->
+        <node pkg="nodelet" type="nodelet" name="sim_nodelet_manager"  args="manager"/>
+
+        <!-- Throttling messages
+        <node pkg="nodelet" type="nodelet" name="data_throttle" args="load rtabmap_ros/data_throttle sim_nodelet_manager" >
+            <param name="rate" type="double" value="5"/>
+            <param name="decimation" type="int" value="2"/>
+
+            <remap from="rgb/image_in"       to="/camera/rgb/image_raw"/>
+            <remap from="depth/image_in"     to="/camera/depth/image_raw"/>
+            <remap from="rgb/camera_info_in" to="/camera/depth/camera_info"/>
+
+            <remap from="rgb/image_out"       to="data_resized_image"/>
+            <remap from="depth/image_out"     to="data_resized_image_depth"/>
+            <remap from="rgb/camera_info_out" to="data_resized_camera_info"/>
+        </node>-->
+
+        <!-- for the planner -->
+        <node pkg="nodelet" type="nodelet" name="points_xyz_planner" args="load rtabmap_ros/point_cloud_xyz sim_nodelet_manager">
+            <remap from="depth/image"            to="/camera/depth/image_raw"/>
+            <remap from="depth/camera_info"      to="/camera/depth/camera_info"/>
+            <remap from="cloud"                  to="cloudXYZ" />
+            <param name="decimation" type="int" value="1"/>
+            <param name="max_depth" type="double" value="5.0"/>
+            <param name="voxel_size" type="double" value="0.02"/>
+        </node>
+
+        <node pkg="nodelet" type="nodelet" name="obstacles_detection" args="load rtabmap_ros/obstacles_detection sim_nodelet_manager">
+            <remap from="cloud"     to="cloudXYZ"/>
+            <remap from="obstacles" to="obstacles_cloud"/>
+            <remap from="ground"    to="ground_cloud"/>
+
+            <param name="frame_id" type="string" value="base_link"/>
+            <param name="map_frame_id" type="string" value="map"/>
+            <param name="wait_for_transform" type="bool" value="true"/>
+            <param name="min_cluster_size" type="int" value="20"/>
+            <param name="max_obstacles_height" type="double" value="0.4"/>
+        </node>
+    </group>
+</launch>
