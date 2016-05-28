@@ -68,7 +68,7 @@ class OdometryFeedback:
         dt = current_time.to_sec() - self.last_cb.to_sec()
         self.last_cb = current_time
 
-        rospy.loginfo("Time between callbacks = %f", dt)
+        # rospy.loginfo("Time between callbacks = %f", dt)
 
         odom.header.stamp = current_time
         odom.header.frame_id = self.frame_id
