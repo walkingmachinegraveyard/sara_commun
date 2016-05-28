@@ -21,7 +21,7 @@ class wm_tts:
         # amplitude (0...200), default value = 100
         self.speech_volume = rospy.get_param('/wm_tts_node/speech_volume', 100)
 
-        self.sub = rospy.Subscriber('output', String, self.callback)
+        self.sub = rospy.Subscriber('sara_tts', String, self.callback)
 
     def callback(self, msg):
 
