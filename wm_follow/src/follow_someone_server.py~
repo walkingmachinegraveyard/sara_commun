@@ -1,0 +1,67 @@
+#!/usr/bin/env python
+
+from wm_follow.srv import *
+import rospy
+from math import *
+import tf
+import time
+
+state = False 
+
+
+
+def handle_followSomeone(req):
+    if req.state == req.START_FOLLOWING:
+	state = True
+		print "START"
+
+	# Flag qui permet de bouger si la personne + 1m.
+	move = False  
+
+	x = 2	
+	y = 1
+
+	# calcule angle par rapport a la position de la personne
+	angleRad = math.atan2(y,x)
+	print "angleRad : " + angleRad
+
+	# calcule la distance par rapport a la personne
+	distance = math.hypot(x,y)
+
+	# si la distance est plus grande que 1m, le robot bouge
+	if distance > 1:
+	    move = True
+	    distance -= 1
+
+	
+
+			
+	
+
+	degs = math.degrees(angleRad)
+	print degs
+
+	quaternion = tf.transformations.quaternion_from_euler(0, 0, degs)
+
+    elif req.state == req.STOP_FOLLOWING:
+	state = False
+        print "STOP"
+
+def startFollow():
+    while not rospy.is_shutdown():
+	time.sleep(0.1)
+	if state:
+	    move_base_msgs::MoveBaseGoal goal;
+		
+    	
+
+def followSomeone():
+    rospy.init_node('followSomeoneServer')
+    s = rospy.Service('follow_someone', setState, handle_followSomeone)
+    print "Ready to follow someone"
+    startFollow()
+    rospy.spin()
+
+if __name__ == "__main__":
+    followSomeone()
+    

@@ -1,0 +1,8 @@
+#request
+int8 START_FOLLOWING = 1
+int8 STOP_FOLLOWING = 0
+int8 state
+---
+#response
+
+

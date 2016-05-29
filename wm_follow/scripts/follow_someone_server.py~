@@ -1,0 +1,20 @@
+#!/usr/bin/env python
+
+from leg_detector.srv import *
+import rospy
+
+def handle_followSomeone(req):
+    if req.state == req.START_FOLLOWING:
+        print "START"
+
+    else:
+        print "STOP"
+
+def followSomeone():
+    rospy.init_node('followSomeoneServer')
+    s = rospy.Service('followSomeone', followSomeone, handle_followSomeone)
+    print "Ready to follow someone"
+    rospy.spin()
+
+if __name__ == "__main__":
+    followSomeone()
