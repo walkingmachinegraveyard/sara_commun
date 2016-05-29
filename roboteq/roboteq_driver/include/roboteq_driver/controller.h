@@ -127,7 +127,7 @@ public :
   void stopScript() { command << "R" << 0 << send; }
   void setUserVariable(int var, int val) { command << "VAR" << var << val << send; }
   void setUserBool(int var, bool val) { command << "B" << var << (val ? 1 : 0) << send; }
-  bool downloadScript();
+  //bool downloadScript();
 
   void setSerialEcho(bool serial_echo) { param << "ECHOF" << (serial_echo ? 0 : 1) << sendVerify; }
 };

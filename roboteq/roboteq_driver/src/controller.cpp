@@ -39,7 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sstream>
 
 // Link to generated source from Microbasic script file.
-extern const char* script_lines[];
+//extern const char* script_lines[];
 extern const int script_ver = 30;
 
 namespace roboteq {
@@ -123,9 +123,9 @@ void Controller::read() {
         flush();
       } else {
         ROS_DEBUG("Attempting to download MBS program.");
-        if (downloadScript()) {
-          start_script_attempts_ = 0;
-        }	
+        //if (downloadScript()) {
+          //start_script_attempts_ = 0;
+        //}	
         ros::Duration(1.0).sleep();
       }
     } else {
@@ -163,7 +163,7 @@ void Controller::processStatus(std::string str) {
         ROS_WARN_STREAM("Script version mismatch. Expecting " << script_ver <<
             " but controller consistently reports " << reported_script_ver << ". " <<
             ". Now attempting download.");
-        downloadScript();
+        //downloadScript();
       }
       return;
     }
@@ -206,7 +206,7 @@ void Controller::processFeedback(std::string msg) {
   }
 }
 
-bool Controller::downloadScript() {
+/*bool Controller::downloadScript() {
   ROS_DEBUG("Commanding driver to stop executing script.");
 
   // Stop the running script, flag us to start it up again after..
@@ -244,6 +244,6 @@ bool Controller::downloadScript() {
     line_num++;
   }
   return true;
-}
+} */
 
 }  // namespace roboteq
