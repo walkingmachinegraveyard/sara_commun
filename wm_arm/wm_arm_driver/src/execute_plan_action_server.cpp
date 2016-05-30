@@ -16,7 +16,7 @@ namespace manipulator
 		nh_.param("maximum_skip", maxSkip_, 2);
 
 		double feedbackRate;
-		nh_.param("actionFeedback_rate", feedbackRate, 5.0);
+		nh_.param("action_feedback_rate", feedbackRate, 5.0);
 		feedbackTimer_ = nh_.createTimer(ros::Duration(1.0/feedbackRate), &executePlanActionServer::feedbackCallback, this);
 
 		actionServer_.registerGoalCallback(boost::bind(&executePlanActionServer::goalCallback, this));
@@ -33,6 +33,8 @@ namespace manipulator
 	void executePlanActionServer::goalCallback()
 	{
 		moveit_msgs::RobotTrajectory goal = actionServer_.acceptNewGoal()->trajectory;
+
+		ROS_INFO("Goal accepted");
 
 		int res;
 		int nbSkip = 0;
@@ -62,7 +64,6 @@ namespace manipulator
 				}
 			}
 		}
-
 	}
 
 	void executePlanActionServer::preemptCallback()
@@ -78,10 +79,11 @@ namespace manipulator
 
 	void executePlanActionServer::feedbackCallback(const ros::TimerEvent& e)
 	{
-		if (actionServer_.isActive())
+		if (!actionServer_.isActive())
 		{
 			return;
 		}
+
 		int res = kComm_.myGetGlobalTrajectoryInfo();
 
 		if (res != NO_ERROR_KINOVA)
