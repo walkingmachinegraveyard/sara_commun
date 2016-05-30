@@ -149,7 +149,7 @@ add_executable(plan_test_node src/test.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-# add_dependencies(wm_arm_driver_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+ add_dependencies(wm_arm_driver_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
  target_link_libraries(wm_arm_driver_node
@@ -158,8 +158,8 @@ add_executable(plan_test_node src/test.cpp)
  ${Eigen_LIBRARIES} 
  )
 
- target_link_libraries(plan_test_node
- ${catkin_LIBRARIES})
+target_link_libraries(plan_test_node
+${catkin_LIBRARIES})
 
 #############
 ## Install ##
