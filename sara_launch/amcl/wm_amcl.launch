@@ -32,6 +32,6 @@
   <param name="recovery_alpha_slow" value="0.0"/>
   <param name="recovery_alpha_fast" value="0.0"/>
   <param name="use_map_topic" value="true" />
-  <param name="base_frame_id" value="sara_base" />
+  <param name="base_frame_id" value="base_link" />
 </node>
 </launch>
