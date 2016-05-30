@@ -32,7 +32,7 @@ namespace kinova
 		int mySendAngularPos(const std::vector<double>&, float);
 		int mySendAngularVel(const std::vector<double>&);
 
-		int myMoveHome(const std::vector<double>&);
+		int myMoveHome();
 
 		int myGetAngularPosition(AngularPosition&);
 
@@ -44,6 +44,7 @@ namespace kinova
 		int myEraseAllTrajectories();
 
 		unsigned int getFifoCount() {return trajectoryCount_;}
+		std::vector<float> getJointsOffset() {return jointsOffset_;}
 
 	private:
 		ros::NodeHandle nh_;
@@ -55,6 +56,8 @@ namespace kinova
 		float maxVel123_, maxVel456_;
 		int enableJointsSync_;
 		int status_;
+		std::vector<double> homePosition_;
+		std::vector<float> jointsOffset_;
 	};
 } // namespace kinova
 #endif /* KINOVACOMM_H_ */

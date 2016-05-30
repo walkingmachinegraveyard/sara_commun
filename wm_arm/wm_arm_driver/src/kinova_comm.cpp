@@ -5,13 +5,18 @@
  *      Author: xhache
  */
 
-#include <iostream>
 #include <vector>
 
 #include "wm_arm_driver/kinova_comm.h"
 
 namespace kinova
 {
+
+	inline float radToDeg(double angle)
+	{
+		return (float)(angle * 180.0 / M_PI);
+	}
+
 	kinovaComm::kinovaComm(const ros::NodeHandle& nh, boost::recursive_mutex &apiMutex)
 		:nh_(nh), apiMutex_(apiMutex)
 	{
@@ -20,9 +25,9 @@ namespace kinova
 		isControlApiStarted_ = false;
 		initSuccess_ = false;
 
-		// get parameters
+		// get parameters from the parameter server
 		double tmpParam;
-		nh_.param("maxVelocity_joints123", tmpParam, 30.0);
+		nh_.param("/wm_arm_driver_node/max_velocity_joints123", tmpParam, 30.0);
 		if (tmpParam < 0)
 		{
 			tmpParam *= -1.0;
@@ -33,7 +38,7 @@ namespace kinova
 			ROS_INFO("Setting maximum velocity for joints 1, 2 and 3 at %f degrees/second.", tmpParam);
 		}
 		maxVel123_ = (float)tmpParam;
-		nh_.param("maxVelocity_joints456", tmpParam, 30.0);
+		nh_.param("/wm_arm_driver_node/max_velocity_joints456", tmpParam, 30.0);
 		if (tmpParam < 0)
 		{
 			tmpParam *= -1.0;
@@ -45,19 +50,37 @@ namespace kinova
 		}
 		maxVel456_ = (float)tmpParam;
 
-		nh_.param("jointMovement_Synchronization", enableJointsSync_, 1);
-		if (enableJointsSync_ != 1 || enableJointsSync_ != 0)
-		{
-			ROS_WARN("Invalid input for joints synchronization. Setting default value");
-			enableJointsSync_ = 1;
-		}
-		if (enableJointsSync_ == 1)
+		bool jointSync;
+		nh_.param("/wm_arm_driver_node/joint_movement_synchronization", jointSync, true);
+		if (jointSync == 1)
 		{
 			ROS_INFO("Joints' movement will be synchronized.");
+			enableJointsSync_ = 1;
 		}
-		else if (enableJointsSync_ == 0)
+		else
 		{
 			ROS_INFO("Joints' movement will not be synchronized.");
+			enableJointsSync_ = 0;
+		}
+
+		if (!nh_.getParam("/wm_arm_driver_node/home_position", homePosition_))
+		{
+			ROS_WARN("Joint space home position not specified. Assuming every joint's home position is 0.0.");
+			homePosition_.assign(6, 0.0);
+		}
+
+		if(!nh_.getParam("/wm_arm_driver_node/joints_offset", jointsOffset_));
+		{
+			ROS_WARN("Joints' offset not specified. Assuming no offset.");
+			/*
+			 * TODO: make getParam() work and remove hard coded values
+			 */
+			jointsOffset_.push_back(30.55);
+			jointsOffset_.push_back(178.73);
+			jointsOffset_.push_back(202.89);
+			jointsOffset_.push_back(351.07);
+			jointsOffset_.push_back(212.86);
+			jointsOffset_.push_back(0.0);
 		}
 
 		// initialize API
@@ -65,7 +88,7 @@ namespace kinova
 
 		if (res != NO_ERROR_KINOVA)
 		{
-			std::cout << "API initialization failed. Error code: " << res << std::endl;
+			ROS_FATAL("API initialization failed. Error code: %d", res);
 			return;
 		}
 
@@ -76,34 +99,32 @@ namespace kinova
 
 		if (res != NO_ERROR_KINOVA)
 		{
-			std::cout << "No device found on the USB bus. Error code: " << res << std::endl;
+			ROS_FATAL("No device found on the USB bus. Error code: %d", res);
 			return;
 		}
 		else
 		{
-			std::cout << "Found " << nbDevices << " device(s)." << std::endl;
+			ROS_INFO("Found %d device(s).", nbDevices);
 		}
 
 		// set active device
 		if (nbDevices == 1)
 		{
-			std::cout << "Setting device as active device." << std::endl;
 			res = kAPI_.setActiveDevice(deviceList[0]);
 			if (res != NO_ERROR_KINOVA)
 			{
-				std::cout << "Could not set first device found as active device. Error code: " << res << std::endl;
+				ROS_FATAL("Could not set first device found as active device. Error code: %d", res);
 				return;
 			}
-			std::cout << "**** Active device information ****" << std::endl;
-			std::cout << "Serial number: " << deviceList[0].SerialNumber << std::endl;
-			std::cout << "Model: " << deviceList[0].Model << std::endl;
-			std::cout << "Code version: " << deviceList[0].VersionMajor << "." <<
-					deviceList[0].VersionMinor << "." << deviceList[0].VersionRelease << std::endl;
+			ROS_INFO("**** Active device information ****");
+			ROS_INFO("Serial number: %s", deviceList[0].SerialNumber);
+			ROS_INFO("Model: %s", deviceList[0].Model);
+			ROS_INFO("Code version: %d.%d.%d", deviceList[0].VersionMajor, deviceList[0].VersionMinor, deviceList[0].VersionRelease);
 		}
 		else if (nbDevices > 1)
 		{
-			std::cout << "Multiple devices. Specify which device you want active." << std::endl;
-			/* TO DO:
+			ROS_INFO("Multiple devices. Specify which device you want active.");
+			/* TODO
 			 * Loop through all devices, print devices' informations and ask user to select a device
 			 */
 		}
@@ -113,7 +134,7 @@ namespace kinova
 
 		if (res != NO_ERROR_KINOVA)
 		{
-			std::cout << "Could not start control over the controller. Error code: " << res << std::endl;
+			ROS_FATAL("Could not start control over the controller. Error code: %d", res);
 			return;
 		}
 
@@ -122,7 +143,7 @@ namespace kinova
 
 		if (res != NO_ERROR_KINOVA)
 		{
-			std::cout << "Could not set angular control. Error code: " << res << std::endl;
+			ROS_FATAL("Could not set angular control. Error code: %d", res);
 			return;
 		}
 
@@ -132,14 +153,14 @@ namespace kinova
 		res = kAPI_.getGlobalTrajectoryInfo(trajInfo);
 		if (res != NO_ERROR_KINOVA)
 		{
-			std::cout << "Could not get trajectory FIFO information. Error code: " << res << std::endl;
+			ROS_FATAL("Could not get trajectory FIFO information. Error code: %d", res);
 			return;
 		}
 
 		trajectoryCount_ = trajInfo.TrajectoryCount;
 		trajectoryCapacity_ = trajInfo.MaxSize;
 
-		ROS_INFO("Initialization completed succesfully.");
+		ROS_INFO("Communication initialization completed succesfully.");
 		initSuccess_ = true;
 	}
 
@@ -186,11 +207,11 @@ namespace kinova
 			// enable/disable joints synchronization
 			PosCmd.SynchroType = enableJointsSync_;
 
-			PosCmd.Position.Actuators.Actuator1 = (float)angularCmd.at(0);
-			PosCmd.Position.Actuators.Actuator2 = (float)angularCmd.at(1);
-			PosCmd.Position.Actuators.Actuator3 = (float)angularCmd.at(2);
-			PosCmd.Position.Actuators.Actuator4 = (float)angularCmd.at(3);
-			PosCmd.Position.Actuators.Actuator5 = (float)angularCmd.at(4);
+			PosCmd.Position.Actuators.Actuator1 = radToDeg(angularCmd.at(0)) + jointsOffset_.at(0);
+			PosCmd.Position.Actuators.Actuator2 = radToDeg(angularCmd.at(1)) + jointsOffset_.at(1);
+			PosCmd.Position.Actuators.Actuator3 = radToDeg(angularCmd.at(2)) + jointsOffset_.at(2);
+			PosCmd.Position.Actuators.Actuator4 = radToDeg(angularCmd.at(3)) + jointsOffset_.at(3);
+			PosCmd.Position.Actuators.Actuator5 = radToDeg(angularCmd.at(4)) + jointsOffset_.at(4);
 
 			// send cmd
 			int res = kAPI_.sendAdvanceTrajectory(PosCmd);
@@ -218,8 +239,8 @@ namespace kinova
 			// set velocity limitations
 			// speedParameter1 controls velocity limits for joints 1, 2 and 3 (ONLY if angular control is enabled)
 			// speedParameter2 controls velocity limits for joints 4, 5 and 6 (ONLY if angular control is enabled)
-			VelCmd.Limitations.speedParameter1 = 30.0f;
-			VelCmd.Limitations.speedParameter2 = 30.0f;
+			VelCmd.Limitations.speedParameter1 = maxVel123_;
+			VelCmd.Limitations.speedParameter2 = maxVel456_;
 
 			// tell the controller the commands represent angular velocities
 			VelCmd.Position.Type = ANGULAR_VELOCITY;
@@ -228,11 +249,11 @@ namespace kinova
 			// no delay
 			VelCmd.Position.Delay = 0.0f;
 
-			VelCmd.Position.Actuators.Actuator1 = (float)angularCmd.at(0);
-			VelCmd.Position.Actuators.Actuator2 = (float)angularCmd.at(1);
-			VelCmd.Position.Actuators.Actuator3 = (float)angularCmd.at(2);
-			VelCmd.Position.Actuators.Actuator4 = (float)angularCmd.at(3);
-			VelCmd.Position.Actuators.Actuator5 = (float)angularCmd.at(4);
+			VelCmd.Position.Actuators.Actuator1 = (float)(M_PI * angularCmd.at(0) / 180.0);
+			VelCmd.Position.Actuators.Actuator2 = (float)(M_PI * angularCmd.at(1) / 180.0);
+			VelCmd.Position.Actuators.Actuator3 = (float)(M_PI * angularCmd.at(2) / 180.0);
+			VelCmd.Position.Actuators.Actuator4 = (float)(M_PI * angularCmd.at(3) / 180.0);
+			VelCmd.Position.Actuators.Actuator5 = (float)(M_PI * angularCmd.at(4) / 180.0);
 
 			// send cmd
 			int res = kAPI_.sendAdvanceTrajectory(VelCmd);
@@ -275,13 +296,13 @@ namespace kinova
 		return res;
 	}
 
-	int kinovaComm::myMoveHome(const std::vector<double>& homePos)
+	int kinovaComm::myMoveHome()
 	{
 		boost::recursive_mutex::scoped_lock lock(apiMutex_);
 
 		kAPI_.eraseAllTrajectories();
 
-		int res = mySendAngularPos(homePos, 1.0f);
+		int res = mySendAngularPos(homePosition_, 1.0f);
 
 		return res;
 	}
