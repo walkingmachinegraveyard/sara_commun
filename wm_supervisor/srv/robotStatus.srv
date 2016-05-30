@@ -1,0 +1,6 @@
+# empty request
+---
+# response
+int8 status
+int8 STATUS_OK=1
+int8 STOP_COMMANDED=-1

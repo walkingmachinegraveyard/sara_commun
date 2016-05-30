@@ -1,0 +1,10 @@
+<launch>
+
+	<node name="wm_supervisor_node" pkg="wm_supervisor" type="wm_supervisor_node" respawn="true" output="screen" >
+		<param name="move_arm_action_name" value="/wm_arm_driver/execute_plan" />
+		<param name="move_base_action_name" value="/move_base" />
+		<param name="watchdog_callback_rate" value="10" />
+		<remap from="output" to="/recognizer_1/output" />
+	</node>
+
+</launch>
