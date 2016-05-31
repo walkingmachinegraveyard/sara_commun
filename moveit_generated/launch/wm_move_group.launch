@@ -1,6 +1,7 @@
 <launch>
 
   <include file="$(find moveit_generated)/launch/wm_planning_context.launch" />
+  <include file="$(find moveit_generated)/launch/wm_sensor_manager.launch" />
 
   <!-- GDB Debug Option -->
   <arg name="debug" default="false" />
