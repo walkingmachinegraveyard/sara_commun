@@ -1,0 +1,22 @@
+<launch>
+	<node pkg="urg_node" type="urg_node" name="urg_node">
+    <param name="frame_id" value="laser_link"/>
+    <rosparam>
+      publish_intensity: false
+      angle_min: -1.57
+      angle_max: 1.57
+      cluster: 1
+      skip: 0
+      ip_port: 10940
+      serial_port: /dev/ttyACM0
+      frame_id: laser
+      calibrate_time: true
+      time_offset: 0.0
+      publish_multiecho: false
+    </rosparam>
+    </node>
+
+  <node pkg="tf" type="static_transform_publisher" name="lidar_base_broadcaster" args="0.308 0.0 0.2 0.0 0.0 0.0 base_link laser_link 10" />
+
+	<include file="$(find cob_leg_detection)/launch/leg_detector.launch"/>
+</launch>

@@ -38,15 +38,18 @@ class Follower:
 def callbackPeople(data):
 
     if follower.state == True:
-
+		
         shortestDistance = -1
 
         shortestX = 0
         shortestY = 0
 
-        for i in data.people:
-            x = data.people[i].pos.x
-            y = data.people[i].pos.y
+        #rospy.loginfo(str(len(data.people)))
+
+        for people in data.people:
+            
+            x = people.pos.x
+            y = people.pos.y
 
             distance = hypot(x, y)
 
@@ -119,6 +122,7 @@ def createNavGoal(x, y):
 def startFollow():
     while not rospy.is_shutdown():
         time.sleep(0.5)
+		
         if follower.state:
             follower.goal = createNavGoal(follower.person.newX, follower.person.newY)
             follower.sendGoal()
@@ -128,12 +132,11 @@ def followSomeone():
     rospy.init_node('followSomeoneServer')
     rospy.Service('follow_someone', setState, handle_FollowSomeone)
     rospy.loginfo("Ready to follow someone")
-
-
+    peopleSub = rospy.Subscriber("/people_tracker_measurements", PositionMeasurementArray, callbackPeople)
     startFollow()
 
     # Subscriber detection personnes
-    peopleSub = rospy.Subscriber("/people_tracker_measurements", people_msgs, callbackPeople)
+    
 
     rospy.spin()
 

@@ -5,8 +5,8 @@
         <rosparam>
             namespace: dxl_manager
             serial_ports:
-                neckHead_dxl:
-                    port_name: "/dev/ttyUSB0"
+                neckHead_port:
+                    port_name: "/dev/usb-ports/7-1.4"
                     baud_rate: 57142
                     min_motor_id: 1
                     max_motor_id: 50
