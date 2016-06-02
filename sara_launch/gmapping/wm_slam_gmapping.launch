@@ -1,6 +1,6 @@
 <launch>
     <node pkg="gmapping" type="slam_gmapping" name="slam_gmapping" output="screen">
-      <param name="base_frame"  value="sara_base"/>
+      <param name="base_frame"  value="base_link"/>
       <param name="map_update_interval" value="0.2"/>
       <param name="maxUrange" value="20.0"/>
       <param name="maxRange" value="40.0" />

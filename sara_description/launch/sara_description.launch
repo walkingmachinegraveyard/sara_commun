@@ -1,10 +1,10 @@
 <launch>
-    <arg name="show_rviz" default="true"/>
-    <arg name="gui" default="true" />
-    <arg name="sim" default="true"/>
+    <arg name="show_rviz" default="false"/>
+    <arg name="gui" default="false" />
+    <arg name="sim" default="false"/>
 
     <!-- SIM CAM SETUP -->
-    <group if="(arg sim)">
+    <group if="$(arg sim)">
         <arg name="camera_name" default="camera"/>
         <node machine ="SARA" pkg="tf" type="static_transform_publisher" name="hand_camera_calib" args="0.000 -0.020 0.000 0.000 0.000 0.000 1.000 $(arg camera_name)_link $(arg camera_name)/camera_link  100"/>
         <node machine ="SARA" pkg="tf" type="static_transform_publisher" name="camera_depth_frame" args="0.000 -0.020 0.000 0.000 0.000 0.000 1.000  $(arg camera_name)/camera_link $(arg camera_name)/camera_depth_frame 100"/>

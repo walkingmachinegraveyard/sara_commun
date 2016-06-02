@@ -4,11 +4,11 @@
      <arg name="dynamic_mapping" default="true" />
      
 
-     <!-- static tf -->
-     <include file="$(find wm_static_tf)/launch/wm_static_tf.launch" />
+     <!-- load urdf -->
+     <include file="$(find sara_description)/launch/sara_description.launch" />
 
      <!-- motor drivers -->
-     <include file="$(find roboteq_driver)/launch/wm_roboteq_drivers.launch" />
+     <include file="$(find sara_launch)/roboteq_driver/wm_roboteq_driver.launch" />
 
      <!-- cmd_vel publisher -->
      <group if="$(arg auto_mode)">
@@ -23,10 +23,10 @@
      <include file="$(find wm_odometry_feedback)/launch/wm_odometry_feedback.launch" />
 
      <!-- lidar -->
-     <include file="$(find urg_node)/launch/wm_urg_node.launch" />
+     <include file="$(find sara_launch)/urg_node/wm_urg_node.launch" />
 
      <group if="$(arg dynamic_mapping)">
-         <include file="$(find gmapping)/launch/wm_slam_gmapping.launch" />
+         <include file="$(find sara_launch)/gmapping/wm_slam_gmapping.launch" />
      </group>
 
 </launch>

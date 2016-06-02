@@ -5,10 +5,10 @@ neckHead_controller:
         type: JointPositionController
     joint_name: neckHead_dynamixel_joint
     joint_speed: 1.0
-    port_name: "/dev/ttyUSB0"
+    port_name: "/dev/usb-ports/7-1.4"
     motor:
         id: 1
-        init: 3075
+        init: 3161
         min: 1800
         max: 4000
     
