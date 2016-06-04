@@ -7,6 +7,21 @@ import wm_supervisor.srv
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from std_msgs.msg import Int8, String
 import threading
+from std_msgs.msg import Float64
+
+
+class InitRobot(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['init_done'])
+        self.neck_pub = rospy.Publisher('neckHead_controller/command', Float64, queue_size=1)
+
+    def execute(self, ud):
+
+        cmd = Float64
+        cmd.data = 0.0
+        self.neck_pub.publish(cmd)
+
+        return 'init_done'
 
 
 class WaitForStart(smach.State):
@@ -30,7 +45,7 @@ class WaitForStart(smach.State):
     def execute(self, ud):
 
         return 'begin_inspection'
-
+        """
         while True:
             self.mutex.acquire()
             if self.start_signal_received:
@@ -41,6 +56,7 @@ class WaitForStart(smach.State):
             rospy.sleep(rospy.Duration(1))
 
         # TODO
+        """
 
 
 class InspectionPoseSupervisor(smach.State):
@@ -141,6 +157,10 @@ if __name__ == '__main__':
     sm.userdata.exit_pose.target_pose.pose.orientation.w = 1.0
 
     with sm:
+        smach.StateMachine.add('INIT',
+                               InitRobot(),
+                               transitions={'init_done': 'WAIT_FOR_START'})
+
         smach.StateMachine.add('WAIT_FOR_START',
                                WaitForStart(),
                                transitions={'begin_inspection': 'INSPECTION_POSE_SUPERVISOR'})
