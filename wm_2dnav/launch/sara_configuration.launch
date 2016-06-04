@@ -10,6 +10,11 @@
      <!-- motor drivers -->
      <include file="$(find sara_launch)/roboteq_driver/wm_roboteq_driver.launch" />
 
+     <!-- neck Dynamixel -->
+     <include file="$(find wm_dynamixel_controller)/launch/neckHead_controller_spawner.launch" />
+     <include file="$(find wm_dynamixel_controller)/launch/neckHead_controller_manager.launch" />
+     <node name="neckHead_dynamixel_state_publisher" pkg="wm_dynamixel_controller" type="neckHead.py" />
+
      <!-- cmd_vel publisher -->
      <group if="$(arg auto_mode)">
          <include file="$(find wm_mecanum_cmd)/launch/wm_mecanum_auto.launch" />
