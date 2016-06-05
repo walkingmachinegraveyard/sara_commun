@@ -1,6 +1,8 @@
+<?xml version="1.0" ?>
+
 <launch>
-    <arg name="show_rviz" default="false"/>
-    <arg name="gui" default="false" />
+    <arg name="show_rviz" default="true"/>
+    <arg name="gui" default="true" />
     <arg name="sim" default="false"/>
 
     <!-- SIM CAM SETUP -->
@@ -14,7 +16,7 @@
     </group>
 
     <!-- load joint controller configurations from YAML file to parameter server -->
-    <param name="robot_description" command="cat $(find sara_description)/urdf/sara.urdf"/>
+    <param name="robot_description" command="$(find xacro)/xacro.py $(find sara_description)/urdf/sara.urdf.xacro"/>
 
     <!-- publish all the frames to TF -->
     <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/>

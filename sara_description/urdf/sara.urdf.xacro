@@ -1,32 +1,34 @@
 <?xml version="1.0"?>
-<robot name="sara">
+
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="sara">
+    <xacro:include filename="$(find sara_description)/urdf/robotiq_c2_model_macro.xacro" />
+
 <!-- LINKS -->
+    <link name="base_link">
+	<visual>
+		<geometry>
+	            <box size="0.7637 0.64311 0.14" />
+		</geometry>
+	    <origin xyz="0.0 0.0 0.07" rpy="0.0 0.0 0.0" />
+	</visual>
+    </link>
 
-	<link name="base_link">
-		<visual>
-			<geometry>
-				<box size="0.7637 0.64311 0.14" />
-			</geometry>
-			<origin xyz="0.0 0.0 0.07" rpy="0.0 0.0 0.0" />
-		</visual>
-	</link>
+    <link name="base_x_trans_link">
+	<visual>
+		<geometry>
+		    <box size="0.10 0.64311 0.14" />
+		</geometry>
+	    <origin origin="0.0 0.0 0.07" rpy="0 0 0" />
+	</visual>
+    </link>
 
-	<link name="base_x_trans_link">
-		<visual>
-			<geometry>
-				<box size="0.10 0.64311 0.14" />
-			</geometry>
-			<origin origin="0.0 0.0 0.07" rpy="0 0 0" />
-		</visual>
-	</link>
-
-	<link name="base_y_trans_link">
-		<visual>
-			<geometry>
-				<box size="0.7637 0.10 0.14" />
-			</geometry>
-		</visual>
-	</link>
+    <link name="base_y_trans_link">
+	<visual>
+	    <geometry>
+	        <box size="0.7637 0.10 0.14" />
+	    </geometry>
+	</visual>
+    </link>
 
     <link name="real_base_link">
         <visual>
@@ -270,54 +272,47 @@
     <link name="rotLowerArm_link">
         <visual>
             <geometry>
-                <mesh filename="package://sara_description/meshes/pince-avant-bras.STL" scale="0.001 0.001 0.001"/>
+                <mesh filename="package://sara_description/meshes/avant-bras.STL" scale="0.001 0.001 0.001"/>
             </geometry>
             <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
         </visual>
 
         <collision>
             <geometry>
-                <mesh filename="package://sara_description/meshes/pince-avant-bras.STL" scale="0.001 0.001 0.001"/>
+                <mesh filename="package://sara_description/meshes/avant-bras.STL" scale="0.001 0.001 0.001"/>
             </geometry>
             <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
         </collision>
     </link>
 
-    <!--
-    <link name="gripper_link">
-        <visual>
-            <geometry>
-                <cylinder length="0.6" radius="0.1"/>
-            </geometry>
-            <origin xyz="0 0 -0.3" rpy="0 0 0"/>
-        </visual>
-    </link>
-    -->
+    <xacro:robotiq_c2_model prefix="">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+    </xacro:robotiq_c2_model> 
+
   <!-- JOINTS -->
+    <joint name="base_x_trans_joint" type="prismatic" >
+	<parent link="base_link" type="prismatic" />
+	<child link="base_x_trans_link" />
+	<origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+	<limit effort="1000.0" lower="-0.10" upper="4.0" velocity="1.0"/>
+	<axis xyz="1 0 0" />
+    </joint>
 
-	<joint name="base_x_trans_joint" type="prismatic" >
-		<parent link="base_link" type="prismatic" />
-		<child link="base_x_trans_link" />
-		<origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
-		<limit effort="1000.0" lower="-0.10" upper="4.0" velocity="1.0"/>
-		<axis xyz="1 0 0" />
-	</joint>
+    <joint name="base_y_trans_joint" type="prismatic" >
+	<parent link="base_x_trans_link" type="prismatic" />
+	<child link="base_y_trans_link" />
+	<origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+	<limit effort="1000.0" lower="-4.0" upper="4.0" velocity="1.0"/>
+	<axis xyz="0 1 0" />
+    </joint>
 
-	<joint name="base_y_trans_joint" type="prismatic" >
-		<parent link="base_x_trans_link" type="prismatic" />
-		<child link="base_y_trans_link" />
-		<origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
-		<limit effort="1000.0" lower="-4.0" upper="4.0" velocity="1.0"/>
-		<axis xyz="0 1 0" />
-	</joint>
-		
-	<joint name="base_revolute_joint" type="revolute" >
-		<parent link="base_y_trans_link" />
-		<child link="real_base_link" />
-		<limit effort="1000.0" lower="-1.5708" upper="1.5708" velocity="0.5"/>
-		<origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
-		<axis xyz="0 0 1" />
-	</joint>
+    <joint name="base_revolute_joint" type="revolute" >
+	<parent link="base_y_trans_link" />
+	<child link="real_base_link" />
+	<limit effort="1000.0" lower="-1.5708" upper="1.5708" velocity="0.5"/>
+	<origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+	<axis xyz="0 0 1" />
+    </joint>
 
     <joint name="laser_joint" type="fixed">
         <parent link="real_base_link"/>
@@ -376,16 +371,17 @@
         <parent link="fixLowerArm_link"/>
         <child link="rotLowerArm_link"/>
         <limit effort="1000.0" lower="-3.1416" upper="3.1416" velocity="0.5"/>
-        <origin xyz="0 0.0945 0" rpy="1.5708 0 0" />
+        <origin xyz="0 0.0945 0" rpy="1.5708 -1.5708 0" />
         <axis xyz="0 0 1" />
     </joint>
-    <!--
+
     <joint name="Wrist_joint" type="fixed">
-        <parent link="rotLowerArm_link"/>
-        <child link="gripper_link"/>
-        <origin xyz="0 0 0.2" rpy="0 0 0" />
+      <parent link="rotLowerArm_link"/>"
+      <child link="robotiq_85_base_link"/>
+      <axis xyz="0 0 1"/>
+      <origin xyz="0 0 -0.10624" rpy="0 1.5708 1.5708"/>
     </joint>
-    -->		
+	
     <joint name="torsoNeck_joint" type="fixed">  <!-- normaly revolute -->
         <parent link="torso_link"/>
         <child link="neck_link"/>
@@ -421,6 +417,26 @@
         <gravity>false</gravity>
     </gazebo>
 
+    <gazebo reference="base_x_trans_link">
+        <gravity>false</gravity>
+    </gazebo>
+
+    <gazebo reference="base_y_trans_link">
+        <gravity>false</gravity>
+    </gazebo>
+
+    <gazebo reference="real_base_link">
+        <gravity>false</gravity>
+    </gazebo>
+
+    <gazebo reference="spine_link">
+        <gravity>false</gravity>
+    </gazebo>
+
+    <gazebo reference="neckHead_dynamixel_link">
+        <gravity>false</gravity>
+    </gazebo>
+
     <gazebo reference="torso_link">
         <gravity>false</gravity>
     </gazebo>
@@ -432,6 +448,32 @@
     <gazebo reference="head_link">
         <gravity>false</gravity>
     </gazebo>
+
+    <gazebo reference="clavicule_link">
+        <gravity>false</gravity>
+    </gazebo>
+
+    <gazebo reference="fixUpperArm_link">
+        <gravity>false</gravity>
+    </gazebo>
+
+    <gazebo reference="rotUpperArm_link">
+        <gravity>false</gravity>
+    </gazebo>
+
+    <gazebo reference="fixLowerArm_link">
+        <gravity>false</gravity>
+    </gazebo>
+
+    <gazebo reference="rotLowerArm_link">
+        <gravity>false</gravity>
+    </gazebo>
+
+    <gazebo reference="fixUpperArm_link">
+        <gravity>false</gravity>
+    </gazebo>
+
+
 
     <!-- hokuyo -->
     <gazebo reference="base_laser_link">
