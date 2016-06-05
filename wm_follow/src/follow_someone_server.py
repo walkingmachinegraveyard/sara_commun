@@ -34,11 +34,9 @@ class Follower:
         self.goal.target_pose.header.frame_id = 'base_link'
 
     def sendGoal(self):
-<<<<<<< HEAD
+
         self.goal.target_pose.header.frame_id = 'base_link'
-=======
-        self.goal.target_pose.header.stamp = rospy.Time.now()
->>>>>>> e8d42bdfb8682707d4f1a009b26ec617628f2b5c
+
         self.moveBaseClient.send_goal(self.goal)
 
 
