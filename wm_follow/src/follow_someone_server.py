@@ -54,8 +54,9 @@ def callbackPeople(data):
             # rospy.loginfo(str(len(data.people)))
 
             if len(data.people) > 0:
+                rospy.logwarn("Looking for first person...")
                 for people in data.people:
-
+					
                     x = people.pos.x
                     y = people.pos.y
 
@@ -106,11 +107,11 @@ def callbackPeople(data):
 
 def handle_FollowSomeone(req):
     if req.state == req.START_FOLLOWING:
-        follower.state = True
+        follower.follow = True
         rospy.logwarn("SARA : START FOLLOWING")
 
     elif req.state == req.STOP_FOLLOWING:
-        follower.state = False
+        follower.follow = False
         rospy.logwarn("SARA : STOP FOLLOWING")
 
     elif req.state == req.LOCK:
@@ -118,7 +119,7 @@ def handle_FollowSomeone(req):
         rospy.logwarn("SARA : FOLLOWER LOCK")
 
     elif req.state == req.UNLOCK:
-        follower.lock = True
+        follower.lock = False
         rospy.logwarn("SARA : FOLLOWER UNLOCK")
 
 
@@ -171,7 +172,7 @@ def followNode():
         time.sleep(1)
 		
         if follower.follow and follower.lock:
-            follower.goal = createNavGoal(follower.person.newX, follower.person.newY)
+            follower.goal = createNavGoal(follower.person.X, follower.person.Y)
             follower.sendGoal()
 
 
