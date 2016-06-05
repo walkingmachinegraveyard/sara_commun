@@ -1,8 +1,0 @@
-<launch>
-
-  <arg name="config_file" default="$(find object_recognition_tabletop)/conf/detection.ros.ork"/>	
-
-
-  <node pkg="object_recognition_core" ns="/object_recognition" name="object_recognition_tabletop" output="screen" args="-c $(arg config_file)"/>
-
-</launch>
