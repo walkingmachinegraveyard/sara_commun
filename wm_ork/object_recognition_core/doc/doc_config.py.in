@@ -1,0 +1,24 @@
+version='${${PROJECT_NAME}_GITTAG_SHORT}'
+commithash='${${PROJECT_NAME}_COMMITHASH}'
+gittag_short='${${PROJECT_NAME}_GITTAG_SHORT}'
+gittag_long='${${PROJECT_NAME}_GITTAG_LONG}'
+git_lastmod='${${PROJECT_NAME}_LAST_MODIFIED}'
+github_url='${${PROJECT_NAME}_GITHUB_URL}'
+
+breathe_default_project = '${PROJECT_NAME}'
+breathe_projects = dict(object_recognition_core='${CMAKE_CURRENT_BINARY_DIR}/../api/xml')
+
+# for release
+ork_module_url_root = 'http://wg-perception.github.com/'
+
+intersphinx_mapping = {'orkcapture': (ork_module_url_root + 'capture', None),
+                       'orklinemod': (ork_module_url_root + 'linemod', None),
+                       'orkreconstruction': (ork_module_url_root + 'reconstruction', None),
+                       'orkros': (ork_module_url_root + 'object_recognition_ros', None),
+                       'orktabletop': (ork_module_url_root + 'tabletop', None),
+                       'orktod': (ork_module_url_root + 'tod', None),
+                       'orktransparentobjects': (ork_module_url_root + 'transparent_objects', None),
+                       'orktutorials': (ork_module_url_root + 'ork_tutorials', None),
+                       }
+
+programoutput_path = '${DOC_SOURCE_DIRS}'.split(';')
