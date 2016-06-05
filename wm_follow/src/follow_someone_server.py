@@ -32,6 +32,7 @@ class Follower:
         self.goal.target_pose.header.frame_id = 'base_link'
 
     def sendGoal(self):
+        self.goal.target_pose.header.frame_id = 'base_link'
         self.moveBaseClient.send_goal(self.goal)
 
 
