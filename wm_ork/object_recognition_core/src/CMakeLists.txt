@@ -1,5 +1,0 @@
-add_subdirectory(common)
-add_subdirectory(db)
-add_subdirectory(filters)
-add_subdirectory(io)
-add_subdirectory(pipelines)
