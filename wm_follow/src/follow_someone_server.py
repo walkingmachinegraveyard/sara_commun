@@ -9,20 +9,22 @@ import actionlib
 from people_msgs.msg import *
 from move_base_msgs.msg import *
 
+MOVING_DISTANCE = 1.0;
+
 class Person:
 
     def __init__(self):
-        self.newX = 0
-        self.newY = 0
-        self.lastX = 0
-        self.lastY = 0
+        self.found = False
+        self.X = 0
+        self.Y = 0
 
 class Follower:
 
     def __init__(self):
         self.person = Person()
 
-        self.state = False
+        self.follow = False
+        self.lock = False
 
         #Action client move_base
         self.moveBaseClient = actionlib.SimpleActionClient('move_base', MoveBaseAction)
@@ -32,41 +34,77 @@ class Follower:
         self.goal.target_pose.header.frame_id = 'base_link'
 
     def sendGoal(self):
+<<<<<<< HEAD
         self.goal.target_pose.header.frame_id = 'base_link'
+=======
+        self.goal.target_pose.header.stamp = rospy.Time.now()
+>>>>>>> e8d42bdfb8682707d4f1a009b26ec617628f2b5c
         self.moveBaseClient.send_goal(self.goal)
 
 
 def callbackPeople(data):
 
-    if follower.state == True:
-		
-        shortestDistance = -1
+    if follower.lock == True:
 
-        shortestX = 0
-        shortestY = 0
+        if not follower.person.found:
 
-        #rospy.loginfo(str(len(data.people)))
+            shortestDistance = -1
 
-        for people in data.people:
-            
-            x = people.pos.x
-            y = people.pos.y
+            shortestX = 0
+            shortestY = 0
 
-            distance = hypot(x, y)
+            # rospy.loginfo(str(len(data.people)))
 
-            if shortestDistance == -1:
-                shortestDistance = distance
-                shortestX = x
-                shortestY = y
-            else :
-                if distance < shortestDistance:
+            if len(data.people) > 0:
+                for people in data.people:
+
+                    x = people.pos.x
+                    y = people.pos.y
+
+                    distance = hypot(x, y)
+
+                    if shortestDistance == -1:
+                        shortestDistance = distance
+                        shortestX = x
+                        shortestY = y
+                    else:
+                        if distance < shortestDistance:
+                            shortestDistance = distance
+                            shortestX = x
+                            shortestY = y
+
+                follower.person.X = shortestX
+                follower.person.Y = shortestY
+
+                follower.person.found = True
+
+        else:
+            for people in data.people:
+
+                shortestDistance = -1
+
+                x = people.pos.x
+                y = people.pos.y
+
+                distance = hypot(x - follower.person.X, y - follower.person.Y)
+
+                if shortestDistance == -1:
                     shortestDistance = distance
                     shortestX = x
                     shortestY = y
+                else:
+                    if distance < shortestDistance:
+                        shortestDistance = distance
+                        shortestX = x
+                        shortestY = y
 
-        follower.person.lastX = follower.person.newX
-        follower.person.newX = shortestX
-        follower.person.newY = shortestY
+                follower.person.X = shortestX
+                follower.person.Y = shortestY
+
+
+
+
+
 
 def handle_FollowSomeone(req):
     if req.state == req.START_FOLLOWING:
@@ -77,39 +115,49 @@ def handle_FollowSomeone(req):
         follower.state = False
         rospy.logwarn("SARA : STOP FOLLOWING")
 
+    elif req.state == req.LOCK:
+        follower.lock = True
+        rospy.logwarn("SARA : FOLLOWER LOCK")
+
+    elif req.state == req.UNLOCK:
+        follower.lock = True
+        rospy.logwarn("SARA : FOLLOWER UNLOCK")
+
+
 def createNavGoal(x, y):
-    rospy.loginfo("Position personne : (" + str(x) + " " + str(y) + ")")
+    #rospy.loginfo("Position personne : (" + str(x) + " " + str(y) + ")")
 
     # calcule angle par rapport a la position de la personne
     angleRad = atan2(y, x)
-    rospy.loginfo("angleRad : " + str(angleRad))
+    #rospy.loginfo("angleRad : " + str(angleRad))
 
     # calcule la distance par rapport a la personne
     distancePersonne = hypot(x, y)
-    rospy.loginfo("distance : " + str(distancePersonne))
+    rospy.loginfo("distance de la personne: " + str(distancePersonne))
 
     # calcul distance a parcourir, si distance < 1 : 0, sinon
-    if distancePersonne > 1.5:
+    if distancePersonne > MOVING_DISTANCE:
         move = True
-        distanceBouger = distancePersonne - 1.5
+        distanceBouger = distancePersonne - MOVING_DISTANCE
 
     else:
         distanceBouger = 0
 
     rospy.loginfo("distance a parcourir : " + str(distanceBouger))
-
+    rospy.loginfo(" ")
     # nouvelle position a atteindre
     x = cos(angleRad) * distanceBouger
     y = sin(angleRad) * distanceBouger
 
-    rospy.loginfo("x : " + str(x))
-    rospy.loginfo("y : " + str(y))
+    #rospy.loginfo("x : " + str(x))
+    #rospy.loginfo("y : " + str(y))
 
     # calcul l'angle de euler(roll, pitch, yaw) a quaternion
     quaternion = tf.transformations.quaternion_from_euler(0, 0, angleRad)
 
     goal = MoveBaseGoal()
 
+    goal.target_pose.header.frame_id = 'base_link'
     goal.target_pose.pose.position.x = x
     goal.target_pose.pose.position.y = y
     goal.target_pose.pose.orientation.x = quaternion[0]
@@ -120,11 +168,11 @@ def createNavGoal(x, y):
     return goal
 
 
-def startFollow():
+def followNode():
     while not rospy.is_shutdown():
-        time.sleep(0.5)
+        time.sleep(1)
 		
-        if follower.state:
+        if follower.follow and follower.lock:
             follower.goal = createNavGoal(follower.person.newX, follower.person.newY)
             follower.sendGoal()
 
@@ -134,7 +182,7 @@ def followSomeone():
     rospy.Service('follow_someone', setState, handle_FollowSomeone)
     rospy.loginfo("Ready to follow someone")
     peopleSub = rospy.Subscriber("/people_tracker_measurements", PositionMeasurementArray, callbackPeople)
-    startFollow()
+    followNode()
 
     # Subscriber detection personnes
     
