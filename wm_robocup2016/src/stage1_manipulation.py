@@ -15,6 +15,9 @@ from object_recognition_msgs.srv import GetObjectInformation, GetObjectInformati
 from tf2_ros import Buffer, TransformListener, ExtrapolationException, LookupException, ConnectivityException, \
     InvalidArgumentException
 from tf2_geometry_msgs import do_transform_pose
+from robotiq_c_model_control.msg import CModel_robot_output as eef_cmd
+from robotiq_c_model_control.msg import CModel_robot_input as eef_status
+import threading
 
 
 class SetObjectTarget(smach.State):
@@ -199,14 +202,51 @@ class GraspArmSupervisor(smach.State):
 
 class CloseEef(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['close_eef_ok',
-                                             'close_eef_error'])
-        # TODO
+        smach.State.__init__(self, outcomes=['close_eef_cmd_sent'])
+        self.eef_pub = rospy.Publisher('/CModelRobotOutput', eef_cmd, queue_size=1)
 
     def execute(self, ud):
+        rospy.logdebug("Entered 'CLOSE_EEF' state.")
 
         # TODO
         return 'close_eef_error'
+
+
+class MonitorEef(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['close_eef_ok',
+                                             'close_eef_error'])
+        self.eef_sub = rospy.Subscriber('/CModelRobotInput', eef_status, self.eef_cb, queue_size=10)
+
+        self.mutex = threading.Lock()
+
+        self.eef_closed = False
+        self.eef_error = False
+
+        self.in_progress = False
+
+    def eef_cb(self, status):
+        self.mutex.acquire()
+
+        if not self.in_progress:
+            if status.gSTA == 1:  # activation in progress
+                self.in_progress = True
+                self.mutex.release()
+                return
+
+        if self.in_progress:
+            if status.gOBJ == 2 and status.gPO != 255:
+                self.eef_closed
+                self.mutex.release()
+                return
+
+           # TODO if status.gOBJ == 2 and
+
+
+    def execute(self, ud):
+
+        return 'close_eff_ok'
+
 
 
 class ArmDropPlan(smach.State):
@@ -531,8 +571,7 @@ if __name__ == '__main__':
 
         smach.StateMachine.add('CLOSE_EEF',
                                CloseEef(),
-                               transitions={'close_eef_ok': 'TEST_FAILED',  # TODO GET_DROP_LOCATION
-                                            'close_eef_error': 'TEST_FAILED'})
+                               transitions={'close_eef_cmd_sent': 'TEST_FAILED'})  # TODO GET_DROP_LOCATION
 
         smach.StateMachine.add('DROP_ARM_PLAN',
                                ArmDropPlan(),

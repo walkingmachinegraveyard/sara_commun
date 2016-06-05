@@ -12,18 +12,38 @@ import tf_conversions
 from tf2_ros import Buffer, TransformListener, ExtrapolationException, LookupException, ConnectivityException, \
     InvalidArgumentException
 import threading
+from open_door_detector.srv import detect_open_door, detect_open_doorRequest
 
 
 class WaitDoor(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['wait_timed_out', 'door_is_open'])
-        # TODO
+        smach.State.__init__(self, outcomes=['wait_timed_out', 'door_is_open', 'door_is_closed'])
+        self.door_detector_srv = rospy.ServiceProxy('/detect_open_door', detect_open_door)
+        self.iter = 0
 
     def execute(self, ud):
         rospy.logdebug("Entered 'WAIT_FOR_OPEN_DOOR' state.")
 
-        # TODO
-        return 'door_is_open'
+        try:
+            req = detect_open_doorRequest()
+            req.aperture_angle = 0.60
+            req.wall_distance = 1.0
+            req.min_door_width = 0.4
+            res = self.door_detector_srv(req)
+
+            if res.door_pos.pose.position.x != 0.0 or res.door_pos.pose.position.y != 0.0:
+                return 'door_is_open'
+
+        except rospy.ServiceException:
+            rospy.logerr("Open door service call failed")
+            pass
+
+        self.iter += 1
+        if self.iter < 3:
+            rospy.sleep(10.0)
+            return 'door_is_closed'
+        else:
+            return 'wait_timed_out'
 
 
 class ContinueCode(smach.State):
@@ -63,7 +83,7 @@ class RobotStatus(smach.State):
             res = self.status_service()
 
         except rospy.ServiceException:
-            rospy.logfatal("Could not get the robot status. Aborting...")
+            rospy.logfatal("Could not get the robot's status. Aborting...")
             return 'status_error'
 
         if res.status == wm_supervisor.srv.robotStatusResponse.STATUS_OK:
@@ -86,6 +106,8 @@ class AttemptMonitor(smach.State):
 
         self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1)
 
+        self.grasp_distance = 1.2
+
     def execute(self, ud):
         rospy.logdebug("Entered 'MONITOR_ATTEMPTS' state.")
 
@@ -106,8 +128,7 @@ class AttemptMonitor(smach.State):
                     return 'monitor_failed'
 
                 if sqrt((ud.ma_waypoints[1].pose.position.x - tf_stamped.transform.translation.x) ** 2 +
-                                        (ud.ma_waypoints[
-                                             1].pose.position.y - tf_stamped.transform.translation.y) ** 2) < 1.2:
+                        (ud.ma_waypoints[1].pose.position.y - tf_stamped.transform.translation.y) ** 2) < self.grasp_distance:
                     return 'wp2_case'
                 else:
                     if ud.ma_current_attempt < ud.ma_attempt_limit:
@@ -130,8 +151,7 @@ class AttemptMonitor(smach.State):
             # attempt limit reached, skip to the next goal
             ud.ma_current_attempt = 1
             tts_msg = String()
-            tts_msg.data = "I can not reach" + ud.ma_wp_str[
-                ud.ma_target_wp - 1] + "." + "I am moving toward the next waypoint."
+            tts_msg.data = "I can not reach" + ud.ma_wp_str[ud.ma_target_wp - 1] + "." + "I am moving toward the next waypoint."
             self.tts_pub.publish(tts_msg)
             ud.ma_target_wp += 1
             return 'monitoring_done'
@@ -193,11 +213,15 @@ class TellInstructions(smach.State):
         # call service to lock on target
 
         tts_msg = String
-        tts_msg.data = "Hello, I will follow you to the next waypoint once I am ready."
+        tts_msg.data = "Hello, my name is SARA. I will follow you to the next waypoint once I am ready."
         self.tts_pub.publish(tts_msg)
         tts_msg.data = "Please stand still, approximately 1.5 meter in front of me, facing me, while I memorize your features."
         self.tts_pub.publish(tts_msg)
         rospy.sleep(5.0)
+        tts_msg.data = "When you want me to stop following you, say 'SARA go back home'"
+        self.tts_pub.publish(tts_msg)
+        tts_msg.data = "You must start your instructions by calling my name."
+        self.tts_pub.publish(tts_msg)
         # call target locking service
 
         target_locked = True
@@ -213,11 +237,10 @@ class TellInstructions(smach.State):
 
 class MonitorFollowing(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['stopped_following', 'continue_following'])
+        smach.State.__init__(self, outcomes=['stop_following'])
         self.audio_input = rospy.Subscriber('recognizer1/output', String, self.audio_cb)
 
         self.mutex = threading.Lock()
-
         self.stop_following = False
         # TODO add service client
 
@@ -235,17 +258,18 @@ class MonitorFollowing(smach.State):
     def execute(self, ud):
         rospy.logdebug("Entered 'MONITOR_FOLLOWING' state.")
 
-        self.mutex.acquire()
+        while True:
+            self.mutex.acquire()
 
-        if self.stop_following:
-            # TODO call service to disable following
-            return 'stopped_following'
+            if self.stop_following:
+                # TODO call service to disable following
+                self.mutex.release()
+                break
 
-        self.mutex.release()
+            self.mutex.release()
+            rospy.sleep(rospy.Duration(1))
 
-        rospy.sleep(2.0)
-
-        return 'continue_following'
+        return 'stop_following'
 
 
 class GoBackSupervisor(smach.State):
@@ -385,7 +409,7 @@ if __name__ == '__main__':
         def go_back_home_cb(userdata, default_goal):
             rospy.logdebug("Entered go back home callback.")
             go_back_goal = MoveBaseGoal()
-            go_back_goal.target_pose = userdata.gb_cb_waypoints[2] #waypoint 3
+            go_back_goal.target_pose = userdata.gb_cb_waypoints[2]  # waypoint 3
             go_back_goal.target_pose.header.frame_id = 'map'
             go_back_goal.target_pose.header.stamp = rospy.Time.now()
             return go_back_goal
@@ -394,7 +418,8 @@ if __name__ == '__main__':
         smach.StateMachine.add('WAIT_FOR_OPEN_DOOR',
                                WaitDoor(),
                                transitions={'wait_timed_out': 'SCAN_CONTINUE_CODE',
-                                            'door_is_open': 'ANNOUNCE_ACTION'})
+                                            'door_is_open': 'ANNOUNCE_ACTION',
+                                            'door_is_closed': 'WAIT_FOR_OPEN_DOOR'})
 
         smach.StateMachine.add('SCAN_CONTINUE_CODE',
                                ContinueCode(),
@@ -463,8 +488,7 @@ if __name__ == '__main__':
 
         smach.StateMachine.add('MONITOR_FOLLOWING',
                                MonitorFollowing(),
-                               transitions={'stopped_following': 'GO_BACK_SUPERVISOR',
-                                            'continue_following': 'MONITOR_FOLLOWING'})
+                               transitions={'stop_following': 'GO_BACK_SUPERVISOR'})
 
         smach.StateMachine.add('GO_BACK_SUPERVISOR',
                                GoBackSupervisor(),
