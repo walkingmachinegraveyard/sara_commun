@@ -34,6 +34,9 @@
 
      <!-- lidar -->
      <include file="$(find sara_launch)/urg_node/wm_urg_node.launch" />
+     
+     <!-- Xtion -->
+     <include file="$(find sara_launch)/openni2/wm_openni2.launch" />
 
      <group if="$(arg dynamic_mapping)">
          <include file="$(find sara_launch)/gmapping/wm_slam_gmapping.launch" />
