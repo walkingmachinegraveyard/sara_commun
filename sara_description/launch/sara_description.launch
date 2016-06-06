@@ -1,18 +1,14 @@
 <?xml version="1.0" ?>
 
 <launch>
-    <arg name="show_rviz" default="true"/>
+    <!-- joint state publisher gui arg -->
     <arg name="gui" default="true" />
-    <arg name="sim" default="true"/>
 
-    <!-- SIM CAM SETUP -->
-    <group if="$(arg sim)">
-        <arg name="camera_name" default="camera"/>
-        <node pkg="tf" type="static_transform_publisher" name="camera_depth_frame" args="0.000 -0.020 0.000 0.000 0.000 0.000 1.000  camera_link camera_depth_frame 100"/>
-        <node pkg="tf" type="static_transform_publisher" name="camera_depth_optical_frame" args="0.000 -0.020 0.000 -0.500 0.500 -0.500 0.500 camera_link camera_depth_optical_frame 100"/>
-        <node pkg="tf" type="static_transform_publisher" name="camera_rgb_frame" args="0.000 0.045 0.000 0.000 0.000 0.000 1.000 camera_link camera_rgb_frame 100"/>
-        <node pkg="tf" type="static_transform_publisher" name="camera_rgb_optical_frame" args="0.000 0.045 0.000 -0.500 0.500 -0.500 0.500 camera_link camera_rgb_optical_frame 100"/>
-    </group>
+    <!--CAM SETUP -->
+    <node pkg="tf" type="static_transform_publisher" name="camera_depth_frame" args="0.000 0.0175 0.000 0.000 0.000 0.000 1.000  camera_link camera_depth_frame 100"/>
+    <node pkg="tf" type="static_transform_publisher" name="camera_depth_optical_frame" args="0.000 0.0175 0.000 -0.500 0.500 -0.500 0.500 camera_link camera_depth_optical_frame 100"/>
+    <node pkg="tf" type="static_transform_publisher" name="camera_rgb_frame" args="0.000 0.0545 0.000 0.000 0.000 0.000 1.000 camera_link camera_rgb_frame 100"/>
+    <node pkg="tf" type="static_transform_publisher" name="camera_rgb_optical_frame" args="0.000 0.0545 0.000 -0.500 0.500 -0.500 0.500 camera_link camera_rgb_optical_frame 100"/>
 
     <!-- load joint controller configurations from YAML file to parameter server -->
     <param name="robot_description" command="$(find xacro)/xacro.py $(find sara_description)/urdf/sara.urdf.xacro"/>
@@ -24,9 +20,4 @@
         <rosparam command="load" file="$(find sara_description)/config/neckHead.yaml"/>
         <rosparam param="source_list">['/neckHead/state']</rosparam>
     </node>
-
-    <!-- robot visualization in Rviz -->
-    <group if="$(arg show_rviz)">
-        <node name="rviz" pkg="rviz" type="rviz" output="screen"/>
-    </group>
 </launch>
