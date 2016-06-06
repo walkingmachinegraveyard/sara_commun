@@ -1,0 +1,24 @@
+#!/usr/bin/env python
+"""
+This script launches several detection pipelines defined in a configuration file to detect several objects in a
+common snapshot of data
+"""
+from object_recognition_core.pipelines.plasm import create_plasm
+from object_recognition_core.utils.training_detection_args import create_parser, read_arguments
+from ecto.opts import scheduler_options, run_plasm
+import argparse
+
+if __name__ == '__main__':
+    # create an ORK parser (it is special as it can read from option files)
+    parser = create_parser()
+
+    # add ecto options
+    scheduler_options(parser)
+
+    # create the plasm that will run the detection
+    args = parser.parse_args()
+    ork_params, _args = read_arguments(args)
+    plasm = create_plasm(ork_params)
+
+    # run the detection plasm
+    run_plasm(args, plasm)

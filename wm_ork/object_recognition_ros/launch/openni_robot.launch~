@@ -1,0 +1,28 @@
+<launch>
+
+  <arg name="camera" default="camera" />
+  <arg name="rgb_frame_id"   default="/$(arg camera)_rgb_optical_frame" />
+  <arg name="depth_frame_id" default="/$(arg camera)_depth_optical_frame" />
+  <arg name="rgb_camera_info_url"   default="" />
+  <arg name="depth_camera_info_url" default="" />
+  <arg name="depth_registration" default="true" />
+
+  <!-- start kinect -->
+  <include file="$(find openni_launch)/launch/openni.launch">
+    <arg name="camera" value="$(arg camera)" />
+    <arg name="rgb_frame_id" value="$(arg rgb_frame_id)" />
+    <arg name="depth_frame_id" value="$(arg depth_frame_id)" />
+    <arg name="rgb_camera_info_url" value="$(arg rgb_camera_info_url)" />
+    <arg name="depth_camera_info_url" value="$(arg depth_camera_info_url)" />
+    <arg name="depth_registration" value="$(arg depth_registration)" />
+  </include>
+
+  <!-- add camera tranformation frame -->
+  <node name="camera_link_broadcaster" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 base_link camera_link 100" />
+
+  <node name="param_set_image_mode" pkg="dynamic_reconfigure" type="dynparam" args="set /camera/driver image_mode 1" />
+  <node name="param_set_depth_mode" pkg="dynamic_reconfigure" type="dynparam" args="set /camera/driver depth_mode 2" />
+  <node name="param_set_image_time_offset" pkg="dynamic_reconfigure" type="dynparam" args="set /camera/driver image_time_offset 0.0" />
+  <node name="param_set_depth_time_offset" pkg="dynamic_reconfigure" type="dynparam" args="set /camera/driver depth_time_offset 0.0" />
+
+</launch>

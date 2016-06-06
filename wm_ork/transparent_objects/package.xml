@@ -1,0 +1,22 @@
+<package>
+  <name>object_recognition_transparent_objects</name>
+  <version>0.4.0</version>
+  <description>A technique to recognize and estimate poses of transparent objects</description>
+  <author email="ilya.lysenkov@itseez.com">Ilya Lysenkov</author>
+  <author email="vincent.rabaud@gmail.com">Vincent Rabaud</author>
+  <maintainer email="ilya.lysenkov@itseez.com">Ilya Lysenkov</maintainer>
+  <maintainer email="vincent.rabaud@gmail.com">Vincent Rabaud</maintainer>
+  <license>BSD</license>
+  <url>http://wg-perception.github.io/transparent_objects</url>
+
+  <build_depend>ecto</build_depend>
+  <build_depend>object_recognition_core</build_depend>
+  <build_depend>pcl_ros</build_depend>
+
+  <run_depend>ecto</run_depend>
+  <run_depend>ecto_opencv</run_depend>
+  <run_depend>object_recognition_core</run_depend>
+  <run_depend>pcl_ros</run_depend>
+
+  <buildtool_depend>catkin</buildtool_depend>
+</package>
