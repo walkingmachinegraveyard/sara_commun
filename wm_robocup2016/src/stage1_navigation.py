@@ -6,13 +6,30 @@ from smach_ros import SimpleActionState, IntrospectionServer
 import wm_supervisor.srv
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from geometry_msgs.msg import PoseStamped
-from std_msgs.msg import String
+from std_msgs.msg import String, Float64, Int8
 from math import sqrt, atan2
 import tf_conversions
 from tf2_ros import Buffer, TransformListener, ExtrapolationException, LookupException, ConnectivityException, \
     InvalidArgumentException
 import threading
 from open_door_detector.srv import detect_open_door, detect_open_doorRequest
+import actionlib
+from face_detector.msg import FaceDetectorAction, FaceDetectorGoal
+
+
+class InitState(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['init_done'])
+        self.neck_pub = rospy.Publisher('neckHead_controller/command', Float64, queue_size=1, latch=True)
+
+    def execute(self, ud):
+        rospy.logdebug("Entered 'INIT_STATE' state.")
+
+        neck_cmd = Float64()
+        neck_cmd.data = 0.0
+        self.neck_pub.publish(neck_cmd)
+
+        return 'init_done'
 
 
 class WaitDoor(smach.State):
@@ -46,14 +63,36 @@ class WaitDoor(smach.State):
             return 'wait_timed_out'
 
 
-class ContinueCode(smach.State):
+class StartOverride(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['code_read', 'continue_timed_out'])
-        # TODO
+        smach.State.__init__(self, outcomes=['start_signal_received'])
+        self.start_signal_sub = rospy.Subscriber('start_signal', Int8, queue_size=1)
+        self.signal_received = False
+
+        self.mutex = threading.Lock()
+
+    def start_signal_sub(self, signal):
+
+        self.mutex.acquire()
+
+        if signal.data == 1:
+            self.signal_received = True
+
+        self.mutex.release()
+
+        return
 
     def execute(self, ud):
-        rospy.logdebug("Entered 'SCAN_CONTINUE_CODE' state.")
-        # TODO
+        rospy.logdebug("Entered 'START_OVERRIDE' state.")
+
+        while True:
+            self.mutex.acquire()
+            if self.signal_received:
+                self.mutex.release()
+                break
+            self.mutex.release()
+            rospy.sleep(rospy.Duration(1))
+
         return 'continue_timed_out'
 
 
@@ -61,7 +100,7 @@ class AnnounceAction(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['announcement_done'], input_keys=['aa_target_wp', 'aa_wp_str'])
 
-        self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1)
+        self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1, latch=True)
 
     def execute(self, ud):
         rospy.logdebug("Entered 'ANNOUNCE_ACTION' state.")
@@ -104,7 +143,7 @@ class AttemptMonitor(smach.State):
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer)
 
-        self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1)
+        self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1, latch=True)
 
         self.grasp_distance = 1.2
 
@@ -160,16 +199,51 @@ class AttemptMonitor(smach.State):
 class ScanFace(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['face_scan_done'])
-        # TODO
-        # connect to service server
+
+        self.face_detector_ac = actionlib.SimpleActionClient('face_positions', FaceDetectorAction)
+        self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1, latch=True)
 
     def execute(self, ud):
         rospy.logdebug("Entered 'SCAN_FACE' state.")
-        # TODO
 
-        # call service
-        # if face found, say the obstacle is human and ask him/her to move
-        # if face not found, say obstacle is not human and wait for the obstacle to clear
+        tts_msg = String()
+
+        if self.face_detector_ac.wait_for_server(rospy.Duration(10)):  # wait for action server
+            self.face_detector_ac.send_goal(FaceDetectorGoal())  # send goal
+
+            if self.face_detector_ac.wait_for_result(rospy.Duration(10)):
+                res = self.face_detector_ac.get_result()
+
+                # verify that action result is not empty
+                if len(res.face_positions) > 0:
+                    human_in_range = False
+                    # check that detected faces are not too far from the robot
+                    for f in range(len(res.face_positions)):
+                        distance_to_human = sqrt(res.face_positions[f].pos.x**2 +
+                                                 res.face_positions[f].pos.y**2)
+                        if distance_to_human < 2.0:
+                            human_in_range = True
+                            break
+
+                    if human_in_range:
+                        tts_msg.data = "A human is blocking the path to the waypoint."
+                        self.tts_pub.publish(tts_msg)
+                        tts_msg.data = "Excuse me, I need you to move so I can reach my target waypoint."
+                        self.tts_pub.publish(tts_msg)
+
+                # action result is empty, assume the path if not blocked by a human
+                else:
+                    tts_msg.data = "The path is blocked by an unknown object."
+                    self.tts_pub.publish(tts_msg)
+            # if action times out, assume no faces were detected and the path is not blocked by a human
+            else:
+                tts_msg.data = "The obstacle blocking the path is not a human."
+                self.tts_pub.publish(tts_msg)
+
+        # wait for server timed out. moving on...
+        else:
+            tts_msg.data = "I am unable to identify the obstacle."
+            self.tts_pub.publish(tts_msg)
 
         return 'face_scan_done'
 
@@ -179,7 +253,7 @@ class AnnounceWpReached(smach.State):
         smach.State.__init__(self, outcomes=['general_case', 'wp3_case'],
                              input_keys=['aw_target_wp', 'aw_wp_str'],
                              output_keys=['aw_target_wp'])
-        self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1)
+        self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1, latch=True)
 
     def execute(self, ud):
         rospy.logdebug("Entered 'ANNOUNCE_WP_REACHED' state.")
@@ -190,8 +264,8 @@ class AnnounceWpReached(smach.State):
             tts_msg.data = " I have reached " + ud.aw_wp_str[ud.aw_target_wp - 1] + "."
             return 'wp3_case'
         else:
-            tts_msg.data = " I have reached " + ud.aw_wp_str[
-                ud.aw_target_wp - 1] + ". I a moving on to the next waypoint."
+            tts_msg.data = " I have reached " + ud.aw_wp_str[ud.aw_target_wp - 1] + \
+                           ". I a moving on to the next waypoint."
             self.tts_pub.publish(tts_msg)
             ud.aw_target_wp += 1
             return 'general_case'
@@ -204,7 +278,7 @@ class TellInstructions(smach.State):
         # TODO
         # connect to service that locks on target
         # connect to the service that publishes move_base goal on a topic
-        self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1)
+        self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1, latch=True)
 
     def execute(self, ud):
         rospy.logdebug("Entered 'TELL_INSTRUCTIONS' state.")
@@ -239,6 +313,7 @@ class MonitorFollowing(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['stop_following'])
         self.audio_input = rospy.Subscriber('recognizer1/output', String, self.audio_cb)
+        self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1, latch=True)
 
         self.mutex = threading.Lock()
         self.stop_following = False
@@ -248,11 +323,12 @@ class MonitorFollowing(smach.State):
 
         self.mutex.acquire()
 
-        if msg.data.find('sara') != -1 or msg.data.find('sarah') != -1:
+        if msg.data.lower().find('sara') != -1 or msg.data.lower().find('sarah') != -1:
             if msg.data.find('go back home') != -1:
                 self.stop_following = True
 
         self.mutex.release()
+
         return
 
     def execute(self, ud):
@@ -268,6 +344,10 @@ class MonitorFollowing(smach.State):
 
             self.mutex.release()
             rospy.sleep(rospy.Duration(1))
+
+        tts_msg = String()
+        tts_msg.data = "I will stop following you and go back home."
+        self.tts_pub.publish(tts_msg)
 
         return 'stop_following'
 
@@ -300,7 +380,7 @@ class FailTest(smach.State):
         smach.State.__init__(self, outcomes=['exit'])
         # TODO
         # connect to service to turn face red, announce the robot cannot recover autonomously
-        self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1)
+        self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1, latch=True)
 
     def execute(self, ud):
         # TODO
@@ -415,16 +495,19 @@ if __name__ == '__main__':
             return go_back_goal
 
 
+        smach.StateMachine.add('INIT_STATE',
+                               InitState(),
+                               transitions={'init_done': 'WAIT_FOR_OPEN_DOOR'})
+
         smach.StateMachine.add('WAIT_FOR_OPEN_DOOR',
                                WaitDoor(),
-                               transitions={'wait_timed_out': 'SCAN_CONTINUE_CODE',
+                               transitions={'wait_timed_out': 'OVERRIDE_START',
                                             'door_is_open': 'ANNOUNCE_ACTION',
                                             'door_is_closed': 'WAIT_FOR_OPEN_DOOR'})
 
-        smach.StateMachine.add('SCAN_CONTINUE_CODE',
-                               ContinueCode(),
-                               transitions={'code_read': 'ANNOUNCE_ACTION',
-                                            'continue_timed_out': 'TEST_FAILED'})
+        smach.StateMachine.add('START_OVERRIDE',
+                               StartOverride(),
+                               transitions={'start_signal_received': 'ANNOUNCE_ACTION'})
 
         smach.StateMachine.add('ANNOUNCE_ACTION',
                                AnnounceAction(),
