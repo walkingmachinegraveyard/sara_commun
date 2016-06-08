@@ -36,6 +36,8 @@ namespace wm
 
 	bool wmSupervisor::robotStatusService(wm_supervisor::robotStatus::Request& req, wm_supervisor::robotStatus::Response& res)
 	{
+		boost::lock_guard<boost::mutex> guard(mtx_);
+
 		if (status_ == wm::STATUS_OK)
 		{
 			res.status = res.STATUS_OK;
@@ -50,6 +52,7 @@ namespace wm
 
 	bool wmSupervisor::recoverFromStopService(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res)
 	{
+		boost::lock_guard<boost::mutex> guard(mtx_);
 		status_ = wm::STATUS_OK;
 		return true;
 	}
@@ -70,7 +73,9 @@ namespace wm
 				moveBaseAC_.cancelAllGoals();
 			}
 
-//			status_ = wm::STOP_COMMANDED;
+			boost::lock_guard<boost::mutex> guard(mtx_);
+
+			status_ = wm::STOP_COMMANDED;
 		}
 
 		return;
@@ -78,9 +83,11 @@ namespace wm
 
 	void wmSupervisor::estopSubscriberCallback(const std_msgs::String& msg)
 	{
+		boost::lock_guard<boost::mutex> guard(mtx_);
+
 		lastCallback_ = ros::Time::now();
 
-		if(true) //TODO
+		if(true) //TODO check if msg == estop
 		{
 			ROS_WARN("Received \"STOP\" signal from emergency stop button!!! Preempting all goals!");
 
@@ -104,6 +111,8 @@ namespace wm
 	{
 		double now = ros::Time::now().toSec();
 
+		boost::lock_guard<boost::mutex> guard(mtx_);
+
 		if ((now - lastCallback_.toSec()) > (1.0 / watchdogRate_))
 		{
 			ROS_WARN_ONCE("Last message was more than %f seconds ago!!! Preempting all goals!", now - lastCallback_.toSec());
@@ -124,6 +133,8 @@ namespace wm
 
 	void wmSupervisor::safeVelocityCallback(const geometry_msgs::Twist& msg)
 	{
+		boost::lock_guard<boost::mutex> guard(mtx_);
+
 		if (status_ == wm::STATUS_OK)
 		{
 			safeVelocityPub_.publish(msg);

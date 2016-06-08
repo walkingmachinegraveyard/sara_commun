@@ -19,6 +19,7 @@
 #include "std_msgs/String.h"
 #include "std_srvs/Empty.h"
 #include "geometry_msgs/Twist.h"
+#include <boost/thread/lock_guard.hpp>
 
 namespace wm{
 
@@ -52,6 +53,8 @@ namespace wm{
 			double watchdogRate_;
 			ros::Time lastCallback_;
 			int status_;
+
+			boost::mutex mtx_;
 	};
 } //namespace wm
 #endif /* WM_SUPERVISOR_H_ */
