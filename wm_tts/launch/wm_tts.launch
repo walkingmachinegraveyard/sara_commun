@@ -1,11 +1,12 @@
 <launch>
 
-    <node name="wm_tts2_node" pkg="wm_tts" type="wm_tts2_node.py" output="screen" >
+    <node name="wm_tts2_node" pkg="wm_tts" type="wm_tts_node.py" output="screen" >
      <!-- abs path to engine or symlink -->
-  <!--     <param name="tts_engine" value="espeak" />
-      <param name="voice_file" value="f5" />
-      <param name="speech_rate" value="120" />
-      <param name="speech_volume" value="100" /> -->
+      <param name="tts_engine" value="espeak" />
+      <param name="voice_file" value="en+f5" />
+      <param name="speech_rate" value="160" />
+      <param name="speech_volume" value="100" />
+      <param name="pitch" value="60" />
     </node>
 
 </launch>

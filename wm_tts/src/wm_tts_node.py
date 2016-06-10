@@ -20,6 +20,9 @@ class wm_tts:
         self.speech_rate = rospy.get_param('/wm_tts_node/speech_rate', 140)
         # amplitude (0...200), default value = 100
         self.speech_volume = rospy.get_param('/wm_tts_node/speech_volume', 100)
+	# pitch (0...99), default value = 50
+	self.pitch = rospy.get_param('/wm_tts_node/pitch',60)
+	
 
         self.sub = rospy.Subscriber('sara_tts', String, self.callback)
 
@@ -28,7 +31,7 @@ class wm_tts:
         try:
             # str() typecasting is necessary for check_call to work
             check_call([str(self.engine), "-s", str(self.speech_rate), "-v", str(self.voice),
-                        "-a", str(self.speech_volume), str(msg.data)])
+                        "-a", str(self.speech_volume), "-p", str(self.pitch), str(msg.data)])
             rospy.loginfo('SARA said: %s', msg.data)
 
         except CalledProcessError:
