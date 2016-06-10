@@ -21,7 +21,7 @@ class dynamixelState:
     def callback(self, data):
         mutex.acquire()
         self.msg.name[0] = data.name
-        self.msg.position[0] = data.current_pos
+        self.msg.position[0] = -1.0 * data.current_pos
         self.msg.velocity[0] = data.velocity
         self.msg.effort[0] = 0
         mutex.release()
