@@ -65,16 +65,27 @@ namespace manipulator
 		double planningTime;
 		nh_.param("/wm_arm_driver_node/planning_time", planningTime, 10.0);
 		baseMoveGroup_.setPlanningTime(planningTime);
+		manipulatorMoveGroup_.setPlanningTime(planningTime);
 
 		int planningAttempts;
 		nh_.param("/wm_arm_driver_node/planning_attempts", planningAttempts, 1);
 		baseMoveGroup_.setNumPlanningAttempts(planningAttempts);
+		manipulatorMoveGroup_.setNumPlanningAttempts(planningAttempts);
 
 		double positionTol, orientationTol;
 		nh_.param("/wm_arm_driver_node/goal_position_tolerance", positionTol, 0.01);
 		baseMoveGroup_.setGoalPositionTolerance(positionTol);
+		manipulatorMoveGroup_.setGoalPositionTolerance(positionTol);
 		nh_.param("/wm_arm_driver_node/goal_orientation_tolerance", orientationTol, 0.1);
 		baseMoveGroup_.setGoalOrientationTolerance(orientationTol);
+		manipulatorMoveGroup_.setGoalOrientationTolerance(orientationTol);
+
+		std::string basePlanner = baseMoveGroup_.getDefaultPlannerId(baseMoveGroup_.getName());
+		nh_.param("/wm_arm_driver_node/base_planner", basePlanner, basePlanner);
+		baseMoveGroup_.setPlannerId(basePlanner);
+		std::string manipulatorPlanner = manipulatorMoveGroup_.getDefaultPlannerId(manipulatorMoveGroup_.getName());
+		nh_.param("/wm_arm_driver_node/manipulator_planner", manipulatorPlanner, manipulatorPlanner);
+		manipulatorMoveGroup_.setPlannerId(manipulatorPlanner);
 
 		// set services
 		stopControlSrv_ = nh_.advertiseService("stop_control", &wmArm::stopControlService, this);
