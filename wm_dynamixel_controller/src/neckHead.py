@@ -39,6 +39,9 @@ def main():
         if(neckHeadDynamixel.msg.name[0] == ""):
             neckHeadDynamixel.publish()
             rate.sleep()
+        else:
+            rospy.loginfo("Waiting for dynamixel node to launch")
+
 
 if __name__ == '__main__':
     main()
