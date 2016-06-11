@@ -13,7 +13,7 @@ class dynamixelState:
         self.pub = rospy.Publisher('/neckHead/state', sensor_msgs.msg.JointState, queue_size=1)
         self.sub = rospy.Subscriber('/neckHead_controller/state', dynamixel_msgs.msg.JointState, self.callback)
         self.msg = sensor_msgs.msg.JointState()
-        self.msg.name.append(0)
+        self.msg.name.append("")
         self.msg.velocity.append(0)
         self.msg.position.append(0)
         self.msg.effort.append(0)
@@ -21,7 +21,7 @@ class dynamixelState:
     def callback(self, data):
         mutex.acquire()
         self.msg.name[0] = data.name
-        self.msg.position[0] = -1.0 * data.current_pos
+        self.msg.position[0] = data.current_pos
         self.msg.velocity[0] = data.velocity
         self.msg.effort[0] = 0
         mutex.release()
@@ -36,12 +36,12 @@ def main():
     rate = rospy.Rate(10)  # 10hz
     neckHeadDynamixel = dynamixelState()
     while not rospy.is_shutdown():
-        if(neckHeadDynamixel.msg.name[0] == ""):
+        if(neckHeadDynamixel.msg.name[0] != ""):
             neckHeadDynamixel.publish()
-            rate.sleep()
         else:
-            rospy.loginfo("Waiting for dynamixel node to launch")
-
+            rospy.loginfo("neckHead State Publisher - Waiting for dynamixel node to launch")
+            rospy.sleep(5)
+        rate.sleep()
 
 if __name__ == '__main__':
     main()

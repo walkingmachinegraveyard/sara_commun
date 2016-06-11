@@ -1,24 +1,24 @@
 <launch>
 
-  <arg name="port_FLW" default="/dev/usb-ports/7-1.2" />
+  <arg name="port_FLW" default="/dev/usb-ports/8-1.6" />
   <node pkg="roboteq_driver" type="driver_node" name="roboteq_driver_FLW" output="screen">
     <param name="port" value="$(arg port_FLW)" />
     <param name="value" value="115200" />
   </node>
-<!--				
-  <arg name="port_FRW" default="/dev/usb-ports/7-1.1" />
+				
+  <arg name="port_FRW" default="/dev/usb-ports/8-1.5" />
   <node pkg="roboteq_driver" type="driver_node" name="roboteq_driver_FRW" output="screen">
     <param name="port" value="$(arg port_FRW)" />
     <param name="value" value="115200" />
   </node>
--->
-  <arg name="port_RLW" default="/dev/usb-ports/8-1.8" />
+
+  <arg name="port_RLW" default="/dev/usb-ports/8-1.3" />
   <node pkg="roboteq_driver" type="driver_node" name="roboteq_driver_RLW" output="screen">
     <param name="port" value="$(arg port_RLW)" />
     <param name="value" value="115200" />
   </node>
 
-  <arg name="port_RRW" default="/dev/usb-ports/8-1.7" />
+  <arg name="port_RRW" default="/dev/usb-ports/8-1.4" />
   <node pkg="roboteq_driver" type="driver_node" name="roboteq_driver_RRW" output="screen">
     <param name="port" value="$(arg port_RRW)" />
     <param name="value" value="115200" />

@@ -9,6 +9,6 @@ neckHead_controller:
     motor:
         id: 1
         init: 3161
-        min: 1800
+        min: 2000
         max: 4000
     

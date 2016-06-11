@@ -8,7 +8,7 @@
       cluster: 1
       skip: 0
       ip_port: 10940
-      serial_port: /dev/usb-ports/8-1.4
+      serial_port: /dev/usb-ports/7-1.2
       frame_id: laser
       calibrate_time: true
       time_offset: 0.0

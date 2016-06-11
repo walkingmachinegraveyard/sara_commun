@@ -1,0 +1,32 @@
+<launch>
+   
+     <arg name="auto_mode" default="true" />
+     <arg name="dynamic_mapping" default="true" />
+     
+
+     <!-- load urdf -->
+     <include file="$(find sara_description)/launch/sara_description.launch" />
+
+     <!-- motor drivers -->
+     
+
+     <!-- cmd_vel publisher -->
+     <group if="$(arg auto_mode)">
+         <include file="$(find wm_mecanum_cmd)/launch/wm_mecanum_auto.launch" />
+     </group>
+
+     <group unless="$(arg auto_mode)">
+         <include file="$(find wm_mecanum_cmd)/launch/wm_mecanum_teleop.launch" />
+     </group>
+
+     <!-- odometry -->
+     <include file="$(find wm_odometry_feedback)/launch/wm_odometry_feedback.launch" />
+
+     <!-- lidar -->
+     <include file="$(find sara_launch)/urg_node/wm_urg_node.launch" />
+
+     <group if="$(arg dynamic_mapping)">
+         <include file="$(find sara_launch)/gmapping/wm_slam_gmapping.launch" />
+     </group>
+
+</launch>

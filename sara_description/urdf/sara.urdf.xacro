@@ -331,7 +331,7 @@
         <parent link="spine_link"/>
         <child link="torso_link"/>
         <limit effort="1000.0" lower="0" upper="0.5" velocity="0.2"/>
-        <origin xyz="0 0 1" rpy="0 0 0" />
+        <origin xyz="0 0 1.05" rpy="0 0 0" />
         <axis xyz="0 0 1" />
     </joint>
 
@@ -391,21 +391,21 @@
         <axis xyz="0 0 1" />
     </joint>
 
-    <joint name="neckHead_dynamixel_joint" type="revolute">
-        <parent link="neck_link"/>
-        <child link="neckHead_dynamixel_link"/>
-        <limit effort="1000.0" lower="-1.5" upper="1.5" velocity="0.5"/>
-        <origin xyz="0 0 0.0927 " rpy="-1.5708 0 0" />
-        <axis xyz="0 0 1" />
-    </joint>
-
-    <joint name="neckHead_joint" type="revolute">
-        <parent link="neckHead_dynamixel_link"/>
-        <child link="head_link"/>
-        <limit effort="1000.0" lower="-0.40" upper="1.04" velocity="0.5"/>
-        <origin xyz="0 0 0" rpy="0 0 0" />
-        <axis xyz="0 0 1" />
-    </joint>
+     <joint name="neckHead_dynamixel_joint" type="revolute">
+         <parent link="head_link"/>
+         <child link="neckHead_dynamixel_link"/>
+         <limit effort="1000.0" lower="-1.5" upper="1.5" velocity="0.5"/>
+         <origin xyz="0 -0.054 0" rpy="3.1416 0 0" />
+         <axis xyz="0 0 1" />
+     </joint>
+ 
+     <joint name="neckHead_joint" type="revolute">
+         <parent link="neck_link"/>
+         <child link="head_link"/>
+         <limit effort="1000.0" lower="-0.40" upper="1.04" velocity="0.5"/>
+         <origin xyz="0 0 0.0927" rpy="-1.57 0 0" />
+         <axis xyz="0 0 1" />
+     </joint>
 
     <joint name="camera_joint" type="fixed">
         <parent link="head_link"/>
