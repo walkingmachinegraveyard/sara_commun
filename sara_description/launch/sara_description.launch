@@ -2,7 +2,7 @@
 
 <launch>
     <!-- joint state publisher gui arg -->
-    <arg name="gui" default="true" />
+    <arg name="gui" default="false" />
 
     <!--CAM SETUP -->
     <node pkg="tf" type="static_transform_publisher" name="camera_depth_frame" args="0.000 0.0175 0.000 0.000 0.000 0.000 1.000  camera_link camera_depth_frame 100"/>
@@ -18,7 +18,7 @@
     <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
         <param name="use_gui" value="$(arg gui)"/>
         <rosparam command="load" file="$(find sara_description)/config/neckHead.yaml"/>
-        <rosparam param="source_list">['/neckHead/state']</rosparam>
-		<param name="publish_default_positions" value="false" />
+        <rosparam param="source_list">['/neckHead/state', '/arm_base_joint_states']</rosparam>
+		<param name="publish_default_positions" value="true" />
     </node>
 </launch>

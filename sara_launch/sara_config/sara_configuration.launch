@@ -15,7 +15,7 @@
      <!-- neck Dynamixel -->
      <include file="$(find wm_dynamixel_controller)/launch/neckHead_controller_spawner.launch" />
      <include file="$(find wm_dynamixel_controller)/launch/neckHead_controller_manager.launch" />
-     <node name="neckHead_dynamixel_state_publisher" pkg="wm_dynamixel_controller" type="neckHead.py" />
+     <node name="neckHead_dynamixel_state_publisher" pkg="wm_dynamixel_controller" type="neckHead.py" respawn="true" />
 
      <!-- Robotiq Model C Gripper -->
      <node name="robotiq_c_model_control" pkg="robotiq_c_model_control" type="CModelTcpNode.py" />
