@@ -13,11 +13,11 @@ from std_msgs.msg import Float64
 class InitRobot(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['init_done'])
-        self.neck_pub = rospy.Publisher('neckHead_controller/command', Float64, queue_size=1)
+        self.neck_pub = rospy.Publisher('neckHead_controller/command', Float64, queue_size=1, latch=True)
 
     def execute(self, ud):
 
-        cmd = Float64
+        cmd = Float64()
         cmd.data = 0.0
         self.neck_pub.publish(cmd)
 

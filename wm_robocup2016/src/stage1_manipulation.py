@@ -18,6 +18,32 @@ from tf2_geometry_msgs import do_transform_pose
 from robotiq_c_model_control.msg import CModel_robot_output as eef_cmd
 from robotiq_c_model_control.msg import CModel_robot_input as eef_status
 import threading
+from std_msgs.msg import Float64
+
+
+class InitState(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['init_done'])
+        self.eef_pub = rospy.Publisher('/CModelRobotOutput', eef_cmd, queue_size=1, latch=True)
+        self.neck_pub = rospy.Publisher('neckHead_controller/command', Float64, queue_size=1, latch=True)
+
+    def execute(self, ud):
+        rospy.logdebug("Entered 'INIT_STATE' state.")
+
+        hand_cmd = eef_cmd()
+        hand_cmd.rACT = 1  # activate gripper
+        hand_cmd.rGTO = 1  # request to go to position
+        hand_cmd.rSP = 200  # set activation speed (0[slowest]-255[fastest])
+        hand_cmd.rFR = 0  # set force limit (0[min] - 255[max])
+        hand_cmd.rPR = 0  # request to open
+
+        self.eef_pub.publish(hand_cmd)
+
+        neck_cmd = Float64()
+        neck_cmd.data = 0.0
+        self.neck_pub.publish(neck_cmd)
+
+        return 'init_done'
 
 
 class SetObjectTarget(smach.State):
@@ -30,7 +56,7 @@ class SetObjectTarget(smach.State):
                                          'sot_grasp_target_pose'],
                              output_keys=['sot_target_object',
                                           'sot_grasp_target_pose'])
-        self.ork_srv = rospy.ServiceProxy('ork_service', GetObjectInformation) # TODO get service name
+        self.ork_srv = rospy.ServiceProxy('ork_service', GetObjectInformation)  # TODO get service name
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer)
 
@@ -105,6 +131,7 @@ class ArmPlanGrasp(smach.State):
 
         else:
             ud.arm_plan = res.trajectory
+            rospy.sleep(rospy.Duration(30))
             return 'grasp_arm_plan_succeeded'
 
 
@@ -148,6 +175,8 @@ class BasePlanGrasp(smach.State):
             grasp_move_base_odom.pose.orientation.z = q.z
             grasp_move_base_odom.pose.orientation.w = q.w
             ud.grasp_move_base_odom = grasp_move_base_odom
+
+            rospy.sleep(rospy.Duration(30))
 
             return 'grasp_base_plan_succeeded'
 
@@ -203,13 +232,22 @@ class GraspArmSupervisor(smach.State):
 class CloseEef(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['close_eef_cmd_sent'])
-        self.eef_pub = rospy.Publisher('/CModelRobotOutput', eef_cmd, queue_size=1)
+        self.eef_pub = rospy.Publisher('/CModelRobotOutput', eef_cmd, queue_size=1, latch=True)
 
     def execute(self, ud):
         rospy.logdebug("Entered 'CLOSE_EEF' state.")
 
-        # TODO
-        return 'close_eef_error'
+        cmd = eef_cmd()
+
+        cmd.rACT = 1  # activate gripper
+        cmd.rGTO = 1  # request to go to position
+        cmd.rSP = 200  # set activation speed (0[slowest]-255[fastest])
+        cmd.rFR = 0  # set force limit (0[min] - 255[max])
+        cmd.rPR = 255  # request to close
+
+        self.eef_pub.publish(cmd)
+
+        return 'close_eef_cmd_sent'
 
 
 class MonitorEef(smach.State):
@@ -236,17 +274,33 @@ class MonitorEef(smach.State):
 
         if self.in_progress:
             if status.gOBJ == 2 and status.gPO != 255:
-                self.eef_closed
+                self.eef_closed = True
                 self.mutex.release()
                 return
 
-           # TODO if status.gOBJ == 2 and
+            elif status.gOBJ == 2:
+                self.eef_error = True
+                self.mutex.release()
 
+        return
 
     def execute(self, ud):
+        rospy.logdebug("Entered 'MONITOR_EEF' state.")
 
-        return 'close_eff_ok'
+        while True:
+            self.mutex.acquire()
+            if self.eef_error or self.eef_closed:
+                self.mutex.release()
+                break
+            self.mutex.release()
+            rospy.sleep(rospy.Duration(1))
 
+        self.mutex.acquire()
+
+        if self.eef_closed:
+            return 'close_eef_ok'
+        else:
+            return 'close_eff_error'
 
 
 class ArmDropPlan(smach.State):
@@ -428,12 +482,21 @@ class DropBaseSupervisor(smach.State):
 class OpenEef(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['open_eef_ok', 'open_eef_error'])
-        # TODO
+        self.eef_pub = rospy.Publisher('/CModelRobotOutput', eef_cmd, queue_size=1, latch=True)
 
     def execute(self, ud):
+        rospy.logdebug("Entered 'OPEN_EEF' state.")
 
-        # TODO
-        return 'open_eef_error'
+        hand_cmd = eef_cmd()
+        hand_cmd.rACT = 1  # activate gripper
+        hand_cmd.rGTO = 1  # request to go to position
+        hand_cmd.rSP = 200  # set activation speed (0[slowest]-255[fastest])
+        hand_cmd.rFR = 0  # set force limit (0[min] - 255[max])
+        hand_cmd.rPR = 0  # request to open
+
+        self.eef_pub.publish(hand_cmd)
+
+        return 'open_eef_ok'
 
 
 class FailTest(smach.State):
@@ -500,6 +563,9 @@ if __name__ == '__main__':
             else:
                 return 'aborted'
 
+        smach.StateMachine.add('INIT_STATE',
+                               InitState(),
+                               transitions={'init_done': 'SCAN_FOR_OBJECTS'})
 
         smach.StateMachine.add('SCAN_FOR_OBJECTS',
                                SimpleActionState('object_recognition_server', # TODO get correct action server name

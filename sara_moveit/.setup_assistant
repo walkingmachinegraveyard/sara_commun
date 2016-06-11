@@ -1,0 +1,8 @@
+moveit_setup_assistant_config:
+  URDF:
+    package: sara_description
+    relative_path: urdf/sara.urdf.xacro
+  SRDF:
+    relative_path: config/sara.srdf
+  CONFIG:
+    generated_timestamp: 1465407495

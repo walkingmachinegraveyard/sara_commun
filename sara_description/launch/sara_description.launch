@@ -19,5 +19,6 @@
         <param name="use_gui" value="$(arg gui)"/>
         <rosparam command="load" file="$(find sara_description)/config/neckHead.yaml"/>
         <rosparam param="source_list">['/neckHead/state']</rosparam>
+		<param name="publish_default_positions" value="false" />
     </node>
 </launch>
