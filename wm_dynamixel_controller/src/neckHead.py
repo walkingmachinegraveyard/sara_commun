@@ -36,8 +36,9 @@ def main():
     rate = rospy.Rate(10)  # 10hz
     neckHeadDynamixel = dynamixelState()
     while not rospy.is_shutdown():
-        neckHeadDynamixel.publish()
-        rate.sleep()
+        if(neckHeadDynamixel.msg.name[0] == ""):
+            neckHeadDynamixel.publish()
+            rate.sleep()
 
 if __name__ == '__main__':
     main()
