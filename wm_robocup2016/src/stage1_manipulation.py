@@ -21,6 +21,7 @@ import threading
 from std_msgs.msg import Float64
 from actionlib_msgs.msg import GoalStatus
 
+
 class InitState(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['init_done'])
@@ -42,6 +43,8 @@ class InitState(smach.State):
         neck_cmd = Float64()
         neck_cmd.data = -1.3
         self.neck_pub.publish(neck_cmd)
+
+        rospy.sleep(rospy.Duration(10))
 
         return 'init_done'
 
@@ -91,10 +94,11 @@ class SetObjectTarget(smach.State):
                 try:
                     transform = self.tf_buffer.lookup_transform('odom', ud.sot_ork_frame, rospy.Time(0))
                     # get the object's pose in odom frame
-                    ud.sot_grasp_target_pose.pose = do_transform_pose(ud.sot_object_array[i].pose.pose, transform)
+                    ud.sot_grasp_target_pose = do_transform_pose(ud.sot_object_array[i].pose.pose, transform)
                     ud.sot_target_object = new_target
                     print "OBJECT NAME : " + new_target
-                    print ud.sot_grasp_target_pose.pose
+                    print "POSE : "
+                    print ud.sot_grasp_target_pose
                     return 'target_set'
                 except (LookupException, ConnectivityException, ExtrapolationException, InvalidArgumentException):
                     rospy.logerr("Could not get transform from " + ud.sot_ork_frame + " to 'odom'.")
@@ -109,21 +113,19 @@ class ArmPlanGrasp(smach.State):
                                              'grasp_arm_error'],
                              input_keys=['grasp_target_pose'],
                              output_keys=['grasp_arm_plan'])
-        self.make_plan_srv = rospy.ServiceProxy('/wm_arm_driver/compute_manipulator_plan', computePlan)
+        self.make_plan_srv = rospy.ServiceProxy('/wm_arm_driver_node/compute_manipulator_plan', computePlan)
 
     def execute(self, ud):
         rospy.logdebug("Entered 'GRASP_ARM_PLAN' state.")
 
         try:
-            req = computePlanRequest
-            req.planningSpace = computePlanRequest.CARTESIAN_SPACE
-            req.targetPose = ud.grasp_target_pose
-            res = self.make_plan_srv(req)
+            print ud.grasp_target_pose
+            res = self.make_plan_srv(targetPose=ud.grasp_target_pose, jointPos=[], planningSpace=computePlanRequest.CARTESIAN_SPACE)
         except rospy.ServiceException:
             rospy.logerr("Failed to connect to the planning service.")
             return 'grasp_arm_error'
 
-        if res == computePlanResponse.PLANNING_FAILURE:
+        if res.planningResult == computePlanResponse.PLANNING_FAILURE:
             rospy.logwarn("Arm planning failed. Moving the base is probably required to reach target pose.")
             return 'grasp_arm_plan_failed'
 
@@ -140,21 +142,18 @@ class BasePlanGrasp(smach.State):
                                              'grasp_base_error'],
                              input_keys=['grasp_target_pose'],
                              output_keys=['grasp_move_base_odom'])
-        self.make_plan_srv = rospy.ServiceProxy('/wm_arm_driver/compute_base_plan', computePlan)
+        self.make_plan_srv = rospy.ServiceProxy('/wm_arm_driver_node/compute_base_plan', computePlan)
 
     def execute(self, ud):
         rospy.logdebug("Entered 'GRASP_BASE_PLAN' state.")
 
         try:
-            req = computePlanRequest
-            req.planningSpace = computePlanRequest.CARTESIAN_SPACE
-            req.targetPose = ud.grasp_target_pose
-            res = self.make_plan_srv(req)
+            res = self.make_plan_srv(targetPose=ud.grasp_target_pose, jointPos=[], planningSpace=computePlanRequest.CARTESIAN_SPACE)
         except rospy.ServiceException:
             rospy.logerr("Failed to connect to the planning service.")
             return 'grasp_base_error'
 
-        if res == computePlanResponse.PLANNING_FAILURE:
+        if res.planningResult == computePlanResponse.PLANNING_FAILURE:
             rospy.logwarn("Base planning failed. Target pose is probably unreachable.")
             return 'grasp_base_plan_failed'
 
@@ -168,10 +167,10 @@ class BasePlanGrasp(smach.State):
             grasp_move_base_odom.pose.position.x = last_traj_point.positions[0]
             grasp_move_base_odom.pose.position.y = last_traj_point.positions[1]
             q = tf_conversions.transformations.quaternion_from_euler(0.0, 0.0, last_traj_point.positions[2])
-            grasp_move_base_odom.pose.orientation.x = q.x
-            grasp_move_base_odom.pose.orientation.y = q.y
-            grasp_move_base_odom.pose.orientation.z = q.z
-            grasp_move_base_odom.pose.orientation.w = q.w
+            grasp_move_base_odom.pose.orientation.x = q[0]
+            grasp_move_base_odom.pose.orientation.y = q[1]
+            grasp_move_base_odom.pose.orientation.z = q[2]
+            grasp_move_base_odom.pose.orientation.w = q[3]
             ud.grasp_move_base_odom = grasp_move_base_odom
 
             rospy.sleep(rospy.Duration(30))
@@ -195,7 +194,7 @@ class GraspBaseSupervisor(smach.State):
             rospy.logerr("Failed to connect to the supervising service.")
             return 'grasp_base_error'
 
-        if res == wm_supervisor.srv.robotStatusResponse.STATUS_OK:
+        if res.status == wm_supervisor.srv.robotStatusResponse.STATUS_OK:
             return 'grasp_base_ok'
 
         rospy.sleep(5.0)
@@ -219,7 +218,7 @@ class GraspArmSupervisor(smach.State):
             rospy.logerr("Failed to connect to the supervising service.")
             return 'grasp_arm_error'
 
-        if res == wm_supervisor.srv.robotStatusResponse.STATUS_OK:
+        if res.status == wm_supervisor.srv.robotStatusResponse.STATUS_OK:
             return 'grasp_arm_ok'
 
         rospy.sleep(5.0)
@@ -308,21 +307,18 @@ class ArmDropPlan(smach.State):
                                              'drop_arm_error'],
                              input_keys=['drop_target_pose'],
                              output_keys=['drop_arm_plan'])
-        self.make_plan_srv = rospy.ServiceProxy('/wm_arm_driver/compute_manipulator_plan', computePlan)
+        self.make_plan_srv = rospy.ServiceProxy('/wm_arm_driver_node/compute_manipulator_plan', computePlan)
 
     def execute(self, ud):
         rospy.logdebug("Entered 'DROP_ARM_PLAN' state.")
 
         try:
-            req = computePlanRequest
-            req.planningSpace = computePlanRequest.CARTESIAN_SPACE
-            req.targetPose = ud.drop_target_pose
-            res = self.make_plan_srv(req)
+            res = self.make_plan_srv(targetPose=ud.drop_target_pose, jointPos=[], planningSpace=computePlanRequest.CARTESIAN_SPACE)
         except rospy.ServiceException:
             rospy.logerr("Failed to connect to the planning service.")
             return 'drop_arm_error'
 
-        if res == computePlanResponse.PLANNING_FAILURE:
+        if res.planningResult == computePlanResponse.PLANNING_FAILURE:
             rospy.logwarn("Planning failed. Target pose is probably unreachable.")
             return 'drop_arm_plan_failed'
 
@@ -347,7 +343,7 @@ class DropArmSupervisor(smach.State):
             rospy.logerr("Failed to connect to the supervising service.")
             return 'drop_arm_error'
 
-        if res == wm_supervisor.srv.robotStatusResponse.STATUS_OK:
+        if res.status == wm_supervisor.srv.robotStatusResponse.STATUS_OK:
             return 'drop_arm_ok'
 
         rospy.sleep(5.0)
@@ -362,21 +358,18 @@ class DropBasePlan(smach.State):
                                          'drop_base_error'],
                              input_keys=['drop_target_pose'],
                              output_keys=['drop_move_base_odom'])
-        self.make_plan_srv = rospy.ServiceProxy('/wm_arm_driver/compute_base_plan', computePlan)
+        self.make_plan_srv = rospy.ServiceProxy('/wm_arm_driver_node/compute_base_plan', computePlan)
 
     def execute(self, ud):
         rospy.logdebug("Entered 'DROP_BASE_PLAN' state.")
 
         try:
-            req = computePlanRequest
-            req.planningSpace = computePlanRequest.CARTESIAN_SPACE
-            req.targetPose = ud.drop_target_pose
-            res = self.make_plan_srv(req)
+            res = self.make_plan_srv(targetPose=ud.drop_target_pose, jointPos=[], planningSpace=computePlanRequest.CARTESIAN_SPACE)
         except rospy.ServiceException:
             rospy.logerr("Failed to connect to the planning service.")
             return 'drop_base_error'
 
-        if res == computePlanResponse.PLANNING_FAILURE:
+        if res.planningResult == computePlanResponse.PLANNING_FAILURE:
             rospy.logwarn("Base planning failed. Target pose is probably unreachable.")
             return 'drop_base_plan_failed'
 
@@ -390,10 +383,10 @@ class DropBasePlan(smach.State):
             drop_move_base_odom.pose.position.x = last_traj_point.positions[0]
             drop_move_base_odom.pose.position.y = last_traj_point.positions[1]
             q = tf_conversions.transformations.quaternion_from_euler(0.0, 0.0, last_traj_point.positions[2])
-            drop_move_base_odom.pose.orientation.x = q.x
-            drop_move_base_odom.pose.orientation.y = q.y
-            drop_move_base_odom.pose.orientation.z = q.z
-            drop_move_base_odom.pose.orientation.w = q.w
+            drop_move_base_odom.pose.orientation.x = q[0]
+            drop_move_base_odom.pose.orientation.y = q[1]
+            drop_move_base_odom.pose.orientation.z = q[2]
+            drop_move_base_odom.pose.orientation.w = q[3]
             ud.grasp_move_base_odom = drop_move_base_odom
 
             return 'drop_base_plan_succeeded'
@@ -406,21 +399,21 @@ class RetractArmPlan(smach.State):
                                              'retract_plan_error'],
                              input_keys=['retract_joint_pos'],
                              output_keys=['retract_plan'])
-        self.make_plan_srv = rospy.ServiceProxy('/wm_arm_driver/compute_manipulator_plan', computePlan)
+        self.make_plan_srv = rospy.ServiceProxy('/wm_arm_driver_node/compute_manipulator_plan', computePlan)
 
     def execute(self, ud):
         rospy.logdebug("Entered 'RETRACT_ARM_PLAN' state.")
 
         try:
-            req = computePlanRequest
+            req = computePlanRequest()
             req.planningSpace = computePlanRequest.JOINT_SPACE
             req.jointPos = ud.retract_joint_pos
-            res = self.make_plan_srv(req)
+            res = self.make_plan_srv(targetPose=None, jointPos = ud.retract_joint_pos, planningSpace=computePlanRequest.JOINT_SPACE)
         except rospy.ServiceException:
             rospy.logerr("Failed to connect to the planning service.")
             return 'retract_error'
 
-        if res == computePlanResponse.PLANNING_FAILURE:
+        if res.status == computePlanResponse.PLANNING_FAILURE:
             rospy.logwarn("Planning failed. Target pose is probably unreachable.")
             return 'retract_plan_failed'
 
@@ -445,7 +438,7 @@ class RetractArmSupervisor(smach.State):
             rospy.logerr("Failed to connect to the supervising service.")
             return 'retract_arm_error'
 
-        if res == wm_supervisor.srv.robotStatusResponse.STATUS_OK:
+        if res.status == wm_supervisor.srv.robotStatusResponse.STATUS_OK:
             return 'retract_arm_ok'
 
         rospy.sleep(5.0)
@@ -469,7 +462,7 @@ class DropBaseSupervisor(smach.State):
             rospy.logerr("Failed to connect to the supervising service.")
             return 'drop_base_error'
 
-        if res == wm_supervisor.srv.robotStatusResponse.STATUS_OK:
+        if res.status == wm_supervisor.srv.robotStatusResponse.STATUS_OK:
             return 'drop_base_ok'
 
         rospy.sleep(5.0)
@@ -556,8 +549,8 @@ if __name__ == '__main__':
                     userdata.ork_object_array = result.recognized_objects.objects
                     userdata.ork_action_frame = result.recognized_objects.header.frame_id
                     return 'succeeded'
-            else:
-                return 'aborted'
+
+            return 'aborted'
 
         smach.StateMachine.add('INIT_STATE',
                                InitState(),
@@ -623,7 +616,7 @@ if __name__ == '__main__':
                                remapping={'target_pose': 'move_base_odom'})
 
         smach.StateMachine.add('GRASP_MOVE_ARM',
-                               SimpleActionState('/wm_arm_driver_node/execute_plan',
+                               SimpleActionState('/wm_arm_driver_node_node/execute_plan',
                                                  executePlanAction,
                                                  goal_slots=['trajectory']),
                                transitions={'succeeded': 'CLOSE_EEF',
@@ -650,7 +643,7 @@ if __name__ == '__main__':
                                             'drop_arm_error': 'TEST_FAILED'})
 
         smach.StateMachine.add('DROP_MOVE_ARM',
-                               SimpleActionState('/wm_arm_driver_node/execute_plan',
+                               SimpleActionState('/wm_arm_driver_node_node/execute_plan',
                                                  executePlanAction,
                                                  goal_slots=['trajectory']),
                                transitions={'succeeded': 'OPEN_EEF',
@@ -681,7 +674,7 @@ if __name__ == '__main__':
                                             'retract_arm_error': 'TEST_FAILED'})
 
         smach.StateMachine.add('RETRACT_MOVE_ARM',
-                               SimpleActionState('/wm_arm_driver_node/execute_plan',
+                               SimpleActionState('/wm_arm_driver_node_node/execute_plan',
                                                  executePlanAction,
                                                  goal_slots=['trajectory']),
                                transitions={'succeeded': 'DROP_BASE_SUPERVISOR',
@@ -696,7 +689,7 @@ if __name__ == '__main__':
                                             'drop_base_error': 'TEST_FAILED'})
 
         smach.StateMachine.add('DROP_MOVE_BASE',
-                               SimpleActionState('/wm_arm_driver_node/execute_plan',
+                               SimpleActionState('/wm_arm_driver_node_node/execute_plan',
                                                  executePlanAction,
                                                  goal_slots=['trajectory']),
                                transitions={'succeeded': 'DROP_ARM_PLAN',
