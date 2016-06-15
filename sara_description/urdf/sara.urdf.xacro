@@ -287,7 +287,16 @@
 
     <xacro:robotiq_c2_model prefix="">
       <origin xyz="0 0 0" rpy="0 0 0" />
-    </xacro:robotiq_c2_model> 
+    </xacro:robotiq_c2_model>
+
+	<link name="grip_link" >
+		<visual>
+			<geometry>
+				<sphere radius="0.01" />
+			</geometry>
+			<origin xyz="0 0 0" rpy="0 0 0" />
+		</visual>
+	</link>
 
   <!-- JOINTS -->
     <joint name="base_x_trans_joint" type="prismatic" >
@@ -382,6 +391,12 @@
       <axis xyz="1 0 0"/>
       <origin xyz="0 0 -0.10624" rpy="0 1.5708 1.5708"/>
     </joint>
+
+	<joint name="grip_joint" type="fixed" >
+		<parent link="robotiq_85_base_link" />
+		<child link="grip_link" />
+		<origin xyz="0.12 0 -0.012" rpy="3.1416 0 1.5708" />
+	</joint>
 	
     <joint name="torsoNeck_joint" type="fixed">  <!-- normaly revolute -->
         <parent link="torso_link"/>
