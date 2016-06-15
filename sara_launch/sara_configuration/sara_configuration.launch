@@ -4,7 +4,8 @@
    
      <arg name="auto_mode" default="true" />
      <arg name="dynamic_mapping" default="true" />
-     
+
+	 <node name="wm_supervisor" pkg="wm_supervisor" type="wm_supervisor_node" required="true" output="screen" />     
 
      <!-- load urdf -->
      <include file="$(find sara_description)/launch/sara_description.launch" />
