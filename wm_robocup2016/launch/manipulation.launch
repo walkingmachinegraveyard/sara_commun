@@ -1,0 +1,7 @@
+<launch>
+
+	<include file="$(find object_recognition_ros)/launch/server.desktop.launch" />
+	<include file="$(find object_recognition_ros)/launch/object_information_server.launch" />
+	<node name="robocup_manipulation" pkg="wm_robocup2016" type="stage1_manipulation.py" output="screen" />
+
+</launch>

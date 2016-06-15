@@ -19,7 +19,7 @@ from robotiq_c_model_control.msg import CModel_robot_output as eef_cmd
 from robotiq_c_model_control.msg import CModel_robot_input as eef_status
 import threading
 from std_msgs.msg import Float64
-
+from actionlib_msgs.msg import GoalStatus
 
 class InitState(smach.State):
     def __init__(self):
@@ -40,7 +40,7 @@ class InitState(smach.State):
         self.eef_pub.publish(hand_cmd)
 
         neck_cmd = Float64()
-        neck_cmd.data = 0.0
+        neck_cmd.data = -1.3
         self.neck_pub.publish(neck_cmd)
 
         return 'init_done'
@@ -56,7 +56,7 @@ class SetObjectTarget(smach.State):
                                          'sot_grasp_target_pose'],
                              output_keys=['sot_target_object',
                                           'sot_grasp_target_pose'])
-        self.ork_srv = rospy.ServiceProxy('ork_service', GetObjectInformation)  # TODO get service name
+        self.ork_srv = rospy.ServiceProxy('get_object_info', GetObjectInformation)
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer)
 
@@ -70,38 +70,36 @@ class SetObjectTarget(smach.State):
 
             # get object info, mainly its name
             try:
-                req = GetObjectInformationRequest
+                req = GetObjectInformationRequest()
                 req.type = ud.sot_object_array[i].type
                 res = self.ork_srv(req)
                 # if the object hasn't been grasped yet, make the object the current grasp target
                 is_new_obj = True
-                if any(res.name in s for s in ud.sot_picked_objects):
+                if any(res.information.name in s for s in ud.sot_picked_objects):
                     is_new_obj = False
 
                 if is_new_obj:
-                    new_target = res.name
-                break
+                    new_target = res.information.name
 
             except rospy.ServiceException:
                 rospy.logerr("GetObjectInformation service request failed.")
 
             # if a new object has been detected
-            if new_target:
+            if new_target and is_new_obj:
 
                 # get the transform from ork's frame to odom
                 try:
-                    transform = self.tf_buffer.lookup_transform(ud.sot_ork_frame, 'odom', rospy.Time(0))
+                    transform = self.tf_buffer.lookup_transform('odom', ud.sot_ork_frame, rospy.Time(0))
+                    # get the object's pose in odom frame
+                    ud.sot_grasp_target_pose.pose = do_transform_pose(ud.sot_object_array[i].pose.pose, transform)
+                    ud.sot_target_object = new_target
+                    print "OBJECT NAME : " + new_target
+                    print ud.sot_grasp_target_pose.pose
+                    return 'target_set'
                 except (LookupException, ConnectivityException, ExtrapolationException, InvalidArgumentException):
                     rospy.logerr("Could not get transform from " + ud.sot_ork_frame + " to 'odom'.")
-                    return 'no_new_object'
 
-                # get the object's pose in odom frame
-                ud.sot_grasp_target_pose.pose = do_transform_pose(ud.sot_object_array[i].pose.pose, transform)
-                ud.sot_target_object = new_target
-                return 'target_set'
-
-            else:
-                return 'no_new_object'
+        return 'no_new_object'
 
 
 class ArmPlanGrasp(smach.State):
@@ -553,12 +551,10 @@ if __name__ == '__main__':
 
         def ork_result_cb(userdata, status, result):
 
-            print status
-
-            if status == 'succeeded':
-                if len(result.objects) > 0:
-                    userdata.ork_object_array = result.objects
-                    userdata.ork_action_frame = result.header.frame_id
+            if status == GoalStatus.SUCCEEDED:
+                if len(result.recognized_objects.objects) > 0:
+                    userdata.ork_object_array = result.recognized_objects.objects
+                    userdata.ork_action_frame = result.recognized_objects.header.frame_id
                     return 'succeeded'
             else:
                 return 'aborted'
@@ -568,14 +564,14 @@ if __name__ == '__main__':
                                transitions={'init_done': 'SCAN_FOR_OBJECTS'})
 
         smach.StateMachine.add('SCAN_FOR_OBJECTS',
-                               SimpleActionState('object_recognition_server', # TODO get correct action server name
+                               SimpleActionState('/object_recognition/recognize_objects',
                                                  ObjectRecognitionAction,
                                                  result_cb=ork_result_cb,
                                                  output_keys={'ork_object_array',
                                                               'ork_action_frame'}),
                                transitions={'succeeded': 'SET_OBJECT_TARGET',
-                                            'aborted': 'SCAN_FOR_OBJECTS',
-                                            'preempted': 'SCAN_FOR_OBJECTS'},
+                                            'aborted': 'TEST_FAILED',  # TODO SCAN_FOR_OBJECTS
+                                            'preempted': 'TEST_FAILED'},   #TODO SCAN_FOR_OBJECTS
                                remapping={'ork_object_array': 'object_array',
                                           'ork_action_frame': 'ork_frame'})
 
