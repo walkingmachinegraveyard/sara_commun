@@ -96,6 +96,7 @@ class SetObjectTarget(smach.State):
                     # get the object's pose in odom frame
                     ud.sot_grasp_target_pose = do_transform_pose(ud.sot_object_array[i].pose.pose, transform)
                     ud.sot_target_object = new_target
+                    ud.sot_grasp_target_pose.pose.position.z += 0.1
                     print "OBJECT NAME : " + new_target
                     print "POSE : "
                     print ud.sot_grasp_target_pose
@@ -119,7 +120,6 @@ class ArmPlanGrasp(smach.State):
         rospy.logdebug("Entered 'GRASP_ARM_PLAN' state.")
 
         try:
-            print ud.grasp_target_pose
             res = self.make_plan_srv(targetPose=ud.grasp_target_pose, jointPos=[], planningSpace=computePlanRequest.CARTESIAN_SPACE)
         except rospy.ServiceException:
             rospy.logerr("Failed to connect to the planning service.")
@@ -130,7 +130,7 @@ class ArmPlanGrasp(smach.State):
             return 'grasp_arm_plan_failed'
 
         else:
-            ud.arm_plan = res.trajectory
+            ud.grasp_arm_plan = res.trajectory
             rospy.sleep(rospy.Duration(30))
             return 'grasp_arm_plan_succeeded'
 
@@ -616,7 +616,7 @@ if __name__ == '__main__':
                                remapping={'target_pose': 'move_base_odom'})
 
         smach.StateMachine.add('GRASP_MOVE_ARM',
-                               SimpleActionState('/wm_arm_driver_node_node/execute_plan',
+                               SimpleActionState('/wm_arm_driver_node/execute_plan',
                                                  executePlanAction,
                                                  goal_slots=['trajectory']),
                                transitions={'succeeded': 'CLOSE_EEF',
@@ -643,7 +643,7 @@ if __name__ == '__main__':
                                             'drop_arm_error': 'TEST_FAILED'})
 
         smach.StateMachine.add('DROP_MOVE_ARM',
-                               SimpleActionState('/wm_arm_driver_node_node/execute_plan',
+                               SimpleActionState('/wm_arm_driver_node/execute_plan',
                                                  executePlanAction,
                                                  goal_slots=['trajectory']),
                                transitions={'succeeded': 'OPEN_EEF',
@@ -674,7 +674,7 @@ if __name__ == '__main__':
                                             'retract_arm_error': 'TEST_FAILED'})
 
         smach.StateMachine.add('RETRACT_MOVE_ARM',
-                               SimpleActionState('/wm_arm_driver_node_node/execute_plan',
+                               SimpleActionState('/wm_arm_driver_node/execute_plan',
                                                  executePlanAction,
                                                  goal_slots=['trajectory']),
                                transitions={'succeeded': 'DROP_BASE_SUPERVISOR',
@@ -689,7 +689,7 @@ if __name__ == '__main__':
                                             'drop_base_error': 'TEST_FAILED'})
 
         smach.StateMachine.add('DROP_MOVE_BASE',
-                               SimpleActionState('/wm_arm_driver_node_node/execute_plan',
+                               SimpleActionState('/wm_arm_driver_node/execute_plan',
                                                  executePlanAction,
                                                  goal_slots=['trajectory']),
                                transitions={'succeeded': 'DROP_ARM_PLAN',
