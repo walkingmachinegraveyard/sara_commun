@@ -1,7 +1,7 @@
 <launch>
 
   <include file="$(find sara_moveit)/launch/wm_planning_context.launch" />
-  <include file="$(find sara_moveit)/launch/wm_sensor_manager.launch" />
+  <include ns="move_group" file="$(find sara_moveit)/launch/wm_sensor_manager.launch" />
 
   <!-- GDB Debug Option -->
   <arg name="debug" default="false" />
