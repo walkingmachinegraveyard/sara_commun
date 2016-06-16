@@ -22,6 +22,7 @@ namespace wm
 
 		robotStatusSrv_ = nh_.advertiseService("robot_status", &wmSupervisor::robotStatusService, this);
 		recoverFromStopSrv_ = nh_.advertiseService("recover_from_estop", &wmSupervisor::recoverFromStopService, this);
+		stopSignalSrv_ = nh_.advertiseService("stop_signal_srv", &wmSupervisor::stopSignalService, this);
 
 		nh_.param("/wm_supervisor_node/watchdog_callback_rate", watchdogRate_, 10.0);
 		watchdogTimer_ = nh_.createTimer(ros::Duration(1.0/watchdogRate_), &wmSupervisor::watchdogCallback, this);
@@ -53,7 +54,27 @@ namespace wm
 	bool wmSupervisor::recoverFromStopService(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res)
 	{
 		boost::lock_guard<boost::mutex> guard(mtx_);
-		status_ = wm::STATUS_OK;
+		if (status_ == wm::STAND_BY)
+		{
+			status_ = wm::STATUS_OK;
+		}
+		return true;
+	}
+
+	bool wmSupervisor::stopSignalService(std_srvs::SetBool::Request& req, std_srvs::SetBool::Response& res)
+	{
+		boost::lock_guard<boost::mutex> guard(mtx_);
+		if (req.data)
+		{
+			status_ = wm::STOP_COMMANDED;
+		}
+		else
+		{
+			status_ = wm::STAND_BY;
+		}
+
+		res.success = true;
+
 		return true;
 	}
 

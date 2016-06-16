@@ -18,6 +18,7 @@
 #include "move_base_msgs/MoveBaseAction.h"
 #include "std_msgs/String.h"
 #include "std_srvs/Empty.h"
+#include "std_srvs/SetBool.h"
 #include "geometry_msgs/Twist.h"
 #include <boost/thread/lock_guard.hpp>
 
@@ -26,6 +27,7 @@ namespace wm{
 	const std::string STOP_STR = "stop";
 	const int STATUS_OK = 1;
 	const int STOP_COMMANDED = -1;
+	const int STAND_BY = -2;
 
 	class wmSupervisor
 	{
@@ -34,9 +36,9 @@ namespace wm{
 			~wmSupervisor();
 			bool robotStatusService(wm_supervisor::robotStatus::Request&, wm_supervisor::robotStatus::Response&);
 			bool recoverFromStopService(std_srvs::Empty::Request&, std_srvs::Empty::Response&);
+			bool stopSignalService(std_srvs::SetBool::Request&, std_srvs::SetBool::Response&);
 
 		private:
-			void acConnectCallback(const ros::TimerEvent&);
 			void audioSubscriberCallback(const std_msgs::String&);
 			void estopSubscriberCallback(const std_msgs::String&); //TODO
 			void watchdogCallback(const ros::TimerEvent&);
@@ -44,6 +46,7 @@ namespace wm{
 			ros::NodeHandle nh_;
 			ros::ServiceServer robotStatusSrv_;
 			ros::ServiceServer recoverFromStopSrv_;
+			ros::ServiceServer stopSignalSrv_;
 			ros::Subscriber audioStreamSub_, estopSignalSub_, safeVelocitySub_;
 			ros::Publisher safeVelocityPub_;
 			actionlib::SimpleActionClient<wm_arm_msgs::executePlanAction> moveArmAC_;
