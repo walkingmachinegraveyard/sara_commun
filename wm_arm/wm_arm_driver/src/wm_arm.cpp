@@ -192,6 +192,10 @@ namespace manipulator
 
 		else
 		{
+			std::vector<moveit_msgs::CollisionObject> collisionObjects;
+			collisionObjects.push_back(req.collisionObject);
+			planningSceneInterface_.addCollisionObjects(collisionObjects);
+
 			moveit::planning_interface::MoveGroup::Plan myPlan;
 
 			bool success = computeBasePlan(req.targetPose, myPlan);
@@ -217,6 +221,10 @@ namespace manipulator
 
 		if (req.planningSpace == req.CARTESIAN_SPACE)
 		{
+			std::vector<moveit_msgs::CollisionObject> collisionObjects;
+			collisionObjects.push_back(req.collisionObject);
+			planningSceneInterface_.addCollisionObjects(collisionObjects);
+
 			success = computeManipulatorPlan(req.targetPose, myPlan);
 		}
 		else if (req.planningSpace == req.JOINT_SPACE)
