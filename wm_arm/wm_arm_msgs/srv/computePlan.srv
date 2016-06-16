@@ -3,6 +3,7 @@ float64[] jointPos
 int8 planningSpace
 int8 CARTESIAN_SPACE=1
 int8 JOINT_SPACE=2
+moveit_msgs/CollisionObject collisionObject
 ---
 int8 planningResult
 int8 PLANNING_SUCCESS=1
