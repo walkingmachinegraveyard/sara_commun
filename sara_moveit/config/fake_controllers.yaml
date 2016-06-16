@@ -9,6 +9,7 @@ controller_list:
       - shoulderRot_joint
       - elbow_joint
       - WristRot_joint
+      - Wrist_joint
   - name: fake_manipulator_controller
     joints:
       - sternoclavicular_joint
@@ -16,3 +17,4 @@ controller_list:
       - shoulderRot_joint
       - elbow_joint
       - WristRot_joint
+      - Wrist_joint

@@ -68,7 +68,7 @@ class InspectionPoseSupervisor(smach.State):
 
         try:
             res = self.supervisor_srv()
-            if res == wm_supervisor.srv.robotStatusResponse.STATUS_OK:
+            if res.status == wm_supervisor.srv.robotStatusResponse.STATUS_OK:
                 return 'inspection_pose_ok'
 
         except rospy.ServiceException:
@@ -119,7 +119,7 @@ class ExitPoseSupervisor(smach.State):
 
         try:
             res = self.supervisor_srv()
-            if res == wm_supervisor.srv.robotStatusResponse.STATUS_OK:
+            if res.status == wm_supervisor.srv.robotStatusResponse.STATUS_OK:
                 return 'exit_pose_ok'
 
         except rospy.ServiceException:

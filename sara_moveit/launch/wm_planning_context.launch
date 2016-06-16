@@ -12,8 +12,6 @@
   <param name="$(arg robot_description)_semantic" textfile="$(find sara_moveit)/config/sara.srdf" />
   
   <!-- Load default settings for kinematics; these settings are overridden by settings in a node's namespace -->
-  <group ns="$(arg robot_description)_kinematics">
-    <rosparam command="load" file="$(find sara_moveit)/config/kinematics.yaml"/>
-  </group>
+  <rosparam ns="move_group" command="load" file="$(find sara_moveit)/config/kinematics.yaml"/>
   
 </launch>

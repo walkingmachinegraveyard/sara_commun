@@ -140,7 +140,7 @@ namespace wm
 
 			if(moveArmAC_.isServerConnected())
 			{
-				moveArmAC_.cancelAllGoals();
+//				moveArmAC_.cancelAllGoals();
 			}
 
 			if(moveBaseAC_.isServerConnected())

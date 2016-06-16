@@ -19,6 +19,7 @@ from robotiq_c_model_control.msg import CModel_robot_output as eef_cmd
 from robotiq_c_model_control.msg import CModel_robot_input as eef_status
 import threading
 from std_msgs.msg import Float64
+from actionlib_msgs.msg import GoalStatus
 
 
 class InitState(smach.State):
@@ -40,8 +41,10 @@ class InitState(smach.State):
         self.eef_pub.publish(hand_cmd)
 
         neck_cmd = Float64()
-        neck_cmd.data = 0.0
+        neck_cmd.data = -1.3
         self.neck_pub.publish(neck_cmd)
+
+        rospy.sleep(rospy.Duration(10))
 
         return 'init_done'
 
@@ -56,7 +59,7 @@ class SetObjectTarget(smach.State):
                                          'sot_grasp_target_pose'],
                              output_keys=['sot_target_object',
                                           'sot_grasp_target_pose'])
-        self.ork_srv = rospy.ServiceProxy('ork_service', GetObjectInformation)  # TODO get service name
+        self.ork_srv = rospy.ServiceProxy('get_object_info', GetObjectInformation)
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer)
 
@@ -70,38 +73,38 @@ class SetObjectTarget(smach.State):
 
             # get object info, mainly its name
             try:
-                req = GetObjectInformationRequest
+                req = GetObjectInformationRequest()
                 req.type = ud.sot_object_array[i].type
                 res = self.ork_srv(req)
                 # if the object hasn't been grasped yet, make the object the current grasp target
                 is_new_obj = True
-                if any(res.name in s for s in ud.sot_picked_objects):
+                if any(res.information.name in s for s in ud.sot_picked_objects):
                     is_new_obj = False
 
                 if is_new_obj:
-                    new_target = res.name
-                break
+                    new_target = res.information.name
 
             except rospy.ServiceException:
                 rospy.logerr("GetObjectInformation service request failed.")
 
             # if a new object has been detected
-            if new_target:
+            if new_target and is_new_obj:
 
                 # get the transform from ork's frame to odom
                 try:
-                    transform = self.tf_buffer.lookup_transform(ud.sot_ork_frame, 'odom', rospy.Time(0))
+                    transform = self.tf_buffer.lookup_transform('odom', ud.sot_ork_frame, rospy.Time(0))
+                    # get the object's pose in odom frame
+                    ud.sot_grasp_target_pose = do_transform_pose(ud.sot_object_array[i].pose.pose, transform)
+                    ud.sot_target_object = new_target
+                    ud.sot_grasp_target_pose.pose.position.z += 0.1
+                    print "OBJECT NAME : " + new_target
+                    print "POSE : "
+                    print ud.sot_grasp_target_pose
+                    return 'target_set'
                 except (LookupException, ConnectivityException, ExtrapolationException, InvalidArgumentException):
                     rospy.logerr("Could not get transform from " + ud.sot_ork_frame + " to 'odom'.")
-                    return 'no_new_object'
 
-                # get the object's pose in odom frame
-                ud.sot_grasp_target_pose.pose = do_transform_pose(ud.sot_object_array[i].pose.pose, transform)
-                ud.sot_target_object = new_target
-                return 'target_set'
-
-            else:
-                return 'no_new_object'
+        return 'no_new_object'
 
 
 class ArmPlanGrasp(smach.State):
@@ -111,26 +114,23 @@ class ArmPlanGrasp(smach.State):
                                              'grasp_arm_error'],
                              input_keys=['grasp_target_pose'],
                              output_keys=['grasp_arm_plan'])
-        self.make_plan_srv = rospy.ServiceProxy('/wm_arm_driver/compute_manipulator_plan', computePlan)
+        self.make_plan_srv = rospy.ServiceProxy('/wm_arm_driver_node/compute_manipulator_plan', computePlan)
 
     def execute(self, ud):
         rospy.logdebug("Entered 'GRASP_ARM_PLAN' state.")
 
         try:
-            req = computePlanRequest
-            req.planningSpace = computePlanRequest.CARTESIAN_SPACE
-            req.targetPose = ud.grasp_target_pose
-            res = self.make_plan_srv(req)
+            res = self.make_plan_srv(targetPose=ud.grasp_target_pose, jointPos=[], planningSpace=computePlanRequest.CARTESIAN_SPACE)
         except rospy.ServiceException:
             rospy.logerr("Failed to connect to the planning service.")
             return 'grasp_arm_error'
 
-        if res == computePlanResponse.PLANNING_FAILURE:
+        if res.planningResult == computePlanResponse.PLANNING_FAILURE:
             rospy.logwarn("Arm planning failed. Moving the base is probably required to reach target pose.")
             return 'grasp_arm_plan_failed'
 
         else:
-            ud.arm_plan = res.trajectory
+            ud.grasp_arm_plan = res.trajectory
             rospy.sleep(rospy.Duration(30))
             return 'grasp_arm_plan_succeeded'
 
@@ -142,21 +142,18 @@ class BasePlanGrasp(smach.State):
                                              'grasp_base_error'],
                              input_keys=['grasp_target_pose'],
                              output_keys=['grasp_move_base_odom'])
-        self.make_plan_srv = rospy.ServiceProxy('/wm_arm_driver/compute_base_plan', computePlan)
+        self.make_plan_srv = rospy.ServiceProxy('/wm_arm_driver_node/compute_base_plan', computePlan)
 
     def execute(self, ud):
         rospy.logdebug("Entered 'GRASP_BASE_PLAN' state.")
 
         try:
-            req = computePlanRequest
-            req.planningSpace = computePlanRequest.CARTESIAN_SPACE
-            req.targetPose = ud.grasp_target_pose
-            res = self.make_plan_srv(req)
+            res = self.make_plan_srv(targetPose=ud.grasp_target_pose, jointPos=[], planningSpace=computePlanRequest.CARTESIAN_SPACE)
         except rospy.ServiceException:
             rospy.logerr("Failed to connect to the planning service.")
             return 'grasp_base_error'
 
-        if res == computePlanResponse.PLANNING_FAILURE:
+        if res.planningResult == computePlanResponse.PLANNING_FAILURE:
             rospy.logwarn("Base planning failed. Target pose is probably unreachable.")
             return 'grasp_base_plan_failed'
 
@@ -170,10 +167,10 @@ class BasePlanGrasp(smach.State):
             grasp_move_base_odom.pose.position.x = last_traj_point.positions[0]
             grasp_move_base_odom.pose.position.y = last_traj_point.positions[1]
             q = tf_conversions.transformations.quaternion_from_euler(0.0, 0.0, last_traj_point.positions[2])
-            grasp_move_base_odom.pose.orientation.x = q.x
-            grasp_move_base_odom.pose.orientation.y = q.y
-            grasp_move_base_odom.pose.orientation.z = q.z
-            grasp_move_base_odom.pose.orientation.w = q.w
+            grasp_move_base_odom.pose.orientation.x = q[0]
+            grasp_move_base_odom.pose.orientation.y = q[1]
+            grasp_move_base_odom.pose.orientation.z = q[2]
+            grasp_move_base_odom.pose.orientation.w = q[3]
             ud.grasp_move_base_odom = grasp_move_base_odom
 
             rospy.sleep(rospy.Duration(30))
@@ -197,7 +194,7 @@ class GraspBaseSupervisor(smach.State):
             rospy.logerr("Failed to connect to the supervising service.")
             return 'grasp_base_error'
 
-        if res == wm_supervisor.srv.robotStatusResponse.STATUS_OK:
+        if res.status == wm_supervisor.srv.robotStatusResponse.STATUS_OK:
             return 'grasp_base_ok'
 
         rospy.sleep(5.0)
@@ -221,7 +218,7 @@ class GraspArmSupervisor(smach.State):
             rospy.logerr("Failed to connect to the supervising service.")
             return 'grasp_arm_error'
 
-        if res == wm_supervisor.srv.robotStatusResponse.STATUS_OK:
+        if res.status == wm_supervisor.srv.robotStatusResponse.STATUS_OK:
             return 'grasp_arm_ok'
 
         rospy.sleep(5.0)
@@ -310,21 +307,18 @@ class ArmDropPlan(smach.State):
                                              'drop_arm_error'],
                              input_keys=['drop_target_pose'],
                              output_keys=['drop_arm_plan'])
-        self.make_plan_srv = rospy.ServiceProxy('/wm_arm_driver/compute_manipulator_plan', computePlan)
+        self.make_plan_srv = rospy.ServiceProxy('/wm_arm_driver_node/compute_manipulator_plan', computePlan)
 
     def execute(self, ud):
         rospy.logdebug("Entered 'DROP_ARM_PLAN' state.")
 
         try:
-            req = computePlanRequest
-            req.planningSpace = computePlanRequest.CARTESIAN_SPACE
-            req.targetPose = ud.drop_target_pose
-            res = self.make_plan_srv(req)
+            res = self.make_plan_srv(targetPose=ud.drop_target_pose, jointPos=[], planningSpace=computePlanRequest.CARTESIAN_SPACE)
         except rospy.ServiceException:
             rospy.logerr("Failed to connect to the planning service.")
             return 'drop_arm_error'
 
-        if res == computePlanResponse.PLANNING_FAILURE:
+        if res.planningResult == computePlanResponse.PLANNING_FAILURE:
             rospy.logwarn("Planning failed. Target pose is probably unreachable.")
             return 'drop_arm_plan_failed'
 
@@ -349,7 +343,7 @@ class DropArmSupervisor(smach.State):
             rospy.logerr("Failed to connect to the supervising service.")
             return 'drop_arm_error'
 
-        if res == wm_supervisor.srv.robotStatusResponse.STATUS_OK:
+        if res.status == wm_supervisor.srv.robotStatusResponse.STATUS_OK:
             return 'drop_arm_ok'
 
         rospy.sleep(5.0)
@@ -364,21 +358,18 @@ class DropBasePlan(smach.State):
                                          'drop_base_error'],
                              input_keys=['drop_target_pose'],
                              output_keys=['drop_move_base_odom'])
-        self.make_plan_srv = rospy.ServiceProxy('/wm_arm_driver/compute_base_plan', computePlan)
+        self.make_plan_srv = rospy.ServiceProxy('/wm_arm_driver_node/compute_base_plan', computePlan)
 
     def execute(self, ud):
         rospy.logdebug("Entered 'DROP_BASE_PLAN' state.")
 
         try:
-            req = computePlanRequest
-            req.planningSpace = computePlanRequest.CARTESIAN_SPACE
-            req.targetPose = ud.drop_target_pose
-            res = self.make_plan_srv(req)
+            res = self.make_plan_srv(targetPose=ud.drop_target_pose, jointPos=[], planningSpace=computePlanRequest.CARTESIAN_SPACE)
         except rospy.ServiceException:
             rospy.logerr("Failed to connect to the planning service.")
             return 'drop_base_error'
 
-        if res == computePlanResponse.PLANNING_FAILURE:
+        if res.planningResult == computePlanResponse.PLANNING_FAILURE:
             rospy.logwarn("Base planning failed. Target pose is probably unreachable.")
             return 'drop_base_plan_failed'
 
@@ -392,10 +383,10 @@ class DropBasePlan(smach.State):
             drop_move_base_odom.pose.position.x = last_traj_point.positions[0]
             drop_move_base_odom.pose.position.y = last_traj_point.positions[1]
             q = tf_conversions.transformations.quaternion_from_euler(0.0, 0.0, last_traj_point.positions[2])
-            drop_move_base_odom.pose.orientation.x = q.x
-            drop_move_base_odom.pose.orientation.y = q.y
-            drop_move_base_odom.pose.orientation.z = q.z
-            drop_move_base_odom.pose.orientation.w = q.w
+            drop_move_base_odom.pose.orientation.x = q[0]
+            drop_move_base_odom.pose.orientation.y = q[1]
+            drop_move_base_odom.pose.orientation.z = q[2]
+            drop_move_base_odom.pose.orientation.w = q[3]
             ud.grasp_move_base_odom = drop_move_base_odom
 
             return 'drop_base_plan_succeeded'
@@ -408,21 +399,21 @@ class RetractArmPlan(smach.State):
                                              'retract_plan_error'],
                              input_keys=['retract_joint_pos'],
                              output_keys=['retract_plan'])
-        self.make_plan_srv = rospy.ServiceProxy('/wm_arm_driver/compute_manipulator_plan', computePlan)
+        self.make_plan_srv = rospy.ServiceProxy('/wm_arm_driver_node/compute_manipulator_plan', computePlan)
 
     def execute(self, ud):
         rospy.logdebug("Entered 'RETRACT_ARM_PLAN' state.")
 
         try:
-            req = computePlanRequest
+            req = computePlanRequest()
             req.planningSpace = computePlanRequest.JOINT_SPACE
             req.jointPos = ud.retract_joint_pos
-            res = self.make_plan_srv(req)
+            res = self.make_plan_srv(targetPose=None, jointPos = ud.retract_joint_pos, planningSpace=computePlanRequest.JOINT_SPACE)
         except rospy.ServiceException:
             rospy.logerr("Failed to connect to the planning service.")
             return 'retract_error'
 
-        if res == computePlanResponse.PLANNING_FAILURE:
+        if res.status == computePlanResponse.PLANNING_FAILURE:
             rospy.logwarn("Planning failed. Target pose is probably unreachable.")
             return 'retract_plan_failed'
 
@@ -447,7 +438,7 @@ class RetractArmSupervisor(smach.State):
             rospy.logerr("Failed to connect to the supervising service.")
             return 'retract_arm_error'
 
-        if res == wm_supervisor.srv.robotStatusResponse.STATUS_OK:
+        if res.status == wm_supervisor.srv.robotStatusResponse.STATUS_OK:
             return 'retract_arm_ok'
 
         rospy.sleep(5.0)
@@ -471,7 +462,7 @@ class DropBaseSupervisor(smach.State):
             rospy.logerr("Failed to connect to the supervising service.")
             return 'drop_base_error'
 
-        if res == wm_supervisor.srv.robotStatusResponse.STATUS_OK:
+        if res.status == wm_supervisor.srv.robotStatusResponse.STATUS_OK:
             return 'drop_base_ok'
 
         rospy.sleep(5.0)
@@ -553,29 +544,27 @@ if __name__ == '__main__':
 
         def ork_result_cb(userdata, status, result):
 
-            print status
-
-            if status == 'succeeded':
-                if len(result.objects) > 0:
-                    userdata.ork_object_array = result.objects
-                    userdata.ork_action_frame = result.header.frame_id
+            if status == GoalStatus.SUCCEEDED:
+                if len(result.recognized_objects.objects) > 0:
+                    userdata.ork_object_array = result.recognized_objects.objects
+                    userdata.ork_action_frame = result.recognized_objects.header.frame_id
                     return 'succeeded'
-            else:
-                return 'aborted'
+
+            return 'aborted'
 
         smach.StateMachine.add('INIT_STATE',
                                InitState(),
                                transitions={'init_done': 'SCAN_FOR_OBJECTS'})
 
         smach.StateMachine.add('SCAN_FOR_OBJECTS',
-                               SimpleActionState('object_recognition_server', # TODO get correct action server name
+                               SimpleActionState('/object_recognition/recognize_objects',
                                                  ObjectRecognitionAction,
                                                  result_cb=ork_result_cb,
                                                  output_keys={'ork_object_array',
                                                               'ork_action_frame'}),
                                transitions={'succeeded': 'SET_OBJECT_TARGET',
-                                            'aborted': 'SCAN_FOR_OBJECTS',
-                                            'preempted': 'SCAN_FOR_OBJECTS'},
+                                            'aborted': 'TEST_FAILED',  # TODO SCAN_FOR_OBJECTS
+                                            'preempted': 'TEST_FAILED'},   #TODO SCAN_FOR_OBJECTS
                                remapping={'ork_object_array': 'object_array',
                                           'ork_action_frame': 'ork_frame'})
 

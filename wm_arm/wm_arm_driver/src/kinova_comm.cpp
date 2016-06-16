@@ -75,11 +75,11 @@ namespace kinova
 			/*
 			 * TODO: make getParam() work and remove hard coded values
 			 */
-			jointsOffset_.push_back(30.55);
-			jointsOffset_.push_back(178.73);
-			jointsOffset_.push_back(202.89);
-			jointsOffset_.push_back(351.07);
-			jointsOffset_.push_back(212.86);
+			jointsOffset_.push_back(166.60);
+			jointsOffset_.push_back(89.25);
+			jointsOffset_.push_back(24.26);
+			jointsOffset_.push_back(350.85);
+			jointsOffset_.push_back(331.23);
 			jointsOffset_.push_back(0.0);
 		}
 

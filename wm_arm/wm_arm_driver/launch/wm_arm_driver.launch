@@ -19,7 +19,7 @@
 
 		<!-- home_position and joints_offset must be in degrees -->
 		<param name="home_position" value="[0.0, 0.0, 0.0, 0.0, 0.0]" />
-		<param name="joints_offset" value='[30.55, 178.73, 202.89, 351.07, 212.86, 0.0]' />		
+		<param name="joints_offset" value='[166.60, 89.25, 24.26, 350.85, 331.23, 0.0]' />		
 
 		<param name="max_torque_joint1" value="20" />
 		<param name="max_torque_joint2" value="20" />
