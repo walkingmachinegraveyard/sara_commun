@@ -97,6 +97,7 @@ namespace manipulator
 			{
 				result_.fifoEmpty = true;
 				actionServer_.setSucceeded(result_);
+				ROS_INFO("Goal reached.");
 			}
 			else
 			{
