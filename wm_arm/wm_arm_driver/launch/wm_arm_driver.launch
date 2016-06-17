@@ -13,8 +13,8 @@
 		<param name="manipulator_move_group_name" value="manipulator" />
 
 		<!-- max_velocity in degrees/second -->
-		<param name="max_velocity_joints123" value="10" />
-		<param name="max_velocity_joints456" value="10" />
+		<param name="max_velocity_joints123" value="20" />
+		<param name="max_velocity_joints456" value="20" />
 		<param name="joint_movement_synchronization" value="true" />
 
 		<!-- home_position and joints_offset must be in degrees -->
@@ -34,14 +34,14 @@
 		<param name="velocity_callback_rate" value="20" />
 
 		<!-- planner parameters -->
-		<param name="planning_time" value="20" />
-		<param name="planning_attempts" value="1" />
+		<param name="planning_time" value="10" />
+		<param name="planning_attempts" value="4" />
 		<param name="goal_position_tolerance" value="0.01" />
 		<param name="goal_orientation_tolerance" value="0.2" />
-		<param name="base_planner" value="BKPIECEkConfigDefault" />
-		<param name="manipulator_planner" value="BKPIECEkConfigDefault" />
+		<param name="base_planner" value="RRTConnectkConfigDefault" />
+		<param name="manipulator_planner" value="RRTConnectkConfigDefault" />
 
-		<param name="manipulator/kinematics_solver_timeout" value="1.0" />
+		<param name="manipulator/kinematics_solver_timeout" value="0.1" />
 		<param name="manipulator/solve_type" value="Speed" />
 
 		<!-- action server parameters -->
