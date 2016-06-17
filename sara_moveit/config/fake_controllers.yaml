@@ -1,17 +1,17 @@
 controller_list:
-  - name: fake_base_controller
+  - name: fake_manipulator_controller
     joints:
-      - base_x_trans_joint
-      - base_y_trans_joint
-      - base_revolute_joint
       - sternoclavicular_joint
       - shoulder_joint
       - shoulderRot_joint
       - elbow_joint
       - WristRot_joint
       - Wrist_joint
-  - name: fake_manipulator_controller
+  - name: fake_base_controller
     joints:
+      - base_x_trans_joint
+      - base_y_trans_joint
+      - base_revolute_joint
       - sternoclavicular_joint
       - shoulder_joint
       - shoulderRot_joint
