@@ -142,10 +142,10 @@ class ArmPlanGrasp(smach.State):
         ta.pose.orientation.z = -0.525026
         ta.pose.orientation.w = 0.756856
 
-        collision_object.primitive_poses.append(ta.pose)
+        collision_object.primitive_poses.append(ud.grasp_target_pose.pose)
 
         try:
-            res = self.make_plan_srv(targetPose=ta, jointPos=[], planningSpace=computePlanRequest.CARTESIAN_SPACE, collisionObject=collision_object)
+            res = self.make_plan_srv(targetPose=ud.grasp_target_pose, jointPos=[], planningSpace=computePlanRequest.CARTESIAN_SPACE, collisionObject=collision_object)
         except rospy.ServiceException:
             rospy.logerr("Failed to connect to the planning service.")
             return 'grasp_arm_error'
@@ -568,7 +568,7 @@ if __name__ == '__main__':
                     return 'succeeded'
 
             return 'aborted'
-        """
+
         smach.StateMachine.add('INIT_STATE',
                                InitState(),
                                transitions={'init_done': 'SCAN_FOR_OBJECTS'})
@@ -594,7 +594,7 @@ if __name__ == '__main__':
                                           'sot_picked_objects': 'picked_objects',
                                           'sot_target_object': 'target_object',
                                           'sot_grasp_target_pose': 'grasp_target_pose'})
-        """
+
         smach.StateMachine.add('GRASP_ARM_PLAN',
                                ArmPlanGrasp(),
                                transitions={'grasp_arm_plan_succeeded': 'GRASP_ARM_SUPERVISOR',
