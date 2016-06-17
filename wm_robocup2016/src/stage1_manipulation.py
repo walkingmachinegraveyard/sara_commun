@@ -8,7 +8,8 @@ from move_base_msgs.msg import MoveBaseAction
 from wm_arm_msgs.msg import executePlanAction
 from wm_arm_msgs.srv import computePlan, computePlanResponse, computePlanRequest
 from geometry_msgs.msg import PoseStamped
-from moveit_msgs.msg import RobotTrajectory
+from moveit_msgs.msg import RobotTrajectory, CollisionObject
+from shape_msgs.msg import SolidPrimitive
 import tf_conversions
 from object_recognition_msgs.msg import ObjectRecognitionAction, ObjectRecognitionGoal, RecognizedObjectArray
 from object_recognition_msgs.srv import GetObjectInformation, GetObjectInformationRequest
@@ -119,8 +120,32 @@ class ArmPlanGrasp(smach.State):
     def execute(self, ud):
         rospy.logdebug("Entered 'GRASP_ARM_PLAN' state.")
 
+        collision_object = CollisionObject()
+        collision_object.header.frame_id = 'odom'
+        collision_object.id = 'coffee'
+        primitive = SolidPrimitive()
+        primitive.type = primitive.CYLINDER
+        primitive.dimensions.append(0.15)
+        primitive.dimensions.append(0.06)
+        collision_object.primitives.append(primitive)
+
+        collision_object.operation = collision_object.ADD
+
+        ta = PoseStamped()
+        ta.header.frame_id = 'odom'
+        ta.header.stamp = rospy.Time.now()
+        ta.pose.position.x = 0.843708
+        ta.pose.position.y = -0.0977909
+        ta.pose.position.z = 1.10764
+        ta.pose.orientation.x = -0.126284
+        ta.pose.orientation.y = -0.368197
+        ta.pose.orientation.z = -0.525026
+        ta.pose.orientation.w = 0.756856
+
+        collision_object.primitive_poses.append(ta.pose)
+
         try:
-            res = self.make_plan_srv(targetPose=ud.grasp_target_pose, jointPos=[], planningSpace=computePlanRequest.CARTESIAN_SPACE)
+            res = self.make_plan_srv(targetPose=ta, jointPos=[], planningSpace=computePlanRequest.CARTESIAN_SPACE, collisionObject=collision_object)
         except rospy.ServiceException:
             rospy.logerr("Failed to connect to the planning service.")
             return 'grasp_arm_error'
@@ -508,14 +533,6 @@ if __name__ == '__main__':
 
     # target object pose in odom frame
     sm.userdata.grasp_target_pose = PoseStamped()
-    sm.userdata.grasp_target_pose.header.frame_id = 'odom'
-    sm.userdata.grasp_target_pose.pose.position.x = 2.04
-    sm.userdata.grasp_target_pose.pose.position.y = -1.25
-    sm.userdata.grasp_target_pose.pose.position.z = 1.78
-    sm.userdata.grasp_target_pose.pose.orientation.x = 0.0
-    sm.userdata.grasp_target_pose.pose.orientation.y = 0.0
-    sm.userdata.grasp_target_pose.pose.orientation.z = 0.0
-    sm.userdata.grasp_target_pose.pose.orientation.w = 1.0
 
     # drop location pose in odom frame
     sm.userdata.drop_target_pose = PoseStamped()
@@ -537,7 +554,7 @@ if __name__ == '__main__':
     sm.userdata.ork_goal.use_roi = False
     sm.userdata.ork_frame = ''
 
-    sm.userdata.picked_objects = []
+    sm.userdata.picked_objects = ['apple']
     sm.userdata.target_object = ''
 
     with sm:
@@ -551,7 +568,7 @@ if __name__ == '__main__':
                     return 'succeeded'
 
             return 'aborted'
-
+        """
         smach.StateMachine.add('INIT_STATE',
                                InitState(),
                                transitions={'init_done': 'SCAN_FOR_OBJECTS'})
@@ -577,7 +594,7 @@ if __name__ == '__main__':
                                           'sot_picked_objects': 'picked_objects',
                                           'sot_target_object': 'target_object',
                                           'sot_grasp_target_pose': 'grasp_target_pose'})
-
+        """
         smach.StateMachine.add('GRASP_ARM_PLAN',
                                ArmPlanGrasp(),
                                transitions={'grasp_arm_plan_succeeded': 'GRASP_ARM_SUPERVISOR',
