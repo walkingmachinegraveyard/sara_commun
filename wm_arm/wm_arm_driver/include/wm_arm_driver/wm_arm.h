@@ -19,6 +19,8 @@
 #include "wm_arm_msgs/computePlan.h"
 
 #include <moveit/move_group_interface/move_group.h>
+#include <moveit/planning_scene_interface/planning_scene_interface.h>
+#include "moveit_msgs/CollisionObject.h"
 
 #include "ros/ros.h"
 #include "sensor_msgs/JointState.h"

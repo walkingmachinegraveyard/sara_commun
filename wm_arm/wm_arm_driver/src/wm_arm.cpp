@@ -7,6 +7,7 @@
 
 #include "wm_arm_driver/wm_arm.h"
 #include <moveit/planning_scene_interface/planning_scene_interface.h>
+#include <vector>
 
 namespace manipulator
 {
@@ -36,13 +37,11 @@ namespace manipulator
 		manipulatorGroupActiveJoints_ = manipulatorMoveGroup_.getActiveJoints();
 		manipulatorGroupNbJoints_ = manipulatorGroupActiveJoints_.size();
 
-		for (unsigned int j = 0; j < baseGroupNbJoints_; j++)
-		{
-			ROS_INFO("Joint %d name is %s", j, baseGroupActiveJoints_.at(j).c_str());
-		}
-
 		baseEndEffectorName_ = baseMoveGroup_.getEndEffector();
 		manipulatorEndEffectorName_ = manipulatorMoveGroup_.getEndEffector();
+
+		baseMoveGroup_.allowReplanning(true);
+		manipulatorMoveGroup_.allowReplanning(true);
 
 		// get parameters from the parameter server
 		double tmpTorque;
@@ -192,10 +191,6 @@ namespace manipulator
 
 		else
 		{
-			std::vector<moveit_msgs::CollisionObject> collisionObjects;
-			collisionObjects.push_back(req.collisionObject);
-			planningSceneInterface_.addCollisionObjects(collisionObjects);
-
 			moveit::planning_interface::MoveGroup::Plan myPlan;
 
 			bool success = computeBasePlan(req.targetPose, myPlan);
@@ -224,6 +219,12 @@ namespace manipulator
 			std::vector<moveit_msgs::CollisionObject> collisionObjects;
 			collisionObjects.push_back(req.collisionObject);
 			planningSceneInterface_.addCollisionObjects(collisionObjects);
+
+			ros::Duration(0.5).sleep();
+
+			manipulatorMoveGroup_.attachObject(req.collisionObject.id, manipulatorMoveGroup_.getEndEffectorLink());
+
+			ros::Duration(0.5).sleep();
 
 			success = computeManipulatorPlan(req.targetPose, myPlan);
 		}
