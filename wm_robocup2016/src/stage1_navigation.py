@@ -269,7 +269,7 @@ class AnnounceWpReached(smach.State):
     def execute(self, ud):
         rospy.logdebug("Entered 'ANNOUNCE_WP_REACHED' state.")
 
-        tts_msg = String
+        tts_msg = String()
 
         if ud.aw_target_wp == 3:
             tts_msg.data = " I have reached " + ud.aw_wp_str[ud.aw_target_wp - 1] + "."
@@ -297,7 +297,7 @@ class TellInstructions(smach.State):
         # TODO
         # call service to lock on target
 
-        tts_msg = String
+        tts_msg = String()
         tts_msg.data = "Hello, my name is SARA. I will follow you to the next waypoint once I am ready."
         self.tts_pub.publish(tts_msg)
         tts_msg.data = "Please stand still, approximately 1.5 meter in front of me, facing me, while I memorize your features."
