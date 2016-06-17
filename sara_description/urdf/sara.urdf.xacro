@@ -289,14 +289,7 @@
       <origin xyz="0 0 0" rpy="0 0 0" />
     </xacro:robotiq_c2_model>
 
-	<link name="grasp_link" >
-		<visual>
-			<geometry>
-				<sphere radius="0.01" />
-			</geometry>
-			<origin xyz="0 0 0" rpy="0 0 0" />
-		</visual>
-	</link>
+	<link name="grasp_link" />
 
   <!-- JOINTS -->
     <joint name="base_x_trans_joint" type="prismatic" >
