@@ -1,10 +1,10 @@
 DWAPlannerROS:
  # robot configuration parameters
-  acc_lim_x: 6
-  acc_lim_y: 6
+  acc_lim_x: 5
+  acc_lim_y: 5
   acc_lim_th: 4
   max_trans_vel: 0.8
-  min_trans_vel: 0.2
+  min_trans_vel: 0.1
 
   max_vel_x: 0.8
   min_vel_x: 0.2
@@ -19,7 +19,7 @@ DWAPlannerROS:
   latch_xy_goal_tolerance: true
 
  # forward simulation parameters
-  sim_time: 1.8
+  sim_time: 1.4
   sim_granularity: 0.05    # default: 0.025
   vx_samples: 10 # default: 3
   vy_samples: 10 # default: 10
