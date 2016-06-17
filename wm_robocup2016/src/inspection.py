@@ -44,8 +44,6 @@ class WaitForStart(smach.State):
 
     def execute(self, ud):
 
-        return 'begin_inspection'
-        """
         while True:
             self.mutex.acquire()
             if self.start_signal_received:
@@ -55,8 +53,7 @@ class WaitForStart(smach.State):
             self.mutex.release()
             rospy.sleep(rospy.Duration(1))
 
-        # TODO
-        """
+        return 'begin_inspection'
 
 
 class InspectionPoseSupervisor(smach.State):

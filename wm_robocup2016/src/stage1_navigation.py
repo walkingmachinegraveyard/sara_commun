@@ -26,7 +26,11 @@ class InitState(smach.State):
         rospy.logdebug("Entered 'INIT_STATE' state.")
 
         neck_cmd = Float64()
-        neck_cmd.data = 0.0
+        neck_cmd.data = -2.0
+        self.neck_pub.publish(neck_cmd)
+
+        rospy.sleep(rospy.Duration(2))
+        neck_cmd.data = -0.7
         self.neck_pub.publish(neck_cmd)
 
         return 'init_done'
@@ -57,7 +61,7 @@ class WaitDoor(smach.State):
 
         self.iter += 1
         if self.iter < 3:
-            rospy.sleep(10.0)
+            rospy.sleep(4.0)
             return 'door_is_closed'
         else:
             return 'wait_timed_out'
@@ -202,9 +206,16 @@ class ScanFace(smach.State):
 
         self.face_detector_ac = actionlib.SimpleActionClient('face_positions', FaceDetectorAction)
         self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1, latch=True)
+        self.neck_pub = rospy.Publisher('neckHead_controller/command', Float64, queue_size=1, latch=True)
 
     def execute(self, ud):
         rospy.logdebug("Entered 'SCAN_FACE' state.")
+
+        neck_cmd = Float64()
+        neck_cmd.data = 0.0
+        self.neck_pub.publish(neck_cmd)
+
+        rospy.sleep(rospy.Duration(2))
 
         tts_msg = String()
 
@@ -501,7 +512,7 @@ if __name__ == '__main__':
 
         smach.StateMachine.add('WAIT_FOR_OPEN_DOOR',
                                WaitDoor(),
-                               transitions={'wait_timed_out': 'OVERRIDE_START',
+                               transitions={'wait_timed_out': 'START_OVERRIDE',
                                             'door_is_open': 'ANNOUNCE_ACTION',
                                             'door_is_closed': 'WAIT_FOR_OPEN_DOOR'})
 

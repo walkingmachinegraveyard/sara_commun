@@ -97,7 +97,8 @@ class SetObjectTarget(smach.State):
                     # get the object's pose in odom frame
                     ud.sot_grasp_target_pose = do_transform_pose(ud.sot_object_array[i].pose.pose, transform)
                     ud.sot_target_object = new_target
-                    ud.sot_grasp_target_pose.pose.position.z += 0.1
+                    ud.sot_grasp_target_pose.pose.position.z += 0.06
+                    ud.sot_grasp_target_pose.pose.position.x -= 0.12
                     print "OBJECT NAME : " + new_target
                     print "POSE : "
                     print ud.sot_grasp_target_pose
