@@ -77,7 +77,7 @@ namespace manipulator
 
 			moveit::planning_interface::MoveGroup baseMoveGroup_;
 			moveit::planning_interface::MoveGroup manipulatorMoveGroup_;
-			moveit::planning_interface::PlanningSceneInterface planningSceneInterface_;
+		//	moveit::planning_interface::PlanningSceneInterface planningSceneInterface_;
 	};
 } //namespace manipulator
 
