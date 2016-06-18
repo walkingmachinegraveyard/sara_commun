@@ -19,8 +19,56 @@ from tf2_geometry_msgs import do_transform_pose
 from robotiq_c_model_control.msg import CModel_robot_output as eef_cmd
 from robotiq_c_model_control.msg import CModel_robot_input as eef_status
 import threading
-from std_msgs.msg import Float64
+from std_msgs.msg import Float64, Int8, String
 from actionlib_msgs.msg import GoalStatus
+
+
+class WaitForStart(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['do_init'])
+        self.start_button_sub = rospy.Subscriber('start_button', Int8, self.start_button_cb, queue_size=4)
+        self.voice_recognizer_sub = rospy.Subscriber('output', String, self.voice_recognizer_cb, queue_size=4)
+
+        self.mutex = threading.Lock()
+        self.proceed = False
+
+    def voice_recognizer_cb(self, msg):
+
+        self.mutex.acquire()
+
+        if msg.data.lower().find('sara') != -1 or msg.data.lower().find('sarah') != -1:
+            if msg.data.find('begin') != -1 or msg.data.find('start'):
+                self.proceed = True
+
+        self.mutex.release()
+
+        return
+
+    def start_button_sub(self, msg):
+
+        self.mutex.acquire()
+
+        if msg.data == 1:
+            self.proceed = True
+
+        self.mutex.release()
+
+        return
+
+    def execute(self, ud):
+        rospy.logdebug("Entered 'WAIT_FOR_START' state.")
+
+        while True:
+            self.mutex.acquire()
+
+            if self.proceed:
+                self.mutex.release()
+                break
+
+            self.mutex.release()
+            rospy.sleep(rospy.Duration(1))
+
+        return 'do_init'
 
 
 class InitState(smach.State):
@@ -612,6 +660,10 @@ if __name__ == '__main__':
                     return 'succeeded'
 
             return 'aborted'
+
+        smach.StateMachine.add('WAIT_FOR_START',
+                               WaitForStart(),
+                               transitions={'do_init': 'INIT_STATE'})
 
         smach.StateMachine.add('INIT_STATE',
                                InitState(),
