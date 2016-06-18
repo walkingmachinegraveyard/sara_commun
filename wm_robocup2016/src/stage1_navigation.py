@@ -6,12 +6,12 @@ from smach_ros import SimpleActionState, IntrospectionServer
 import wm_supervisor.srv
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from nav_msgs.srv import GetPlan
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped
 from std_msgs.msg import String, Float64, Int8
 from math import sqrt, atan2
 import tf_conversions
-from tf2_ros import Buffer, TransformListener, ExtrapolationException, LookupException, ConnectivityException, \
-    InvalidArgumentException
+from tf2_ros import Buffer, TransformListener
+from tf2_geometry_msgs import do_transform_pose
 import threading
 from open_door_detector.srv import detect_open_door, detect_open_doorRequest
 import actionlib
@@ -22,9 +22,21 @@ class InitState(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['init_done'])
         self.neck_pub = rospy.Publisher('neckHead_controller/command', Float64, queue_size=1, latch=True)
+        self.amcl_initial_pose_pub = rospy.Publisher('initialpose', PoseWithCovarianceStamped, queue_size=1, latch=True)
 
     def execute(self, ud):
         rospy.logdebug("Entered 'INIT_STATE' state.")
+
+        initial_pose = PoseWithCovarianceStamped()
+        initial_pose.header.frame_id = 'map'
+        initial_pose.pose.pose.position.x = 1.0
+        initial_pose.pose.pose.position.y = 2.0
+        initial_pose.pose.pose.orientation.x = 0.0
+        initial_pose.pose.pose.orientation.y = 0.0
+        initial_pose.pose.pose.orientation.z = 0.0
+        initial_pose.pose.pose.orientation.w = 1.0
+
+        self.amcl_initial_pose_pub.publish(initial_pose)
 
         neck_cmd = Float64()
         neck_cmd.data = -2.0
@@ -172,11 +184,7 @@ class AttemptMonitor(smach.State):
                 we consider the robot has reached the target if it is within grasp distance
                 """
 
-                try:
-                    tf_stamped = self.tf_buffer.lookup_transform('base_link', 'map', rospy.Time(0))
-                except (LookupException, ConnectivityException, ExtrapolationException, InvalidArgumentException):
-                    rospy.logerr("Could not get transform from 'base_link' to 'map'.")
-                    return 'monitor_failed'
+                tf_stamped = self.tf_buffer.lookup_transform('map', 'base_link', rospy.Time(0))
 
                 if sqrt((ud.ma_waypoints[1].pose.position.x - tf_stamped.transform.translation.x) ** 2 +
                         (ud.ma_waypoints[1].pose.position.y - tf_stamped.transform.translation.y) ** 2) < self.grasp_distance:
@@ -274,6 +282,8 @@ class WaitForObstacle(smach.State):
                              output_keys=['wait_target_wp'])
         self.move_base_srv = rospy.ServiceProxy('/move_base/make_plan', GetPlan)  # TODO verify service name
         self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1, latch=True)
+        self.tf_buffer = Buffer()
+        self.tf_listener = TransformListener(self.tf_buffer)
 
     def execute(self, ud):
         rospy.logdebug("Entered 'WAIT_FOR_OBSTACLE' state.")
@@ -283,7 +293,8 @@ class WaitForObstacle(smach.State):
 
         start_pose = PoseStamped()
         start_pose.header.frame_id = 'base_link'
-        start_pose.header.stamp = rospy.Time.now()
+        tf_stamped = self.tf_buffer.lookup_transform('map', 'base_link', rospy.Time(0))
+        start_pose = do_transform_pose(start_pose, tf_stamped)
 
         goal_pose = ud.wait_waypoints[1]  # wp2
 
@@ -525,11 +536,7 @@ if __name__ == '__main__':
 
             # loop until we get a valid transform
             while True:
-                try:
-                    tf_stamped = tf_buffer.lookup_transform('base_link', 'map', rospy.Time.now(), rospy.Time(10))
-                    break
-                except (LookupException, ConnectivityException, ExtrapolationException, InvalidArgumentException):
-                    rospy.logerr("Could not get transform from 'base_link' to 'map'.")
+                tf_stamped = tf_buffer.lookup_transform('map', 'base_link', rospy.Time.now(), rospy.Time(10))
 
             # we don't want the robot to translate, only to rotate
             align_goal.target_pose.pose.position.x = tf_stamped.transform.translation.x

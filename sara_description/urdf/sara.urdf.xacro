@@ -300,27 +300,27 @@
 
   <!-- JOINTS -->
     <joint name="base_x_trans_joint" type="prismatic" >
-	<parent link="base_link" type="prismatic" />
-	<child link="base_x_trans_link" />
-	<origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
-	<limit effort="1000.0" lower="-0.10" upper="1.5" velocity="1.0"/>
-	<axis xyz="1 0 0" />
+		<parent link="base_link" type="prismatic" />
+		<child link="base_x_trans_link" />
+		<origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+		<limit effort="1000.0" lower="-0.40" upper="1.0" velocity="1.0"/>
+		<axis xyz="1 0 0" />
     </joint>
 
     <joint name="base_y_trans_joint" type="prismatic" >
-	<parent link="base_x_trans_link" type="prismatic" />
-	<child link="base_y_trans_link" />
-	<origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
-	<limit effort="1000.0" lower="-1.5" upper="1.5" velocity="1.0"/>
-	<axis xyz="0 1 0" />
+		<parent link="base_x_trans_link" type="prismatic" />
+		<child link="base_y_trans_link" />
+		<origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+		<limit effort="1000.0" lower="-1.0" upper="1.0" velocity="1.0"/>
+		<axis xyz="0 1 0" />
     </joint>
 
     <joint name="base_revolute_joint" type="revolute" >
-	<parent link="base_y_trans_link" />
-	<child link="real_base_link" />
-	<limit effort="1000.0" lower="-1.5708" upper="1.5708" velocity="0.5"/>
-	<origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
-	<axis xyz="0 0 1" />
+		<parent link="base_y_trans_link" />
+		<child link="real_base_link" />
+		<limit effort="1000.0" lower="-1.5708" upper="1.5708" velocity="0.5"/>
+		<origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+		<axis xyz="0 0 1" />
     </joint>
 
     <joint name="laser_joint" type="fixed">
