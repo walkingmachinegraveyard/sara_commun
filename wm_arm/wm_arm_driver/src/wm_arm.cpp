@@ -6,8 +6,6 @@
  */
 
 #include "wm_arm_driver/wm_arm.h"
-#include <moveit/planning_scene_interface/planning_scene_interface.h>
-#include <vector>
 
 namespace manipulator
 {
@@ -222,7 +220,7 @@ namespace manipulator
 
 //			ros::Duration(0.5).sleep();
 
-//			manipulatorMoveGroup_.attachObject(req.collisionObject.id);
+//			manipulatorMoveGroup_.attachObject(collisionObjects.front().id, manipulatorMoveGroup_.getEndEffectorLink(), endEffectorLinks_);
 
 //			ros::Duration(0.5).sleep();
 
