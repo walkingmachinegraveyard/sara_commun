@@ -6,8 +6,6 @@
  */
 
 #include "wm_arm_driver/wm_arm.h"
-#include <moveit/planning_scene_interface/planning_scene_interface.h>
-#include <vector>
 
 namespace manipulator
 {
@@ -17,8 +15,8 @@ namespace manipulator
 		return (double)(M_PI * angle / 180.0);
 	}
 
-	wmArm::wmArm(ros::NodeHandle& nh, kinova::kinovaComm& kComm, const moveit::planning_interface::MoveGroup::Options& baseOpt, const moveit::planning_interface::MoveGroup::Options& manipulatorOpt)
-				:nh_(nh), kComm_(kComm), baseMoveGroup_(baseOpt), manipulatorMoveGroup_(manipulatorOpt)
+	wmArm::wmArm(ros::NodeHandle& nh, kinova::kinovaComm& kComm, const moveit::planning_interface::MoveGroup::Options& manipulatorOpt, const moveit::planning_interface::MoveGroup::Options& baseOpt)
+				:nh_(nh), kComm_(kComm), manipulatorMoveGroup_(manipulatorOpt), baseMoveGroup_(baseOpt)
 	{
 		torqueFault_ = false;
 
@@ -216,15 +214,15 @@ namespace manipulator
 
 		if (req.planningSpace == req.CARTESIAN_SPACE)
 		{
-			std::vector<moveit_msgs::CollisionObject> collisionObjects;
-			collisionObjects.push_back(req.collisionObject);
-			planningSceneInterface_.addCollisionObjects(collisionObjects);
+//			std::vector<moveit_msgs::CollisionObject> collisionObjects;
+//			collisionObjects.push_back(req.collisionObject);
+//			planningSceneInterface_.addCollisionObjects(collisionObjects);
 
-			ros::Duration(0.5).sleep();
+//			ros::Duration(0.5).sleep();
 
-			manipulatorMoveGroup_.attachObject(req.collisionObject.id, manipulatorMoveGroup_.getEndEffectorLink());
+//			manipulatorMoveGroup_.attachObject(collisionObjects.front().id, manipulatorMoveGroup_.getEndEffectorLink(), endEffectorLinks_);
 
-			ros::Duration(0.5).sleep();
+//			ros::Duration(0.5).sleep();
 
 			success = computeManipulatorPlan(req.targetPose, myPlan);
 		}

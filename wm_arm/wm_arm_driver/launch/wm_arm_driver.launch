@@ -34,10 +34,10 @@
 		<param name="velocity_callback_rate" value="20" />
 
 		<!-- planner parameters -->
-		<param name="planning_time" value="10" />
+		<param name="planning_time" value="12" />
 		<param name="planning_attempts" value="4" />
 		<param name="goal_position_tolerance" value="0.01" />
-		<param name="goal_orientation_tolerance" value="0.2" />
+		<param name="goal_orientation_tolerance" value="0.4" />
 		<param name="base_planner" value="RRTConnectkConfigDefault" />
 		<param name="manipulator_planner" value="RRTConnectkConfigDefault" />
 

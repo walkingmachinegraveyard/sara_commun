@@ -75,9 +75,11 @@ namespace manipulator
 			float maxTorqJoint1_, maxTorqJoint2_, maxTorqJoint3_, maxTorqJoint4_, maxTorqJoint5_, maxTorqJoint6_;
 			std::vector<float> jointsOffset_;
 
-			moveit::planning_interface::MoveGroup baseMoveGroup_;
 			moveit::planning_interface::MoveGroup manipulatorMoveGroup_;
-			moveit::planning_interface::PlanningSceneInterface planningSceneInterface_;
+			moveit::planning_interface::MoveGroup baseMoveGroup_;
+//			moveit::planning_interface::PlanningSceneInterface planningSceneInterface_;
+
+//			std::vector<std::string> endEffectorLinks_;
 	};
 } //namespace manipulator
 

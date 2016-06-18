@@ -46,7 +46,7 @@ int main(int argc, char **argv)
 
 	manipulator::executePlanActionServer executePlanAS(nh, kComm, actionName);
 
-	manipulator::wmArm wArm(nh, kComm, baseOpt, manipulatorOpt);
+	manipulator::wmArm wArm(nh, kComm, manipulatorOpt, baseOpt);
 
 	while(ros::ok())
 	{

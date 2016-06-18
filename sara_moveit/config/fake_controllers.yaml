@@ -1,4 +1,12 @@
 controller_list:
+  - name: fake_manipulator_controller
+    joints:
+      - sternoclavicular_joint
+      - shoulder_joint
+      - shoulderRot_joint
+      - elbow_joint
+      - WristRot_joint
+      - Wrist_joint
   - name: fake_base_controller
     joints:
       - base_x_trans_joint
@@ -10,11 +18,6 @@ controller_list:
       - elbow_joint
       - WristRot_joint
       - Wrist_joint
-  - name: fake_manipulator_controller
+  - name: fake_gripper_controller
     joints:
-      - sternoclavicular_joint
-      - shoulder_joint
-      - shoulderRot_joint
-      - elbow_joint
-      - WristRot_joint
-      - Wrist_joint
+      - robotiq_85_left_knuckle_joint

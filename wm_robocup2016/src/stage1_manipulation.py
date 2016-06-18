@@ -19,15 +19,65 @@ from tf2_geometry_msgs import do_transform_pose
 from robotiq_c_model_control.msg import CModel_robot_output as eef_cmd
 from robotiq_c_model_control.msg import CModel_robot_input as eef_status
 import threading
-from std_msgs.msg import Float64
+from std_msgs.msg import Float64, Int8, String
 from actionlib_msgs.msg import GoalStatus
+
+
+class WaitForStart(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['do_init'])
+        self.start_button_sub = rospy.Subscriber('start_button', Int8, self.start_button_cb, queue_size=4)
+        self.voice_recognizer_sub = rospy.Subscriber('output', String, self.voice_recognizer_cb, queue_size=4)
+
+        self.mutex = threading.Lock()
+        self.proceed = False
+
+    def voice_recognizer_cb(self, msg):
+
+        self.mutex.acquire()
+
+        if msg.data.lower().find('sara') != -1 or msg.data.lower().find('sarah') != -1:
+            if msg.data.find('begin') != -1 or msg.data.find('start'):
+                self.proceed = True
+
+        self.mutex.release()
+
+        return
+
+    def start_button_sub(self, msg):
+
+        self.mutex.acquire()
+
+        if msg.data == 1:
+            self.proceed = True
+
+        self.mutex.release()
+
+        return
+
+    def execute(self, ud):
+        rospy.logdebug("Entered 'WAIT_FOR_START' state.")
+
+        while True:
+            self.mutex.acquire()
+
+            if self.proceed:
+                self.mutex.release()
+                break
+
+            self.mutex.release()
+            rospy.sleep(rospy.Duration(1))
+
+        return 'do_init'
 
 
 class InitState(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['init_done'])
+        smach.State.__init__(self, outcomes=['init_move_arm', 'init_scan_objects'],
+                             output_keys=['init_arm_plan'])
         self.eef_pub = rospy.Publisher('/CModelRobotOutput', eef_cmd, queue_size=1, latch=True)
         self.neck_pub = rospy.Publisher('neckHead_controller/command', Float64, queue_size=1, latch=True)
+        self.make_plan_srv = rospy.ServiceProxy('/wm_arm_driver_node/compute_manipulator_plan', computePlan)
 
     def execute(self, ud):
         rospy.logdebug("Entered 'INIT_STATE' state.")
@@ -47,7 +97,45 @@ class InitState(smach.State):
 
         rospy.sleep(rospy.Duration(10))
 
-        return 'init_done'
+        try:
+            res = self.make_plan_srv(targetPose=None, jointPos=[0.0, 0.0, 0.80, -1.80, 0.0, 0.0],
+                                     planningSpace=computePlanRequest.JOINT_SPACE, collisionObject=None)
+        except rospy.ServiceException:
+            rospy.logerr("Failed to connect to the planning service.")
+            return 'init_scan_objects'
+
+        if res.planningResult == computePlanResponse.PLANNING_FAILURE:
+            rospy.logwarn("Arm planning failed.")
+            return 'init_scan_objects'
+
+        else:
+            ud.init_arm_plan = res.trajectory
+            rospy.sleep(rospy.Duration(30))
+            return 'init_move_arm'
+
+
+class InitSupervisor(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['init_arm_estop',
+                                             'init_arm_ok',
+                                             'init_arm_error'])
+        self.supervisor_srv = rospy.ServiceProxy('robot_status', wm_supervisor.srv.robotStatus)
+
+    def execute(self, ud):
+        rospy.logdebug("Entered 'INIT_SUPERVISOR' state.")
+
+        try:
+            res = self.supervisor_srv()
+        except rospy.ServiceException:
+            rospy.logerr("Failed to connect to the supervising service.")
+            return 'init_arm_error'
+
+        if res.status == wm_supervisor.srv.robotStatusResponse.STATUS_OK:
+            return 'init_arm_ok'
+
+        rospy.sleep(5.0)
+
+        return 'init_arm_estop'
 
 
 class SetObjectTarget(smach.State):
@@ -97,7 +185,9 @@ class SetObjectTarget(smach.State):
                     # get the object's pose in odom frame
                     ud.sot_grasp_target_pose = do_transform_pose(ud.sot_object_array[i].pose.pose, transform)
                     ud.sot_target_object = new_target
-                    ud.sot_grasp_target_pose.pose.position.z += 0.1
+                    ud.sot_grasp_target_pose.pose.position.z += 0.06
+                    ud.sot_grasp_target_pose.pose.position.x -= 0.04
+                    ud.sot_grasp_target_pose.pose.position.y -= 0.03
                     print "OBJECT NAME : " + new_target
                     print "POSE : "
                     print ud.sot_grasp_target_pose
@@ -197,6 +287,8 @@ class BasePlanGrasp(smach.State):
             grasp_move_base_odom.pose.orientation.z = q[2]
             grasp_move_base_odom.pose.orientation.w = q[3]
             ud.grasp_move_base_odom = grasp_move_base_odom
+
+            print ud.grasp_move_base_odom
 
             rospy.sleep(rospy.Duration(30))
 
@@ -569,9 +661,30 @@ if __name__ == '__main__':
 
             return 'aborted'
 
+        smach.StateMachine.add('WAIT_FOR_START',
+                               WaitForStart(),
+                               transitions={'do_init': 'INIT_STATE'})
+
         smach.StateMachine.add('INIT_STATE',
                                InitState(),
-                               transitions={'init_done': 'SCAN_FOR_OBJECTS'})
+                               transitions={'init_move_arm': 'INIT_SUPERVISOR',
+                                            'init_scan_objects': 'SCAN_FOR_OBJECTS'},
+                               remapping={'init_arm_plan': 'arm_plan'})
+
+        smach.StateMachine.add('INIT_SUPERVISOR',
+                               InitSupervisor(),
+                               transitions={'init_arm_estop': 'INIT_SUPERVISOR',
+                                            'init_arm_ok': 'INIT_ARM',
+                                            'init_arm_error': 'INIT_SUPERVISOR'})
+
+        smach.StateMachine.add('INIT_ARM',
+                               SimpleActionState('/wm_arm_driver_node/execute_plan',
+                                                 executePlanAction,
+                                                 goal_slots=['trajectory']),
+                               transitions={'succeeded': 'SCAN_FOR_OBJECTS',
+                                            'aborted': 'SCAN_FOR_OBJECTS',
+                                            'preempted': 'SCAN_FOR_OBJECTS'},
+                               remapping={'trajectory': 'arm_plan'})
 
         smach.StateMachine.add('SCAN_FOR_OBJECTS',
                                SimpleActionState('/object_recognition/recognize_objects',

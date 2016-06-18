@@ -5,6 +5,7 @@ import smach
 from smach_ros import SimpleActionState, IntrospectionServer
 import wm_supervisor.srv
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
+from nav_msgs.srv import GetPlan
 from geometry_msgs.msg import PoseStamped
 from std_msgs.msg import String, Float64, Int8
 from math import sqrt, atan2
@@ -26,7 +27,11 @@ class InitState(smach.State):
         rospy.logdebug("Entered 'INIT_STATE' state.")
 
         neck_cmd = Float64()
-        neck_cmd.data = 0.0
+        neck_cmd.data = -2.0
+        self.neck_pub.publish(neck_cmd)
+
+        rospy.sleep(rospy.Duration(2))
+        neck_cmd.data = -0.7
         self.neck_pub.publish(neck_cmd)
 
         return 'init_done'
@@ -37,9 +42,14 @@ class WaitDoor(smach.State):
         smach.State.__init__(self, outcomes=['wait_timed_out', 'door_is_open', 'door_is_closed'])
         self.door_detector_srv = rospy.ServiceProxy('/detect_open_door', detect_open_door)
         self.iter = 0
+        self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1, latch=True)
 
     def execute(self, ud):
         rospy.logdebug("Entered 'WAIT_FOR_OPEN_DOOR' state.")
+
+        tts_msg = String()
+        tts_msg.data = "I am ready to begin the navigation test."
+        self.tts_pub.publish(tts_msg)
 
         try:
             req = detect_open_doorRequest()
@@ -57,9 +67,11 @@ class WaitDoor(smach.State):
 
         self.iter += 1
         if self.iter < 3:
-            rospy.sleep(10.0)
+            rospy.sleep(4.0)
             return 'door_is_closed'
         else:
+            tts_msg.data = "I do not see the door. I require you to press the start button."
+            self.tts_pub.publish(tts_msg)
             return 'wait_timed_out'
 
 
@@ -202,9 +214,16 @@ class ScanFace(smach.State):
 
         self.face_detector_ac = actionlib.SimpleActionClient('face_positions', FaceDetectorAction)
         self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1, latch=True)
+        self.neck_pub = rospy.Publisher('neckHead_controller/command', Float64, queue_size=1, latch=True)
 
     def execute(self, ud):
         rospy.logdebug("Entered 'SCAN_FACE' state.")
+
+        neck_cmd = Float64()
+        neck_cmd.data = 0.0
+        self.neck_pub.publish(neck_cmd)
+
+        rospy.sleep(rospy.Duration(2))
 
         tts_msg = String()
 
@@ -248,6 +267,50 @@ class ScanFace(smach.State):
         return 'face_scan_done'
 
 
+class WaitForObstacle(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['wait_over'],
+                             input_keys=['wait_target_wp', 'wait_waypoints'],
+                             output_keys=['wait_target_wp'])
+        self.move_base_srv = rospy.ServiceProxy('/move_base/make_plan', GetPlan)  # TODO verify service name
+        self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1, latch=True)
+
+    def execute(self, ud):
+        rospy.logdebug("Entered 'WAIT_FOR_OBSTACLE' state.")
+
+        nb_loop = 0
+        max_nb_loop = 5
+
+        start_pose = PoseStamped()
+        start_pose.header.frame_id = 'base_link'
+        start_pose.header.stamp = rospy.Time.now()
+
+        goal_pose = ud.wait_waypoints[1]  # wp2
+
+        goal_tolerance = 0.10
+
+        while nb_loop < max_nb_loop:
+            try:
+                res = self.move_base_srv(start=start_pose, goal=goal_pose, tolerance=goal_tolerance)
+                if res.plan.poses:
+                    break
+            except rospy.ServiceException:
+                pass
+
+            nb_loop += 1
+            rospy.sleep(rospy.Duration(5))
+
+        if nb_loop > max_nb_loop:
+            ud.wait_target_wp += 1
+            tts_msg = String()
+            tts_msg.data = "I detect that the path to the waypoint is still obstructed."
+            self.tts_pub.publish(tts_msg)
+            tts_msg.data = "I have waited long enough. I am moving toward the next waypoint."
+            self.tts_pub.publish(tts_msg)
+
+        return 'wait_over'
+
+
 class AnnounceWpReached(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['general_case', 'wp3_case'],
@@ -258,14 +321,14 @@ class AnnounceWpReached(smach.State):
     def execute(self, ud):
         rospy.logdebug("Entered 'ANNOUNCE_WP_REACHED' state.")
 
-        tts_msg = String
+        tts_msg = String()
+
+        tts_msg.data = "I have reached " + ud.aw_wp_str[ud.aw_target_wp - 1] + "."
 
         if ud.aw_target_wp == 3:
-            tts_msg.data = " I have reached " + ud.aw_wp_str[ud.aw_target_wp - 1] + "."
             return 'wp3_case'
         else:
-            tts_msg.data = " I have reached " + ud.aw_wp_str[ud.aw_target_wp - 1] + \
-                           ". I a moving on to the next waypoint."
+            tts_msg.data = "I a moving on to the next waypoint."
             self.tts_pub.publish(tts_msg)
             ud.aw_target_wp += 1
             return 'general_case'
@@ -286,10 +349,10 @@ class TellInstructions(smach.State):
         # TODO
         # call service to lock on target
 
-        tts_msg = String
+        tts_msg = String()
         tts_msg.data = "Hello, my name is SARA. I will follow you to the next waypoint once I am ready."
         self.tts_pub.publish(tts_msg)
-        tts_msg.data = "Please stand still, approximately 1.5 meter in front of me, facing me, while I memorize your features."
+        tts_msg.data = "Please stand still, approximately 1 meter in front of me, facing me, while I memorize your features."
         self.tts_pub.publish(tts_msg)
         rospy.sleep(5.0)
         tts_msg.data = "When you want me to stop following you, say 'SARA go back home'"
@@ -501,7 +564,7 @@ if __name__ == '__main__':
 
         smach.StateMachine.add('WAIT_FOR_OPEN_DOOR',
                                WaitDoor(),
-                               transitions={'wait_timed_out': 'OVERRIDE_START',
+                               transitions={'wait_timed_out': 'START_OVERRIDE',
                                             'door_is_open': 'ANNOUNCE_ACTION',
                                             'door_is_closed': 'WAIT_FOR_OPEN_DOOR'})
 
@@ -555,18 +618,24 @@ if __name__ == '__main__':
 
         smach.StateMachine.add('SCAN_FACE',
                                ScanFace(),
-                               transitions={'face_scan_done': 'TEST_FAILED'})  # TODO WAIT_FOR_OBSTACLE
+                               transitions={'face_scan_done': 'WAIT_FOR_OBSTACLE'})
+
+        smach.StateMachine.add('WAIT_FOR_OBSTACLE',
+                               WaitForObstacle(),
+                               transitions={'wait_over': 'ROBOT_STATUS'},
+                               remapping={'wait_target_wp': 'target_wp',
+                                          'wait_waypoints': 'waypoints'})
 
         smach.StateMachine.add('ANNOUNCE_WP_REACHED',
                                AnnounceWpReached(),
                                transitions={'general_case': 'ROBOT_STATUS',
-                                            'wp3_case': 'TEST_FAILED'},  # TODO WP3_INIT
+                                            'wp3_case': 'TELL_FOLLOW_INSTRUCTIONS'},
                                remapping={'aw_target_wp': 'target_wp',
                                           'aw_wp_str': 'wp_str'})
 
         smach.StateMachine.add('TELL_FOLLOW_INSTRUCTIONS',
                                TellInstructions(),
-                               transitions={'target_locked': 'TEST_FAILED',  # TODO FOLLOWING
+                               transitions={'target_locked': 'MONITOR_FOLLOWING',  # TODO FOLLOWING
                                             'target_not_locked': 'TEST_FAILED'})
 
         smach.StateMachine.add('MONITOR_FOLLOWING',
