@@ -13,8 +13,7 @@ from shape_msgs.msg import SolidPrimitive
 import tf_conversions
 from object_recognition_msgs.msg import ObjectRecognitionAction, ObjectRecognitionGoal, RecognizedObjectArray
 from object_recognition_msgs.srv import GetObjectInformation, GetObjectInformationRequest
-from tf2_ros import Buffer, TransformListener, ExtrapolationException, LookupException, ConnectivityException, \
-    InvalidArgumentException
+from tf2_ros import Buffer, TransformListener
 from tf2_geometry_msgs import do_transform_pose
 from robotiq_c_model_control.msg import CModel_robot_output as eef_cmd
 from robotiq_c_model_control.msg import CModel_robot_input as eef_status
@@ -180,20 +179,19 @@ class SetObjectTarget(smach.State):
             if new_target and is_new_obj:
 
                 # get the transform from ork's frame to odom
-                try:
-                    transform = self.tf_buffer.lookup_transform('odom', ud.sot_ork_frame, rospy.Time(0))
-                    # get the object's pose in odom frame
-                    ud.sot_grasp_target_pose = do_transform_pose(ud.sot_object_array[i].pose.pose, transform)
-                    ud.sot_target_object = new_target
-                    ud.sot_grasp_target_pose.pose.position.z += 0.06
-                    ud.sot_grasp_target_pose.pose.position.x -= 0.04
-                    ud.sot_grasp_target_pose.pose.position.y -= 0.03
-                    print "OBJECT NAME : " + new_target
-                    print "POSE : "
-                    print ud.sot_grasp_target_pose
-                    return 'target_set'
-                except (LookupException, ConnectivityException, ExtrapolationException, InvalidArgumentException):
-                    rospy.logerr("Could not get transform from " + ud.sot_ork_frame + " to 'odom'.")
+
+                transform = self.tf_buffer.lookup_transform('odom', ud.sot_ork_frame, rospy.Time(0))
+                # get the object's pose in odom frame
+                ud.sot_grasp_target_pose = do_transform_pose(ud.sot_object_array[i].pose.pose, transform)
+                ud.sot_target_object = new_target
+                ud.sot_grasp_target_pose.pose.position.z += 0.06
+                ud.sot_grasp_target_pose.pose.position.x -= 0.04
+                ud.sot_grasp_target_pose.pose.position.y -= 0.03
+                print "OBJECT NAME : " + new_target
+                print "POSE : "
+                print ud.sot_grasp_target_pose
+                return 'target_set'
+                # rospy.logerr("Could not get transform from " + ud.sot_ork_frame + " to 'odom'.")
 
         return 'no_new_object'
 
