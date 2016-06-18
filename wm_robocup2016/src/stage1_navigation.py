@@ -41,9 +41,14 @@ class WaitDoor(smach.State):
         smach.State.__init__(self, outcomes=['wait_timed_out', 'door_is_open', 'door_is_closed'])
         self.door_detector_srv = rospy.ServiceProxy('/detect_open_door', detect_open_door)
         self.iter = 0
+        self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1, latch=True)
 
     def execute(self, ud):
         rospy.logdebug("Entered 'WAIT_FOR_OPEN_DOOR' state.")
+
+        tts_msg = String()
+        tts_msg.data = "I am ready to begin the navigation test."
+        self.tts_pub.publish(tts_msg)
 
         try:
             req = detect_open_doorRequest()
@@ -64,6 +69,8 @@ class WaitDoor(smach.State):
             rospy.sleep(4.0)
             return 'door_is_closed'
         else:
+            tts_msg.data = "I do not see the door. I require you to press the start button."
+            self.tts_pub.publish(tts_msg)
             return 'wait_timed_out'
 
 

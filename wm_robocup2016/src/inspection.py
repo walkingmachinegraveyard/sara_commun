@@ -7,19 +7,28 @@ import wm_supervisor.srv
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from std_msgs.msg import Int8, String
 import threading
-from std_msgs.msg import Float64
+from std_msgs.msg import Float64, String
 
 
 class InitRobot(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['init_done'])
         self.neck_pub = rospy.Publisher('neckHead_controller/command', Float64, queue_size=1, latch=True)
+        self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1, latch=True)
 
     def execute(self, ud):
 
-        cmd = Float64()
-        cmd.data = 0.0
-        self.neck_pub.publish(cmd)
+        tts_msg = String()
+        tts_msg.data = "I am ready to begin the inspection."
+        self.tts_pub.publish(tts_msg)
+
+        neck_cmd = Float64()
+        neck_cmd.data = -2.0
+        self.neck_pub.publish(neck_cmd)
+
+        rospy.sleep(rospy.Duration(2))
+        neck_cmd.data = -0.7
+        self.neck_pub.publish(neck_cmd)
 
         return 'init_done'
 
