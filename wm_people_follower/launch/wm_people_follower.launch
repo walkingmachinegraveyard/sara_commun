@@ -1,0 +1,12 @@
+<launch>
+
+	<node name="wm_people_follower_node" pkg="wm_people_follower" type="wm_people_follower_node" output="screen">
+		<param name="maximum_locking_distance" value="1.0" />
+		<param name="locking_time_out" value="10.0" />
+		<param name="follow_distance" value="1.0" />
+		<param name="search_distance" value="0.2" />
+		<param name="minimum_measurement_reliability" value="0.8" />
+		<param name="action_client_period" value="0.0" />		
+	</node>
+
+</launch>
