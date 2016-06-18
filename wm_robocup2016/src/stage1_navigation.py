@@ -184,7 +184,7 @@ class AttemptMonitor(smach.State):
                 we consider the robot has reached the target if it is within grasp distance
                 """
 
-                tf_stamped = self.tf_buffer.lookup_transform('base_link', 'map', rospy.Time(0))
+                tf_stamped = self.tf_buffer.lookup_transform('map', 'base_link', rospy.Time(0))
 
                 if sqrt((ud.ma_waypoints[1].pose.position.x - tf_stamped.transform.translation.x) ** 2 +
                         (ud.ma_waypoints[1].pose.position.y - tf_stamped.transform.translation.y) ** 2) < self.grasp_distance:
@@ -536,7 +536,7 @@ if __name__ == '__main__':
 
             # loop until we get a valid transform
             while True:
-                tf_stamped = tf_buffer.lookup_transform('base_link', 'map', rospy.Time.now(), rospy.Time(10))
+                tf_stamped = tf_buffer.lookup_transform('map', 'base_link', rospy.Time.now(), rospy.Time(10))
 
             # we don't want the robot to translate, only to rotate
             align_goal.target_pose.pose.position.x = tf_stamped.transform.translation.x

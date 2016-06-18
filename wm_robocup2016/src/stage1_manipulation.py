@@ -43,7 +43,7 @@ class WaitForStart(smach.State):
 
         return
 
-    def start_button_sub(self, msg):
+    def start_button_cb(self, msg):
 
         self.mutex.acquire()
 
@@ -86,7 +86,7 @@ class InitState(smach.State):
         hand_cmd.rGTO = 1  # request to go to position
         hand_cmd.rSP = 200  # set activation speed (0[slowest]-255[fastest])
         hand_cmd.rFR = 0  # set force limit (0[min] - 255[max])
-        hand_cmd.rPR = 0  # request to open
+        hand_cmd.rPR = 200  # request to open
 
         self.eef_pub.publish(hand_cmd)
 
@@ -94,7 +94,7 @@ class InitState(smach.State):
         neck_cmd.data = -1.3
         self.neck_pub.publish(neck_cmd)
 
-        rospy.sleep(rospy.Duration(10))
+        rospy.sleep(rospy.Duration(5))
 
         try:
             res = self.make_plan_srv(targetPose=None, jointPos=[0.0, 0.0, 0.80, -1.80, 0.0, 0.0],
@@ -109,7 +109,6 @@ class InitState(smach.State):
 
         else:
             ud.init_arm_plan = res.trajectory
-            rospy.sleep(rospy.Duration(30))
             return 'init_move_arm'
 
 
@@ -185,8 +184,8 @@ class SetObjectTarget(smach.State):
                 ud.sot_grasp_target_pose = do_transform_pose(ud.sot_object_array[i].pose.pose, transform)
                 ud.sot_target_object = new_target
                 ud.sot_grasp_target_pose.pose.position.z += 0.06
-                ud.sot_grasp_target_pose.pose.position.x -= 0.04
-                ud.sot_grasp_target_pose.pose.position.y -= 0.03
+                ud.sot_grasp_target_pose.pose.position.x -= 0.1
+
                 print "OBJECT NAME : " + new_target
                 print "POSE : "
                 print ud.sot_grasp_target_pose
@@ -244,7 +243,7 @@ class ArmPlanGrasp(smach.State):
 
         else:
             ud.grasp_arm_plan = res.trajectory
-            rospy.sleep(rospy.Duration(30))
+            rospy.sleep(rospy.Duration(10))
             return 'grasp_arm_plan_succeeded'
 
 
@@ -286,9 +285,9 @@ class BasePlanGrasp(smach.State):
             grasp_move_base_odom.pose.orientation.w = q[3]
             ud.grasp_move_base_odom = grasp_move_base_odom
 
-            print ud.grasp_move_base_odom
+            print grasp_move_base_odom
 
-            rospy.sleep(rospy.Duration(30))
+            rospy.sleep(rospy.Duration(10))
 
             return 'grasp_base_plan_succeeded'
 
@@ -355,7 +354,7 @@ class CloseEef(smach.State):
         cmd.rGTO = 1  # request to go to position
         cmd.rSP = 200  # set activation speed (0[slowest]-255[fastest])
         cmd.rFR = 0  # set force limit (0[min] - 255[max])
-        cmd.rPR = 255  # request to close
+        cmd.rPR = 250  # request to close
 
         self.eef_pub.publish(cmd)
 
@@ -657,6 +656,8 @@ if __name__ == '__main__':
                     userdata.ork_action_frame = result.recognized_objects.header.frame_id
                     return 'succeeded'
 
+
+
             return 'aborted'
 
         smach.StateMachine.add('WAIT_FOR_START',
@@ -691,8 +692,8 @@ if __name__ == '__main__':
                                                  output_keys={'ork_object_array',
                                                               'ork_action_frame'}),
                                transitions={'succeeded': 'SET_OBJECT_TARGET',
-                                            'aborted': 'TEST_FAILED',  # TODO SCAN_FOR_OBJECTS
-                                            'preempted': 'TEST_FAILED'},   #TODO SCAN_FOR_OBJECTS
+                                            'aborted': 'SCAN_FOR_OBJECTS',
+                                            'preempted': 'SCAN_FOR_OBJECTS'},
                                remapping={'ork_object_array': 'object_array',
                                           'ork_action_frame': 'ork_frame'})
 
