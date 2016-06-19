@@ -1,0 +1,5 @@
+<launch>
+
+	<node name="robocup_face_recognition" pkg="wm_robocup2016" type="stage1_facerecognition.py" output="screen" />
+
+</launch>
