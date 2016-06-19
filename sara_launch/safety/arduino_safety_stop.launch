@@ -1,0 +1,5 @@
+<launch>
+
+	<node name="safety_stop" pkg="rosserial_python" type="serial_node.py" args="/dev/usb-ports/7-1.3" output="screen"/>
+
+</launch>

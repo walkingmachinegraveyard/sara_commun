@@ -3,11 +3,13 @@
 import rospy
 import smach
 from smach_ros import SimpleActionState, IntrospectionServer
+from actionlib import SimpleActionClient
+from actionlib_msgs.msg import GoalStatus
 import wm_supervisor.srv
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from nav_msgs.srv import GetPlan
 from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped
-from std_msgs.msg import String, Float64, Int8
+from std_msgs.msg import String, Float64, Int8, Bool
 from math import sqrt, atan2
 import tf_conversions
 from tf2_ros import Buffer, TransformListener
@@ -16,6 +18,7 @@ import threading
 from open_door_detector.srv import detect_open_door, detect_open_doorRequest
 import actionlib
 from face_detector.msg import FaceDetectorAction, FaceDetectorGoal
+from wm_people_follower.srv import peopleFollower, peopleFollowerRequest, peopleFollowerResponse
 
 
 class InitState(smach.State):
@@ -23,6 +26,7 @@ class InitState(smach.State):
         smach.State.__init__(self, outcomes=['init_done'])
         self.neck_pub = rospy.Publisher('neckHead_controller/command', Float64, queue_size=1, latch=True)
         self.amcl_initial_pose_pub = rospy.Publisher('initialpose', PoseWithCovarianceStamped, queue_size=1, latch=True)
+        self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1, latch=True)
 
     def execute(self, ud):
         rospy.logdebug("Entered 'INIT_STATE' state.")
@@ -46,6 +50,10 @@ class InitState(smach.State):
         neck_cmd.data = -0.7
         self.neck_pub.publish(neck_cmd)
 
+        tts_msg = String()
+        tts_msg.data = "I am ready to begin the navigation test."
+        self.tts_pub.publish(tts_msg)
+
         return 'init_done'
 
 
@@ -53,15 +61,11 @@ class WaitDoor(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['wait_timed_out', 'door_is_open', 'door_is_closed'])
         self.door_detector_srv = rospy.ServiceProxy('/detect_open_door', detect_open_door)
-        self.iter = 0
         self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1, latch=True)
+        self.iter = 0
 
     def execute(self, ud):
         rospy.logdebug("Entered 'WAIT_FOR_OPEN_DOOR' state.")
-
-        tts_msg = String()
-        tts_msg.data = "I am ready to begin the navigation test."
-        self.tts_pub.publish(tts_msg)
 
         try:
             req = detect_open_doorRequest()
@@ -78,10 +82,11 @@ class WaitDoor(smach.State):
             pass
 
         self.iter += 1
-        if self.iter < 3:
+        if self.iter < 5:
             rospy.sleep(4.0)
             return 'door_is_closed'
         else:
+            tts_msg = String()
             tts_msg.data = "I do not see the door. I require you to press the start button."
             self.tts_pub.publish(tts_msg)
             return 'wait_timed_out'
@@ -90,7 +95,7 @@ class WaitDoor(smach.State):
 class StartOverride(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['start_signal_received'])
-        self.start_signal_sub = rospy.Subscriber('start_signal', Int8, queue_size=1)
+        self.start_signal_sub = rospy.Subscriber('start_button_msg', Bool, self.start_signal_sub, queue_size=1)
         self.signal_received = False
 
         self.mutex = threading.Lock()
@@ -99,7 +104,7 @@ class StartOverride(smach.State):
 
         self.mutex.acquire()
 
-        if signal.data == 1:
+        if signal.data:
             self.signal_received = True
 
         self.mutex.release()
@@ -117,7 +122,7 @@ class StartOverride(smach.State):
             self.mutex.release()
             rospy.sleep(rospy.Duration(1))
 
-        return 'continue_timed_out'
+        return 'start_signal_received'
 
 
 class AnnounceAction(smach.State):
@@ -155,6 +160,32 @@ class RobotStatus(smach.State):
         rospy.sleep(5.0)
 
         return 'status_estop'
+
+
+class Move(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['succeeded', 'aborted', 'preempted'],
+                             input_keys=['move_waypoints', 'move_target_wp'])
+        self.move_base_client = SimpleActionClient('move_base', MoveBaseAction)
+
+    def execute(self, ud):
+
+        self.move_base_client.wait_for_server()
+
+        goal = MoveBaseGoal()
+        goal.target_pose = ud.move_waypoints[ud.move_target_wp - 1]
+        goal.target_pose.header.stamp = rospy.Time.now()
+
+        self.move_base_client.send_goal(goal)
+        self.move_base_client.wait_for_result(rospy.Duration(20))
+
+        status = self.move_base_client.get_state()
+        if status == GoalStatus.SUCCEEDED:
+            return 'succeeded'
+        elif status == GoalStatus.PREEMPTED:
+            return 'preempted'
+        else:
+            return 'aborted'
 
 
 class AttemptMonitor(smach.State):
@@ -280,7 +311,7 @@ class WaitForObstacle(smach.State):
         smach.State.__init__(self, outcomes=['wait_over'],
                              input_keys=['wait_target_wp', 'wait_waypoints'],
                              output_keys=['wait_target_wp'])
-        self.move_base_srv = rospy.ServiceProxy('/move_base/make_plan', GetPlan)  # TODO verify service name
+        self.move_base_srv = rospy.ServiceProxy('/move_base/make_plan', GetPlan)
         self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1, latch=True)
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer)
@@ -292,7 +323,6 @@ class WaitForObstacle(smach.State):
         max_nb_loop = 5
 
         start_pose = PoseStamped()
-        start_pose.header.frame_id = 'base_link'
         tf_stamped = self.tf_buffer.lookup_transform('map', 'base_link', rospy.Time(0))
         start_pose = do_transform_pose(start_pose, tf_stamped)
 
@@ -336,6 +366,8 @@ class AnnounceWpReached(smach.State):
 
         tts_msg.data = "I have reached " + ud.aw_wp_str[ud.aw_target_wp - 1] + "."
 
+        rospy.sleep(rospy.Duration(2))
+
         if ud.aw_target_wp == 3:
             return 'wp3_case'
         else:
@@ -350,15 +382,13 @@ class TellInstructions(smach.State):
         smach.State.__init__(self, outcomes=['target_locked', 'target_not_locked'])
 
         # TODO
-        # connect to service that locks on target
-        # connect to the service that publishes move_base goal on a topic
         self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1, latch=True)
+        self.people_follower_srv = rospy.ServiceProxy('wm_people_follow', peopleFollower)
 
     def execute(self, ud):
         rospy.logdebug("Entered 'TELL_INSTRUCTIONS' state.")
 
         # TODO
-        # call service to lock on target
 
         tts_msg = String()
         tts_msg.data = "Hello, my name is SARA. I will follow you to the next waypoint once I am ready."
@@ -366,21 +396,35 @@ class TellInstructions(smach.State):
         tts_msg.data = "Please stand still, approximately 1 meter in front of me, facing me, while I memorize your features."
         self.tts_pub.publish(tts_msg)
         rospy.sleep(5.0)
+
+        loop_again = True
+
+        while loop_again:
+            try:
+                res = self.people_follower_srv.call(request=peopleFollowerRequest.ACQUIRE_TARGET)
+                if res.response == peopleFollowerResponse.SUCCESS:
+                    loop_again = False
+                else:
+                    tts_msg.data = "I was not able to get your features. Please stand still, approximately 1 meter in front of me, facing me."
+                    self.tts_pub.publish(tts_msg)
+
+            except rospy.ServiceException:
+                rospy.sleep(rospy.Duration(8))
+                pass
+
         tts_msg.data = "When you want me to stop following you, say 'SARA go back home'"
         self.tts_pub.publish(tts_msg)
         tts_msg.data = "You must start your instructions by calling my name."
         self.tts_pub.publish(tts_msg)
-        # call target locking service
+        tts_msg.data = "I am now ready to follow you."
+        self.tts_pub.publish(tts_msg)
 
-        target_locked = True
-        if target_locked:
+        try:
+            self.people_follower_srv.call(request=peopleFollowerRequest.START_FOLLOWING)
+        except rospy.ServiceException:
+            pass
 
-            tts_msg.data = "I am now ready to follow you."
-            self.tts_pub.publish(tts_msg)
-            # call service to publish target location on move_base topic
-            return 'target_locked'
-        else:
-            return 'target_not_locked'
+        return 'target_locked'
 
 
 class MonitorFollowing(smach.State):
@@ -388,17 +432,18 @@ class MonitorFollowing(smach.State):
         smach.State.__init__(self, outcomes=['stop_following'])
         self.audio_input = rospy.Subscriber('recognizer1/output', String, self.audio_cb)
         self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1, latch=True)
+        self.people_follower_srv = rospy.ServiceProxy('wm_people_follow', peopleFollower)
+        self.move_base_client = SimpleActionClient('move_base', MoveBaseAction)
 
         self.mutex = threading.Lock()
         self.stop_following = False
-        # TODO add service client
 
     def audio_cb(self, msg):
 
         self.mutex.acquire()
 
         if msg.data.lower().find('sara') != -1 or msg.data.lower().find('sarah') != -1:
-            if msg.data.find('go back home') != -1:
+            if msg.data.find('home') != -1:
                 self.stop_following = True
 
         self.mutex.release()
@@ -408,11 +453,14 @@ class MonitorFollowing(smach.State):
     def execute(self, ud):
         rospy.logdebug("Entered 'MONITOR_FOLLOWING' state.")
 
+        self.move_base_client.wait_for_server()
+
         while True:
             self.mutex.acquire()
 
             if self.stop_following:
-                # TODO call service to disable following
+                self.people_follower_srv.call(request=peopleFollowerRequest.STOP_FOLLOWING)
+                self.move_base_client.cancel_all_goals()
                 self.mutex.release()
                 break
 
@@ -472,7 +520,7 @@ if __name__ == '__main__':
 
     wp1 = PoseStamped()
     wp1.header.frame_id = 'map'
-    wp1.pose.position.x = 2.0
+    wp1.pose.position.x = 1.0
     wp1.pose.position.y = 0.0
     wp1.pose.position.z = 0.0
     wp1.pose.orientation.x = 0.0
@@ -482,8 +530,8 @@ if __name__ == '__main__':
 
     wp2 = PoseStamped()
     wp2.header.frame_id = 'map'
-    wp2.pose.position.x = 2.0
-    wp2.pose.position.y = 1.0
+    wp2.pose.position.x = 3.0
+    wp2.pose.position.y = 0.0
     wp2.pose.position.z = 0.0
     wp2.pose.orientation.x = 0.0
     wp2.pose.orientation.y = 0.0
@@ -492,8 +540,8 @@ if __name__ == '__main__':
 
     wp3 = PoseStamped()
     wp3.header.frame_id = 'map'
-    wp3.pose.position.x = 2.0
-    wp3.pose.position.y = 2.0
+    wp3.pose.position.x = 3.0
+    wp3.pose.position.y = 1.0
     wp3.pose.position.z = 0.0
     wp3.pose.orientation.x = 0.0
     wp3.pose.orientation.y = 0.0
@@ -502,8 +550,8 @@ if __name__ == '__main__':
 
     wp4 = PoseStamped()
     wp4.header.frame_id = 'map'
-    wp4.pose.position.x = 1.0
-    wp4.pose.position.y = 2.0
+    wp4.pose.position.x = 4.0
+    wp4.pose.position.y = 1.0
     wp4.pose.position.z = 0.0
     wp4.pose.orientation.x = 0.0
     wp4.pose.orientation.y = 0.0
@@ -534,9 +582,7 @@ if __name__ == '__main__':
             tf_buffer = Buffer()
             tf_listener = TransformListener(tf_buffer)
 
-            # loop until we get a valid transform
-            while True:
-                tf_stamped = tf_buffer.lookup_transform('map', 'base_link', rospy.Time.now(), rospy.Time(10))
+            tf_stamped = tf_buffer.lookup_transform('map', 'base_link', rospy.Time(0), rospy.Duration(10))
 
             # we don't want the robot to translate, only to rotate
             align_goal.target_pose.pose.position.x = tf_stamped.transform.translation.x
@@ -591,6 +637,7 @@ if __name__ == '__main__':
                                             'status_error': 'TEST_FAILED',
                                             'status_estop': 'ROBOT_STATUS'})
 
+        """
         smach.StateMachine.add('MOVE',
                                SimpleActionState('move_base',
                                                  MoveBaseAction,
@@ -601,6 +648,15 @@ if __name__ == '__main__':
                                             'aborted': 'MONITOR_ATTEMPTS'},
                                remapping={'mb_cb_waypoints': 'waypoints',
                                           'mb_cb_target_wp': 'target_wp'})
+        """
+
+        smach.StateMachine.add('MOVE',
+                               Move(),
+                               transitions={'succeeded': 'ANNOUNCE_WP_REACHED',
+                                            'preempted': 'MONITOR_ATTEMPTS',
+                                            'aborted': 'MONITOR_ATTEMPTS'},
+                               remapping={'move_waypoints': 'waypoints',
+                                          'move_target_wp': 'target_wp'})
 
         smach.StateMachine.add('MONITOR_ATTEMPTS',
                                AttemptMonitor(),
@@ -642,7 +698,7 @@ if __name__ == '__main__':
 
         smach.StateMachine.add('TELL_FOLLOW_INSTRUCTIONS',
                                TellInstructions(),
-                               transitions={'target_locked': 'MONITOR_FOLLOWING',  # TODO FOLLOWING
+                               transitions={'target_locked': 'MONITOR_FOLLOWING',
                                             'target_not_locked': 'TEST_FAILED'})
 
         smach.StateMachine.add('MONITOR_FOLLOWING',

@@ -5,7 +5,7 @@ import smach
 from smach_ros import SimpleActionState, IntrospectionServer
 import wm_supervisor.srv
 from move_base_msgs.msg import MoveBaseAction
-from wm_arm_msgs.msg import executePlanAction
+from wm_arm_msgs.msg import executePlanAction, executePlanGoal
 from wm_arm_msgs.srv import computePlan, computePlanResponse, computePlanRequest
 from geometry_msgs.msg import PoseStamped
 from moveit_msgs.msg import RobotTrajectory, CollisionObject
@@ -18,14 +18,15 @@ from tf2_geometry_msgs import do_transform_pose
 from robotiq_c_model_control.msg import CModel_robot_output as eef_cmd
 from robotiq_c_model_control.msg import CModel_robot_input as eef_status
 import threading
-from std_msgs.msg import Float64, Int8, String
+from std_msgs.msg import Float64, Bool, String
 from actionlib_msgs.msg import GoalStatus
+from actionlib import SimpleActionClient
 
 
 class WaitForStart(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['do_init'])
-        self.start_button_sub = rospy.Subscriber('start_button', Int8, self.start_button_cb, queue_size=4)
+        self.start_button_sub = rospy.Subscriber('start_button_msg', Bool, self.start_button_cb, queue_size=4)
         self.voice_recognizer_sub = rospy.Subscriber('output', String, self.voice_recognizer_cb, queue_size=4)
 
         self.mutex = threading.Lock()
@@ -47,7 +48,7 @@ class WaitForStart(smach.State):
 
         self.mutex.acquire()
 
-        if msg.data == 1:
+        if msg.data:
             self.proceed = True
 
         self.mutex.release()
@@ -73,6 +74,7 @@ class WaitForStart(smach.State):
 class InitState(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['init_move_arm', 'init_scan_objects'],
+                             input_keys=['init_r_pos'],
                              output_keys=['init_arm_plan'])
         self.eef_pub = rospy.Publisher('/CModelRobotOutput', eef_cmd, queue_size=1, latch=True)
         self.neck_pub = rospy.Publisher('neckHead_controller/command', Float64, queue_size=1, latch=True)
@@ -86,7 +88,7 @@ class InitState(smach.State):
         hand_cmd.rGTO = 1  # request to go to position
         hand_cmd.rSP = 200  # set activation speed (0[slowest]-255[fastest])
         hand_cmd.rFR = 0  # set force limit (0[min] - 255[max])
-        hand_cmd.rPR = 200  # request to open
+        hand_cmd.rPR = 0  # request to open
 
         self.eef_pub.publish(hand_cmd)
 
@@ -97,7 +99,7 @@ class InitState(smach.State):
         rospy.sleep(rospy.Duration(5))
 
         try:
-            res = self.make_plan_srv(targetPose=None, jointPos=[0.0, 0.0, 0.80, -1.80, 0.0, 0.0],
+            res = self.make_plan_srv(targetPose=None, jointPos=ud.init_r_pos,
                                      planningSpace=computePlanRequest.JOINT_SPACE, collisionObject=None)
         except rospy.ServiceException:
             rospy.logerr("Failed to connect to the planning service.")
@@ -134,6 +136,20 @@ class InitSupervisor(smach.State):
         rospy.sleep(5.0)
 
         return 'init_arm_estop'
+
+
+class GetDropPose(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['drop_pose_acquired'],
+                             output_keys=['drop_pose'])
+
+        # TODO
+
+        def execute(self, ud):
+
+            # TODO get planes and select an horizontal where to drop picked objects
+
+            return 'drop_pose_acquired'
 
 
 class SetObjectTarget(smach.State):
@@ -364,7 +380,9 @@ class CloseEef(smach.State):
 class MonitorEef(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['close_eef_ok',
-                                             'close_eef_error'])
+                                             'close_eef_error'],
+                             input_keys=['eef_picked_objects', 'eef_target_object'],
+                             output_keys=['eef_picked_objects', 'eef_target_object'])
         self.eef_sub = rospy.Subscriber('/CModelRobotInput', eef_status, self.eef_cb, queue_size=10)
 
         self.mutex = threading.Lock()
@@ -409,9 +427,90 @@ class MonitorEef(smach.State):
         self.mutex.acquire()
 
         if self.eef_closed:
+            ud.eef_picked_objects.append(ud.eef_target_object)
+            ud.eef_target_object = ''
             return 'close_eef_ok'
         else:
             return 'close_eff_error'
+
+
+class ResetPosition(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['reset_plan_ok', 'reset_plan_error'],
+                             input_keys=['reset_r_pos'],
+                             output_keys=['reset_arm_plan'])
+        self.make_plan_srv = rospy.ServiceProxy('/wm_arm_driver_node/compute_manipulator_plan', computePlan)
+
+    def execute(self, ud):
+
+        try:
+            res = self.make_plan_srv(targetPose=None, jointPos=ud.reset_r_pos,
+                                     planningSpace=computePlanRequest.JOINT_SPACE, collisionObject=None)
+        except rospy.ServiceException:
+            rospy.logerr("Failed to connect to the planning service.")
+            return 'reset_plan_error'
+
+        if res.planningResult == computePlanResponse.PLANNING_SUCCESS:
+            ud.reset_arm_plan = res.trajectory
+            return 'reset_plan_ok'
+        else:
+            rospy.logwarn("Arm planning failed.")
+            return 'reset_plan_error'
+
+
+class ResetSupervisor(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['reset_ok', 'reset_estop'])
+        self.supervisor_srv = rospy.ServiceProxy('robot_status', wm_supervisor.srv.robotStatus)
+
+    def execute(self, ud):
+        rospy.logdebug("Entered 'RESET_SUPERVISOR' state.")
+
+        try:
+            res = self.supervisor_srv()
+            if res.status == wm_supervisor.srv.robotStatusResponse.STATUS_OK:
+                return 'reset_ok'
+
+        except rospy.ServiceException:
+            rospy.sleep(5.0)
+            rospy.logerr("Failed to connect to the supervising service.")
+
+        return 'reset_estop'
+
+
+class DoReset(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['succeeded', 'aborted', 'preempted'],
+                             input_keys=['reset_plan'])
+        self.eef_pub = rospy.Publisher('/CModelRobotOutput', eef_cmd, queue_size=1, latch=True)
+        self.move_arm_client = SimpleActionClient('/wm_arm_driver_node/execute_plan', executePlanAction)
+
+    def execute(self, ud):
+        rospy.logdebug("Entered 'RO_RESET' state.")
+
+        hand_cmd = eef_cmd()
+        hand_cmd.rACT = 1  # activate gripper
+        hand_cmd.rGTO = 1  # request to go to position
+        hand_cmd.rSP = 200  # set activation speed (0[slowest]-255[fastest])
+        hand_cmd.rFR = 0  # set force limit (0[min] - 255[max])
+        hand_cmd.rPR = 0  # request to open
+
+        self.eef_pub.publish(hand_cmd)
+
+        self.move_arm_client.wait_for_server()
+        goal = executePlanGoal()
+        goal.trajectory = ud.reset_plan
+        self.move_arm_client.send_goal(goal)
+
+        self.move_arm_client.wait_for_result()
+
+        status = self.move_arm_client.get_state()
+        if status == GoalStatus.SUCCEEDED:
+            return 'succeeded'
+        elif status == GoalStatus.PREEMPTED:
+            return 'preempted'
+        else:
+            return 'aborted'
 
 
 class ArmDropPlan(smach.State):
@@ -634,7 +733,7 @@ if __name__ == '__main__':
     sm.userdata.arm_plan = RobotTrajectory()
 
     # joints' retracted position in joint space (arm joints only)
-    sm.userdata.retract_pos = [0.0, 0.0, 0.0, 0.0, 0.0]
+    sm.userdata.retract_pos = [0.0, 0.0, 0.80, -1.80, 0.0, 0.0]
 
     # array of RecognizedObject
     sm.userdata.object_array = RecognizedObjectArray()
@@ -656,8 +755,6 @@ if __name__ == '__main__':
                     userdata.ork_action_frame = result.recognized_objects.header.frame_id
                     return 'succeeded'
 
-
-
             return 'aborted'
 
         smach.StateMachine.add('WAIT_FOR_START',
@@ -668,7 +765,8 @@ if __name__ == '__main__':
                                InitState(),
                                transitions={'init_move_arm': 'INIT_SUPERVISOR',
                                             'init_scan_objects': 'SCAN_FOR_OBJECTS'},
-                               remapping={'init_arm_plan': 'arm_plan'})
+                               remapping={'init_arm_plan': 'arm_plan',
+                                          'init_r_pos': 'retract_pos'})
 
         smach.StateMachine.add('INIT_SUPERVISOR',
                                InitSupervisor(),
@@ -684,6 +782,11 @@ if __name__ == '__main__':
                                             'aborted': 'SCAN_FOR_OBJECTS',
                                             'preempted': 'SCAN_FOR_OBJECTS'},
                                remapping={'trajectory': 'arm_plan'})
+
+        smach.StateMachine.add('GET_DROP_POSE',
+                               GetDropPose(),
+                               transitions={'drop_pose_acquired': 'SCAN_FOR_OBJECTS'},
+                               remapping={'drop_pose': 'drop_target_pose'})
 
         smach.StateMachine.add('SCAN_FOR_OBJECTS',
                                SimpleActionState('/object_recognition/recognize_objects',
@@ -718,7 +821,7 @@ if __name__ == '__main__':
         smach.StateMachine.add('GRASP_BASE_PLAN',
                                BasePlanGrasp(),
                                transitions={'grasp_base_plan_succeeded': 'GRASP_BASE_SUPERVISOR',
-                                            'grasp_base_plan_failed': 'TEST_FAILED',  # TODO SKIP_OBJECT
+                                            'grasp_base_plan_failed': 'GRASP_ARM_PLAN',  # TODO SKIP_OBJECT
                                             'grasp_base_error': 'TEST_FAILED'},
                                remapping={'grasp_target_pose': 'grasp_target_pose',
                                           'grasp_move_base_odom': 'move_base_odom'})
@@ -755,13 +858,39 @@ if __name__ == '__main__':
 
         smach.StateMachine.add('CLOSE_EEF',
                                CloseEef(),
-                               transitions={'close_eef_cmd_sent': 'TEST_FAILED'})  # TODO GET_DROP_LOCATION
+                               transitions={'close_eef_cmd_sent': 'MONITOR_EEF'})
+
+        smach.StateMachine.add('MONITOR_EEF',
+                               MonitorEef(),
+                               transitions={'close_eef_ok': 'RETRACT_ARM_PLAN',
+                                            'close_eef_error': 'RESET_POSITION'},
+                               remapping={'eef_picked_objects': 'picked_objects',
+                                          'eef_target_object': 'target_object'})
+
+        smach.StateMachine.add('RESET_POSITION',
+                               ResetPosition(),
+                               transitions={'reset_plan_ok': 'RESET_SUPERVISOR',
+                                            'reset_plan_error': 'RESET_POSITION'},
+                               remapping={'reset_r_pos': 'retract_pos',
+                                          'reset_trajectory': 'arm_plan'})
+
+        smach.StateMachine.add('RESET_SUPERVISOR',
+                               ResetSupervisor(),
+                               transitions={'reset_ok': 'DO_RESET',
+                                            'reset_estop': 'RESET_SUPERVISOR'})
+
+        smach.StateMachine.add('DO_RESET',
+                               DoReset(),
+                               transitions={'succeeded': 'SET_OBJECT_TARGET',
+                                            'aborted': 'RESET_POSITION',
+                                            'preempted': 'RESET_POSITION'},
+                               remapping={'reset_plan': 'arm_plan'})
 
         smach.StateMachine.add('DROP_ARM_PLAN',
                                ArmDropPlan(),
                                transitions={'drop_arm_plan_succeeded': 'DROP_ARM_SUPERVISOR',
-                                             'drop_arm_plan_failed': 'DROP_BASE_PLAN',
-                                             'drop_arm_error': 'TEST_FAILED'},
+                                            'drop_arm_plan_failed': 'DROP_BASE_PLAN',
+                                            'drop_arm_error': 'TEST_FAILED'},
                                remapping={'drop_arm_plan': 'arm_plan',
                                           'drop_arm_target_pose': 'drop_target_pose'})
 
@@ -828,8 +957,8 @@ if __name__ == '__main__':
 
         smach.StateMachine.add('OPEN_EEF',
                                OpenEef(),
-                               transitions={'open_eef_ok': 'TEST_FAILED',  # TODO look for next object
-                                            'open_eef_error': 'TEST_FAILED'})
+                               transitions={'open_eef_ok': 'RESET_POSITION',
+                                            'open_eef_error': 'OPEN_EEF'})
 
         smach.StateMachine.add('TEST_FAILED',
                                FailTest(),

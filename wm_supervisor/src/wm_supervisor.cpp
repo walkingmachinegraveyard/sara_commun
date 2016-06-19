@@ -17,16 +17,11 @@ namespace wm
 		safeVelocityPub_ = nh_.advertise<geometry_msgs::Twist>("safe_cmd_vel", 1);
 
 		audioStreamSub_ = nh_.subscribe("output", 10, &wmSupervisor::audioSubscriberCallback, this);
-		estopSignalSub_ = nh_.subscribe("estop_signal", 10, &wmSupervisor::estopSubscriberCallback, this);
 		safeVelocitySub_ = nh_.subscribe("cmd_vel", 10, &wmSupervisor::safeVelocityCallback, this);
+		startSignalSub_ = nh_.subscribe("start_button_msg", 1, &wmSupervisor::startSignalCallback, this);
 
 		robotStatusSrv_ = nh_.advertiseService("robot_status", &wmSupervisor::robotStatusService, this);
-		recoverFromStopSrv_ = nh_.advertiseService("recover_from_estop", &wmSupervisor::recoverFromStopService, this);
-
-		nh_.param("/wm_supervisor_node/watchdog_callback_rate", watchdogRate_, 10.0);
-		watchdogTimer_ = nh_.createTimer(ros::Duration(1.0/watchdogRate_), &wmSupervisor::watchdogCallback, this);
-
-		lastCallback_ = ros::Time::now();
+		stopSignalSrv_ = nh_.advertiseService("safety_stop_srv", &wmSupervisor::stopSignalService, this);
 	}
 
 	wmSupervisor::~wmSupervisor()
@@ -50,10 +45,33 @@ namespace wm
 		return true;
 	}
 
-	bool wmSupervisor::recoverFromStopService(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res)
+	bool wmSupervisor::stopSignalService(std_srvs::SetBool::Request& req, std_srvs::SetBool::Response& res)
 	{
 		boost::lock_guard<boost::mutex> guard(mtx_);
-		status_ = wm::STATUS_OK;
+
+		if (!req.data)
+		{
+			ROS_WARN("Received stop signal!!!");
+			status_ = wm::STOP_COMMANDED;
+			if (moveBaseAC_.isServerConnected())
+			{
+				moveBaseAC_.cancelAllGoals();
+			}
+
+			if (moveArmAC_.isServerConnected())
+			{
+				moveArmAC_.cancelAllGoals();
+			}
+
+			res.success = true;
+		}
+		else if (status_ == wm::STOP_COMMANDED)
+		{
+			ROS_INFO("Safety stop disengaged.");
+			status_ = wm::STAND_BY;
+			res.success = true;
+		}
+
 		return true;
 	}
 
@@ -81,56 +99,6 @@ namespace wm
 		return;
 	}
 
-	void wmSupervisor::estopSubscriberCallback(const std_msgs::String& msg)
-	{
-		boost::lock_guard<boost::mutex> guard(mtx_);
-
-		lastCallback_ = ros::Time::now();
-
-		if(true) //TODO check if msg == estop
-		{
-			ROS_WARN("Received \"STOP\" signal from emergency stop button!!! Preempting all goals!");
-
-			if(moveArmAC_.isServerConnected())
-			{
-				moveArmAC_.cancelAllGoals();
-			}
-
-			if(moveBaseAC_.isServerConnected())
-			{
-				moveBaseAC_.cancelAllGoals();
-			}
-
-//			status_ = wm::STOP_COMMANDED;
-		}
-
-		return;
-	}
-
-	void wmSupervisor::watchdogCallback(const ros::TimerEvent& e)
-	{
-		double now = ros::Time::now().toSec();
-
-		boost::lock_guard<boost::mutex> guard(mtx_);
-
-		if ((now - lastCallback_.toSec()) > (1.0 / watchdogRate_))
-		{
-			ROS_WARN_ONCE("Last message was more than %f seconds ago!!! Preempting all goals!", now - lastCallback_.toSec());
-
-			if(moveArmAC_.isServerConnected())
-			{
-				moveArmAC_.cancelAllGoals();
-			}
-
-			if(moveBaseAC_.isServerConnected())
-			{
-		//		moveBaseAC_.cancelAllGoals();
-			}
-
-//			status_ = wm::STOP_COMMANDED;
-		}
-	}
-
 	void wmSupervisor::safeVelocityCallback(const geometry_msgs::Twist& msg)
 	{
 		boost::lock_guard<boost::mutex> guard(mtx_);
@@ -139,6 +107,21 @@ namespace wm
 		{
 			safeVelocityPub_.publish(msg);
 		}
+		return;
+	}
+
+	void wmSupervisor::startSignalCallback(const std_msgs::Bool& msg)
+	{
+		boost::lock_guard<boost::mutex> guard(mtx_);
+		if (msg.data)
+		{
+			if (status_ == wm::STAND_BY)
+			{
+				ROS_INFO("Received start signal.");
+				status_ = wm::STATUS_OK;
+			}
+		}
+
 		return;
 	}
 } //namespace wm

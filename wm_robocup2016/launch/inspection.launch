@@ -1,0 +1,8 @@
+<launch>
+
+	<include file="$(find sara_launch)/safety/arduino_safety_stop.launch" />
+	<include file="$(find wm_2dnav)/launch/move_base.launch" />
+	<include file="$(find zbar_ros)/launch/wm_zbar_ros.launch" />
+	<node name="robocup_inspection" pkg="wm_robocup2016" type="inspection.py" output="screen" />
+
+</launch>

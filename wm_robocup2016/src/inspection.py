@@ -4,10 +4,10 @@ import rospy
 import smach
 from smach_ros import SimpleActionState
 import wm_supervisor.srv
-from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
-from std_msgs.msg import Int8, String
+from move_base_msgs.msg import MoveBaseAction
+from geometry_msgs.msg import PoseStamped
 import threading
-from std_msgs.msg import Float64, String
+from std_msgs.msg import Float64, String, Bool
 
 
 class InitRobot(smach.State):
@@ -37,7 +37,7 @@ class WaitForStart(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['begin_inspection'])
         # TODO subscribe to start button topic
-        self.start_sub = rospy.Subscriber('topic_name', Int8, self.sub_cb, queue_size=4)
+        self.start_sub = rospy.Subscriber('start_button_msg', Bool, self.sub_cb, queue_size=4)
 
         self.mutex = threading.Lock()
         self.start_signal_received = False
@@ -46,7 +46,7 @@ class WaitForStart(smach.State):
 
         self.mutex.acquire()
 
-        if msg.data == 1:
+        if msg.data:
             self.start_signal_received = True
 
         self.mutex.release()
@@ -140,27 +140,27 @@ if __name__ == '__main__':
     rospy.init_node('stage1_navigation_node')
     sm = smach.StateMachine(outcomes=['exit'])
 
-    sm.userdata.inspection_pose = MoveBaseGoal()
-    sm.userdata.inspection_pose.target_pose.header.frame_id = 'map'
-    sm.userdata.inspection_pose.target_pose.header.stamp = rospy.Time.now()
-    sm.userdata.inspection_pose.target_pose.pose.position.x = 3.0
-    sm.userdata.inspection_pose.target_pose.pose.position.y = -1.0
-    sm.userdata.inspection_pose.target_pose.pose.position.z = 0.0
-    sm.userdata.inspection_pose.target_pose.pose.orientation.x = 0.0
-    sm.userdata.inspection_pose.target_pose.pose.orientation.y = 0.0
-    sm.userdata.inspection_pose.target_pose.pose.orientation.z = 0.0
-    sm.userdata.inspection_pose.target_pose.pose.orientation.w = 1.0
+    sm.userdata.inspection_pose = PoseStamped()
+    sm.userdata.inspection_pose.header.frame_id = 'map'
+    sm.userdata.inspection_pose.header.stamp = rospy.Time.now()
+    sm.userdata.inspection_pose.pose.position.x = 4.0
+    sm.userdata.inspection_pose.pose.position.y = 2.0
+    sm.userdata.inspection_pose.pose.position.z = 0.0
+    sm.userdata.inspection_pose.pose.orientation.x = 0.0
+    sm.userdata.inspection_pose.pose.orientation.y = 0.0
+    sm.userdata.inspection_pose.pose.orientation.z = 0.0
+    sm.userdata.inspection_pose.pose.orientation.w = 1.0
 
-    sm.userdata.exit_pose = MoveBaseGoal()
-    sm.userdata.exit_pose.target_pose.header.frame_id = 'map'
-    sm.userdata.exit_pose.target_pose.header.stamp = rospy.Time.now()
-    sm.userdata.exit_pose.target_pose.pose.position.x = 0.0
-    sm.userdata.exit_pose.target_pose.pose.position.y = 0.0
-    sm.userdata.exit_pose.target_pose.pose.position.z = 0.0
-    sm.userdata.exit_pose.target_pose.pose.orientation.x = 0.0
-    sm.userdata.exit_pose.target_pose.pose.orientation.y = 0.0
-    sm.userdata.exit_pose.target_pose.pose.orientation.z = 0.0
-    sm.userdata.exit_pose.target_pose.pose.orientation.w = 1.0
+    sm.userdata.exit_pose = PoseStamped()
+    sm.userdata.exit_pose.header.frame_id = 'map'
+    sm.userdata.exit_pose.header.stamp = rospy.Time.now()
+    sm.userdata.exit_pose.pose.position.x = 0.0
+    sm.userdata.exit_pose.pose.position.y = 0.0
+    sm.userdata.exit_pose.pose.position.z = 0.0
+    sm.userdata.exit_pose.pose.orientation.x = 0.0
+    sm.userdata.exit_pose.pose.orientation.y = 0.0
+    sm.userdata.exit_pose.pose.orientation.z = 0.0
+    sm.userdata.exit_pose.pose.orientation.w = 1.0
 
     with sm:
         smach.StateMachine.add('INIT',

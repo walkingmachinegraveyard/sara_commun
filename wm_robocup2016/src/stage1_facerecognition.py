@@ -5,6 +5,8 @@ import roslib;
 import rospy
 import smach
 import smach_ros
+from cob_perception_msgs.msg import *
+from cob_people_detection.msg import *
 from people_msgs.msg import *
 from math import *
 from std_msgs.msg import Float64, String
@@ -14,8 +16,9 @@ from math import *
 import actionlib
 from actionlib_msgs.msg import *
 
-from cob_perception_msgs.msg import *
-from cob_people_detection.msg import *
+from geometry_msgs.msg import Twist
+
+
 
 from move_base_msgs.msg import *
 
@@ -94,7 +97,7 @@ class Face_Detector(smach.State):
             elif neck_cmd.data >= 1.0:
                 direction = -1
 
-            neck_cmd.data -= direction * 0.1
+            neck_cmd.data += direction * 0.1
             self.neck_pub.publish(neck_cmd)
             rospy.sleep(0.1);
 
@@ -210,9 +213,10 @@ class Turn_180(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['finished'])
         self.pub_voice = rospy.Publisher('sara_tts', String, queue_size=10)
-        self.moveBaseClient = actionlib.SimpleActionClient('move_base', MoveBaseAction)
-        self.goal = MoveBaseGoal()
-        self.goal.target_pose.header.frame_id = 'base_link'
+        self.pub_cmdvel = rospy.Publisher('cmd_vel', Twist, queue_size=1)
+        #self.moveBaseClient = actionlib.SimpleActionClient('move_base', MoveBaseAction)
+        #self.goal = MoveBaseGoal()
+        #self.goal.target_pose.header.frame_id = 'base_link'
 
     def execute(self, userdata):
         rospy.loginfo('Executing state TURNING_180')
@@ -220,15 +224,21 @@ class Turn_180(smach.State):
         # TODO tourner 180 degres
         self.pub_voice.publish("Watch out ! I'm turning")
         rospy.sleep(3)
+        twist = Twist()
+        twist.angular.z = pi/8
+        timenow = rospy.get_time()
 
+        while rospy.get_time() - timenow < 8:
+        	self.pub_cmdvel.publish(twist)
+        
+		
+        #quaternion = tf.transformations.quaternion_from_euler(0, 0, pi)
+        #self.goal.target_pose.pose.orientation.x = quaternion[0]
+        #self.goal.target_pose.pose.orientation.y = quaternion[1]
+        #self.goal.target_pose.pose.orientation.z = quaternion[2]
+        #self.goal.target_pose.pose.orientation.w = quaternion[3]
 
-        quaternion = tf.transformations.quaternion_from_euler(0, 0, pi)
-        self.goal.target_pose.pose.orientation.x = quaternion[0]
-        self.goal.target_pose.pose.orientation.y = quaternion[1]
-        self.goal.target_pose.pose.orientation.z = quaternion[2]
-        self.goal.target_pose.pose.orientation.w = quaternion[3]
-
-        self.moveBaseClient.send_goal(self.goal)
+        #self.moveBaseClient.send_goal(self.goal)
 
         return 'finished'
 

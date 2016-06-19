@@ -10,7 +10,7 @@
 namespace wm
 {
 	peopleFollower::peopleFollower(const ros::NodeHandle& nh)
-								:nh_(nh), moveBaseAC_("move_base", false)
+								:nh_(nh), moveBaseAC_("move_base", false), tfListener_(tfBuffer_)
 	{
 		isFollowing_ = false;
 		lockTarget_ = false;
@@ -27,6 +27,8 @@ namespace wm
 		testPub_ = nh_.advertise<geometry_msgs::PoseStamped>("people_follower_test", 1);
 		followSrvServer_ = nh_.advertiseService("wm_people_follow", &peopleFollower::peopleFollowerService, this);
 		legTrackerSub_ = nh_.subscribe("/people_tracker_measurements", 10, &peopleFollower::legTrackerCallback, this);
+
+		searchRadius_ = searchDistance_;
 	}
 
 	peopleFollower::~peopleFollower()
@@ -40,6 +42,16 @@ namespace wm
 
 		if (req.request == req.ACQUIRE_TARGET)
 		{
+			try
+			{
+				tfStamped_ = tfBuffer_.lookupTransform("odom", "base_link", ros::Time(0));
+			}
+			catch (tf2::TransformException &e)
+			{
+				res.response = res.FAILURE;
+				return true;
+			}
+			
 			lockTarget_ = true;
 			ROS_INFO("Received request to acquire target to follow.");
 			mtx_.unlock();
@@ -123,8 +135,10 @@ namespace wm
 				// get the closest person's position
 				for (unsigned int i = 0; i < inputMsg.people.size(); i++)
 				{
-					distance = sqrt(pow(inputMsg.people.at(i).pos.y, 2) + pow(inputMsg.people.at(i).pos.y, 2));
-					angle = abs(atan2(inputMsg.people.at(i).pos.y, inputMsg.people.at(i).pos.y));
+					distance = sqrt(pow(inputMsg.people.at(i).pos.x - tfStamped_.transform.translation.x, 2) +
+									pow(inputMsg.people.at(i).pos.y - tfStamped_.transform.translation.y, 2));
+					angle = abs(atan2(inputMsg.people.at(i).pos.y - tfStamped_.transform.translation.y,
+										inputMsg.people.at(i).pos.x - tfStamped_.transform.translation.x));
 
 					newScore = 1.0 / (distance * angle + 0.0001);
 
@@ -186,11 +200,11 @@ namespace wm
 					headingX = inputMsg.people.at(i).pos.x - personNewPosition_.x;
 					headingY = inputMsg.people.at(i).pos.y - personNewPosition_.y;
 
-					if (distance < searchDistance_ && inputMsg.people.at(i).reliability > minMeasurementReliability_)
+					if (distance < searchRadius_ && inputMsg.people.at(i).reliability > minMeasurementReliability_)
 					{
 						if (distanceX != 0.0 && distanceY != 0.0)
 						{
-							cosTheta = ((inputMsg.people.at(i).pos.x * personNewPosition_.x +
+							cosTheta = (((inputMsg.people.at(i).pos.x) * personNewPosition_.x +
 										inputMsg.people.at(i).pos.y * personNewPosition_.y) /
 										(sqrt(distanceX) * sqrt(distanceY)));
 						}
@@ -223,54 +237,74 @@ namespace wm
 				{
 					personNewPosition_.x = inputMsg.people.at(followedPerson).pos.x;
 					personNewPosition_.y = inputMsg.people.at(followedPerson).pos.y;
-				}
-			}
-
-			if (isFollowing_ && (ros::Time::now().toSec() - lastActionTime_ > actionClientPeriod_))
-			{
-				lastActionTime_ = ros::Time::now().toSec();
-
-				geometry_msgs::PoseStamped outputMsg;
-
-				outputMsg.header.frame_id = "base_link";
-				outputMsg.header.stamp = ros::Time::now();
-
-				outputMsg.pose.position.x = personNewPosition_.x;
-				outputMsg.pose.position.y = personNewPosition_.y;
-				outputMsg.pose.position.z = 0.0;
-
-				tf2::Quaternion q;
-				double yaw = atan2(personNewPosition_.y, personNewPosition_.x);
-				q.setEuler(0.0, 0.0, yaw);
-
-				outputMsg.pose.orientation.x = q[0];
-				outputMsg.pose.orientation.y = q[1];
-				outputMsg.pose.orientation.z = q[2];
-				outputMsg.pose.orientation.w = q[3];
-
-				testPub_.publish(outputMsg);
-
-				// add  X distance from base_link center to laser sensor
-				double distance = sqrt(pow(personNewPosition_.x + 0.34 , 2) + pow(personNewPosition_.y, 2));
-
-				// if the followed person is closer than followDistance_, the robot can only rotate
-				if (distance < followDistance_)
-				{
-					outputMsg.pose.position.x = 0.0;
-					outputMsg.pose.position.y = 0.0;
-				}
-/*
-				if (moveBaseAC_.isServerConnected())
-				{
-					move_base_msgs::MoveBaseGoal goal;
-
-					goal.target_pose = outputMsg;
-					moveBaseAC_.sendGoal(goal);
+					searchRadius_ = searchDistance_;
 				}
 				else
 				{
-					ROS_ERROR("Action client is not connected to action server.");
-				}	*/
+					searchRadius_ += 0.0;
+				}
+			}
+
+			if (isFollowing_ && ((ros::Time::now().toSec() - lastActionTime_) > actionClientPeriod_))
+			{
+				lastActionTime_ = ros::Time::now().toSec();
+
+				try
+				{
+					tfStamped_ = tfBuffer_.lookupTransform("odom", "base_link", ros::Time(0));
+					geometry_msgs::PoseStamped outputMsg;
+
+					outputMsg.header.frame_id = "odom";
+					outputMsg.header.stamp = ros::Time::now();
+
+					double distance = sqrt(pow(personNewPosition_.x - tfStamped_.transform.translation.x, 2)
+										+ pow(personNewPosition_.y - tfStamped_.transform.translation.y, 2));
+
+					tf2::Quaternion q;
+					double yaw = atan2(personNewPosition_.y - tfStamped_.transform.translation.y,
+										personNewPosition_.x - tfStamped_.transform.translation.x);
+					q.setEuler(0.0, 0.0, yaw);
+
+					outputMsg.pose.orientation.x = q[0];
+					outputMsg.pose.orientation.y = q[1];
+					outputMsg.pose.orientation.z = q[2];
+					outputMsg.pose.orientation.w = q[3];
+
+					// if the followed person is closer than followDistance_, the robot can only rotate
+					if (distance < followDistance_)
+					{
+						outputMsg.pose.position.x = tfStamped_.transform.translation.x;
+						outputMsg.pose.position.y = tfStamped_.transform.translation.y;
+					}
+					else
+					{
+						outputMsg.pose.position.x = (distance - followDistance_) * cos(yaw);
+						outputMsg.pose.position.y = (distance - followDistance_) * sin(yaw);
+					}
+
+					outputMsg.pose.orientation.x = q[0];
+					outputMsg.pose.orientation.y = q[1];
+					outputMsg.pose.orientation.z = q[2];
+					outputMsg.pose.orientation.w = q[3];
+
+					testPub_.publish(outputMsg);
+
+					if (moveBaseAC_.isServerConnected())
+					{
+						move_base_msgs::MoveBaseGoal goal;
+
+						goal.target_pose = outputMsg;
+						moveBaseAC_.sendGoal(goal);
+					}
+					else
+					{
+						ROS_ERROR("Action client is not connected to action server.");
+					}
+				}
+				catch (tf2::TransformException &e)
+				{
+					ROS_WARN("Lookup transform exception: %s", e.what());
+				}
 			}
 		}
 
@@ -292,6 +326,4 @@ int main(int argc, char **argv)
 
 	return 0;
 }
-
-
 
