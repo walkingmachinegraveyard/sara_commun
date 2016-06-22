@@ -24,7 +24,7 @@ namespace wm
 		nh_.param("wm_people_follower_node/locking__time_out", lockingTimeOut_, 10);
 		nh_.param("wm_people_follower_node/search_distance", searchDistance_, 0.2);
 		nh_.param("wm_people_follower_node/minimum_measurement_reliability", minMeasurementReliability_, 0.0);
-		testPub_ = nh_.advertise<geometry_msgs::PoseStamped>("people_follower_test", 1);
+		testPub_ = nh_.advertise<geometry_msgs::PoseStamped>("people_follower_base_frame", 1);
 		followSrvServer_ = nh_.advertiseService("wm_people_follow", &peopleFollower::peopleFollowerService, this);
 		legTrackerSub_ = nh_.subscribe("/people_tracker_measurements", 10, &peopleFollower::legTrackerCallback, this);
 
@@ -89,6 +89,10 @@ namespace wm
 		else if (req.request == req.STOP_FOLLOWING)
 		{
 			isFollowing_ = false;
+			if (moveBaseAC_.isServerConnected())
+			{
+				moveBaseAC_.cancelAllGoals();
+			}
 			res.response = res.SUCCESS;
 			ROS_INFO("Following stopped.");
 		}
@@ -253,16 +257,20 @@ namespace wm
 				{
 					tfStamped_ = tfBuffer_.lookupTransform("odom", "base_link", ros::Time(0));
 					geometry_msgs::PoseStamped outputMsg;
+					geometry_msgs::PoseStamped testMsg;
 
 					outputMsg.header.frame_id = "odom";
 					outputMsg.header.stamp = ros::Time::now();
 
-					double distance = sqrt(pow(personNewPosition_.x - tfStamped_.transform.translation.x, 2)
-										+ pow(personNewPosition_.y - tfStamped_.transform.translation.y, 2));
+					// followed person's position in base_link frame
+					double dx = personNewPosition_.x - tfStamped_.transform.translation.x;
+					double dy = personNewPosition_.y - tfStamped_.transform.translation.y;
+
+					double distance = sqrt(pow(dx, 2) + pow(dy, 2));
+
+					double yaw = atan2(dy, dx);
 
 					tf2::Quaternion q;
-					double yaw = atan2(personNewPosition_.y - tfStamped_.transform.translation.y,
-										personNewPosition_.x - tfStamped_.transform.translation.x);
 					q.setEuler(0.0, 0.0, yaw);
 
 					outputMsg.pose.orientation.x = q[0];
@@ -278,14 +286,18 @@ namespace wm
 					}
 					else
 					{
-						outputMsg.pose.position.x = (distance - followDistance_) * cos(yaw);
-						outputMsg.pose.position.y = (distance - followDistance_) * sin(yaw);
+						outputMsg.pose.position.x = (distance - followDistance_) * cos(yaw) + tfStamped_.transform.translation.x;
+						outputMsg.pose.position.y = (distance - followDistance_) * sin(yaw) + tfStamped_.transform.translation.y;
 					}
 
-					outputMsg.pose.orientation.x = q[0];
-					outputMsg.pose.orientation.y = q[1];
-					outputMsg.pose.orientation.z = q[2];
-					outputMsg.pose.orientation.w = q[3];
+					testMsg.header.frame_id = "odom";
+					testMsg.header.stamp = ros::Time::now();
+					testMsg.pose.position.x = dx;
+					testMsg.pose.position.y = dy;
+					testMsg.pose.orientation.x = q[0];
+					testMsg.pose.orientation.y = q[1];
+					testMsg.pose.orientation.z = q[2];
+					testMsg.pose.orientation.w = q[3];
 
 					testPub_.publish(outputMsg);
 
