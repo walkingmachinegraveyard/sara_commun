@@ -433,7 +433,6 @@ class MonitorFollowing(smach.State):
         self.audio_input = rospy.Subscriber('recognizer1/output', String, self.audio_cb)
         self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1, latch=True)
         self.people_follower_srv = rospy.ServiceProxy('wm_people_follow', peopleFollower)
-        self.move_base_client = SimpleActionClient('move_base', MoveBaseAction)
 
         self.mutex = threading.Lock()
         self.stop_following = False
@@ -453,14 +452,11 @@ class MonitorFollowing(smach.State):
     def execute(self, ud):
         rospy.logdebug("Entered 'MONITOR_FOLLOWING' state.")
 
-        self.move_base_client.wait_for_server()
-
         while True:
             self.mutex.acquire()
 
             if self.stop_following:
                 self.people_follower_srv.call(request=peopleFollowerRequest.STOP_FOLLOWING)
-                self.move_base_client.cancel_all_goals()
                 self.mutex.release()
                 break
 
