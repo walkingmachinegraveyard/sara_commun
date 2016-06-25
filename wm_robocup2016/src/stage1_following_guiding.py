@@ -5,7 +5,7 @@ import smach
 from actionlib import SimpleActionClient
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from actionlib_msgs.msg import GoalStatus
-from std_msgs.msg import String, Float64, Bool
+from std_msgs.msg import String, Float64, Bool, UInt8
 from geometry_msgs.msg import PoseStamped
 from wm_people_follower.srv import peopleFollower, peopleFollowerRequest, peopleFollowerResponse
 from tf2_ros import Buffer, TransformListener
@@ -13,14 +13,21 @@ import wm_supervisor.srv
 import threading
 from math import sqrt
 
+GREEN_FACE = 3
+YELLOW_FACE = 4
+RED_FACE = 5
+
 
 class InitState(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['init_done'])
         self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1, latch=True)
         self.neck_pub = rospy.Publisher('neckHead_controller/command', Float64, queue_size=1, latch=True)
+        self.face_cmd = rospy.Publisher('/face_mode', UInt8, queue_size=1, latch=True)
 
     def execute(self, ud):
+
+        self.face_cmd.publish(GREEN_FACE)
 
         neck_cmd = Float64()
 
@@ -180,6 +187,7 @@ class AskContinueFollowing(smach.State):
         self.audio_input = rospy.Subscriber('recognizer1/output', String, self.audio_cb)
         self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1, latch=True)
         self.people_follower_srv = rospy.ServiceProxy('wm_people_follow', peopleFollower)
+        self.face_cmd = rospy.Publisher('/face_mode', UInt8, queue_size=1, latch=True)
 
         self.mutex = threading.Lock()
 
@@ -202,6 +210,7 @@ class AskContinueFollowing(smach.State):
             else:
                 tts_msg = String()
                 tts_msg.data = "I am sorry. I did not understand. Can you please repeat?"
+                self.face_cmd.publish(YELLOW_FACE)
                 self.tts_pub.publish(tts_msg)
 
         self.mutex.release()
@@ -247,6 +256,7 @@ class AskStartGuiding(smach.State):
         self.audio_input = rospy.Subscriber('recognizer1/output', String, self.audio_cb)
         self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1, latch=True)
         self.people_follower_srv = rospy.ServiceProxy('wm_people_follow', peopleFollower)
+        self.face_cmd = rospy.Publisher('/face_mode', UInt8, queue_size=1, latch=True)
 
         self.mutex = threading.Lock()
 
@@ -270,6 +280,7 @@ class AskStartGuiding(smach.State):
                 tts_msg = String()
                 tts_msg.data = "I am sorry. I did not understand. Can you please repeat?"
                 self.tts_pub.publish(tts_msg)
+                self.face_cmd.publish(YELLOW_FACE)
 
         self.mutex.release()
 
@@ -314,6 +325,7 @@ class StartGuiding(smach.State):
         self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1, latch=True)
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer)
+        self.face_cmd = rospy.Publisher('/face_mode', UInt8, queue_size=1, latch=True)
 
     def execute(self, ud):
 
@@ -321,6 +333,7 @@ class StartGuiding(smach.State):
 
         rospy.sleep(rospy.Duration(5))
 
+        self.face_cmd.publish(YELLOW_FACE)
         tts_msg.data = "I can not guide you back. I will go back to the stating location on my own."
         self.tts_pub.publish(tts_msg)
 
@@ -361,6 +374,7 @@ class MoveSupervisor(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['move_ok', 'move_estop'])
         self.status_service = rospy.ServiceProxy('robot_status', wm_supervisor.srv.robotStatus)
+        self.face_cmd = rospy.Publisher('/face_mode', UInt8, queue_size=1, latch=True)
 
     def execute(self, ud):
         rospy.logdebug("Entered 'ROBOT_STATUS' state.")
@@ -369,12 +383,14 @@ class MoveSupervisor(smach.State):
             res = self.status_service()
 
         except rospy.ServiceException:
+            self.face_cmd.publish(RED_FACE)
             return 'move_estop'
 
         if res.status == wm_supervisor.srv.robotStatusResponse.STATUS_OK:
             return 'move_ok'
 
         rospy.sleep(5.0)
+        self.face_cmd.publish(YELLOW_FACE)
 
         return 'move_estop'
 

@@ -9,7 +9,7 @@ import wm_supervisor.srv
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from nav_msgs.srv import GetPlan
 from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped
-from std_msgs.msg import String, Float64, Int8, Bool
+from std_msgs.msg import String, Float64, UInt8, Bool
 from math import sqrt, atan2
 import tf_conversions
 from tf2_ros import Buffer, TransformListener
@@ -20,6 +20,10 @@ import actionlib
 from face_detector.msg import FaceDetectorAction, FaceDetectorGoal
 from wm_people_follower.srv import peopleFollower, peopleFollowerRequest, peopleFollowerResponse
 
+GREEN_FACE = 3
+YELLOW_FACE = 4
+RED_FACE = 5
+
 
 class InitState(smach.State):
     def __init__(self):
@@ -27,9 +31,12 @@ class InitState(smach.State):
         self.neck_pub = rospy.Publisher('neckHead_controller/command', Float64, queue_size=1, latch=True)
         self.amcl_initial_pose_pub = rospy.Publisher('initialpose', PoseWithCovarianceStamped, queue_size=1, latch=True)
         self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1, latch=True)
+        self.face_cmd = rospy.Publisher('/face_mode', UInt8, queue_size=1, latch=True)
 
     def execute(self, ud):
         rospy.logdebug("Entered 'INIT_STATE' state.")
+
+        self.face_cmd.publish(GREEN_FACE)
 
         initial_pose = PoseWithCovarianceStamped()
         initial_pose.header.frame_id = 'map'
@@ -62,6 +69,7 @@ class WaitDoor(smach.State):
         smach.State.__init__(self, outcomes=['wait_timed_out', 'door_is_open', 'door_is_closed'])
         self.door_detector_srv = rospy.ServiceProxy('/detect_open_door', detect_open_door)
         self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1, latch=True)
+        self.face_cmd = rospy.Publisher('/face_mode', UInt8, queue_size=1, latch=True)
         self.iter = 0
 
     def execute(self, ud):
@@ -86,6 +94,7 @@ class WaitDoor(smach.State):
             rospy.sleep(4.0)
             return 'door_is_closed'
         else:
+            self.face_cmd.publish(YELLOW_FACE)
             tts_msg = String()
             tts_msg.data = "I do not see the door. I require you to press the start button."
             self.tts_pub.publish(tts_msg)
@@ -96,6 +105,7 @@ class StartOverride(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['start_signal_received'])
         self.start_signal_sub = rospy.Subscriber('start_button_msg', Bool, self.start_signal_sub, queue_size=1)
+        self.face_cmd = rospy.Publisher('/face_mode', UInt8, queue_size=1, latch=True)
         self.signal_received = False
 
         self.mutex = threading.Lock()
@@ -122,6 +132,7 @@ class StartOverride(smach.State):
             self.mutex.release()
             rospy.sleep(rospy.Duration(1))
 
+        self.face_cmd.publish(GREEN_FACE)
         return 'start_signal_received'
 
 
@@ -199,6 +210,7 @@ class AttemptMonitor(smach.State):
         self.tf_listener = TransformListener(self.tf_buffer)
 
         self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1, latch=True)
+        self.face_cmd = rospy.Publisher('/face_mode', UInt8, queue_size=1, latch=True)
 
         self.grasp_distance = 1.2
 
@@ -240,6 +252,7 @@ class AttemptMonitor(smach.State):
         else:
             # attempt limit reached, skip to the next goal
             ud.ma_current_attempt = 1
+            self.face_cmd.publish(YELLOW_FACE)
             tts_msg = String()
             tts_msg.data = "I can not reach" + ud.ma_wp_str[ud.ma_target_wp - 1] + "." + "I am moving toward the next waypoint."
             self.tts_pub.publish(tts_msg)
@@ -254,6 +267,7 @@ class ScanFace(smach.State):
         self.face_detector_ac = actionlib.SimpleActionClient('face_positions', FaceDetectorAction)
         self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1, latch=True)
         self.neck_pub = rospy.Publisher('neckHead_controller/command', Float64, queue_size=1, latch=True)
+        self.face_cmd = rospy.Publisher('/face_mode', UInt8, queue_size=1, latch=True)
 
     def execute(self, ud):
         rospy.logdebug("Entered 'SCAN_FACE' state.")
@@ -300,6 +314,7 @@ class ScanFace(smach.State):
 
         # wait for server timed out. moving on...
         else:
+            self.face_cmd.publish(YELLOW_FACE)
             tts_msg.data = "I am unable to identify the obstacle."
             self.tts_pub.publish(tts_msg)
 
@@ -358,9 +373,12 @@ class AnnounceWpReached(smach.State):
                              input_keys=['aw_target_wp', 'aw_wp_str'],
                              output_keys=['aw_target_wp'])
         self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1, latch=True)
+        self.face_cmd = rospy.Publisher('/face_mode', UInt8, queue_size=1, latch=True)
 
     def execute(self, ud):
         rospy.logdebug("Entered 'ANNOUNCE_WP_REACHED' state.")
+
+        self.face_cmd.publish(GREEN_FACE)
 
         tts_msg = String()
 

@@ -11,16 +11,20 @@ from geometry_msgs.msg import PoseStamped
 from moveit_msgs.msg import RobotTrajectory, CollisionObject
 from shape_msgs.msg import SolidPrimitive
 import tf_conversions
-from object_recognition_msgs.msg import ObjectRecognitionAction, ObjectRecognitionGoal, RecognizedObjectArray
+from object_recognition_msgs.msg import ObjectRecognitionAction, ObjectRecognitionGoal, RecognizedObjectArray, TableArray
 from object_recognition_msgs.srv import GetObjectInformation, GetObjectInformationRequest
 from tf2_ros import Buffer, TransformListener
 from tf2_geometry_msgs import do_transform_pose
 from robotiq_c_model_control.msg import CModel_robot_output as eef_cmd
 from robotiq_c_model_control.msg import CModel_robot_input as eef_status
 import threading
-from std_msgs.msg import Float64, Bool, String
+from std_msgs.msg import Float64, Bool, String, UInt8
 from actionlib_msgs.msg import GoalStatus
 from actionlib import SimpleActionClient
+
+GREEN_FACE = 3
+YELLOW_FACE = 4
+RED_FACE = 5
 
 
 class WaitForStart(smach.State):
@@ -28,11 +32,14 @@ class WaitForStart(smach.State):
         smach.State.__init__(self, outcomes=['do_init'])
         self.start_button_sub = rospy.Subscriber('start_button_msg', Bool, self.start_button_cb, queue_size=4)
         self.voice_recognizer_sub = rospy.Subscriber('output', String, self.voice_recognizer_cb, queue_size=4)
+        self.face_cmd = rospy.Publisher('/face_mode', UInt8, queue_size=1, latch=True)
 
         self.mutex = threading.Lock()
         self.proceed = False
 
     def voice_recognizer_cb(self, msg):
+
+        self.face_cmd.publish(GREEN_FACE)
 
         self.mutex.acquire()
 
@@ -120,6 +127,7 @@ class InitSupervisor(smach.State):
                                              'init_arm_ok',
                                              'init_arm_error'])
         self.supervisor_srv = rospy.ServiceProxy('robot_status', wm_supervisor.srv.robotStatus)
+        self.face_cmd = rospy.Publisher('/face_mode', UInt8, queue_size=1, latch=True)
 
     def execute(self, ud):
         rospy.logdebug("Entered 'INIT_SUPERVISOR' state.")
@@ -128,13 +136,14 @@ class InitSupervisor(smach.State):
             res = self.supervisor_srv()
         except rospy.ServiceException:
             rospy.logerr("Failed to connect to the supervising service.")
+            self.face_cmd.publish(RED_FACE)
             return 'init_arm_error'
 
         if res.status == wm_supervisor.srv.robotStatusResponse.STATUS_OK:
             return 'init_arm_ok'
 
         rospy.sleep(5.0)
-
+        self.face_cmd.publish(YELLOW_FACE)
         return 'init_arm_estop'
 
 
@@ -143,13 +152,57 @@ class GetDropPose(smach.State):
         smach.State.__init__(self, outcomes=['drop_pose_acquired'],
                              output_keys=['drop_pose'])
 
-        # TODO
+        self.tabletop_sub = rospy.Subscriber('/object_recognition/table_array', TableArray, self.tabletop_cb, queue_size=10)
+        self.tf_buffer = Buffer()
+        self.tf_listener = TransformListener(self.tf_buffer)
 
-        def execute(self, ud):
+        self.msg_received = False
 
-            # TODO get planes and select an horizontal plane where to drop picked objects
+        self.mutex = threading.Lock()
 
-            return 'drop_pose_acquired'
+        self.tables = TableArray()
+
+    def tabletop_cb(self, table_array):
+
+        self.mutex.acquire()
+        self.msg_received = True
+        self.tables = table_array
+        self.mutex.release()
+
+    def execute(self, ud):
+
+        loop_again = True
+
+        while loop_again:
+            self.mutex.acquire()
+            if self.msg_received:
+                loop_again = False
+            self.mutex.release()
+            rospy.sleep(rospy.Duration(1))
+
+        transform = self.tf_buffer.lookup_transform('odom', self.tables.header.frame_id, rospy.Time(0))
+
+        drop_pose_z = 1.5
+        tmp = PoseStamped()
+        lst = []
+
+        for t in range(len(self.tables.tables)):
+            tmp.pose = self.tables.tables[t].pose
+            tmp.header.frame_id = self.tables.header.frame_id
+            tmp.header.stamp = rospy.Time.now()
+
+            eval_pose = do_transform_pose(tmp, transform)
+
+            rpy = tf_conversions.transformations.euler_from_quaternion(eval_pose.pose.orientation)
+
+            if rpy[2]**2 > 0.90:
+                lst.append([(eval_pose.pose.position.z - drop_pose_z)**2, eval_pose])
+
+        lst.sort()
+
+        ud.drop_pose = lst[0][1]
+
+        return 'drop_pose_acquired'
 
 
 class SetObjectTarget(smach.State):
