@@ -21,10 +21,12 @@ import threading
 from std_msgs.msg import Float64, Bool, String, UInt8
 from actionlib_msgs.msg import GoalStatus
 from actionlib import SimpleActionClient
+from subprocess import check_call, CalledProcessError
 
 GREEN_FACE = 3
 YELLOW_FACE = 4
 RED_FACE = 5
+PATH_TO_PDF_CREATOR = '~/sara_ws/src/sara_commun/wm_ork/Rviz_Capture/open_rviz.sh'
 
 
 class WaitForStart(smach.State):
@@ -855,6 +857,8 @@ if __name__ == '__main__':
                 if len(result.recognized_objects.objects) > 0:
                     userdata.ork_object_array = result.recognized_objects.objects
                     userdata.ork_action_frame = result.recognized_objects.header.frame_id
+                    bash_str = 'sh ' + PATH_TO_PDF_CREATOR
+                    check_call([bash_str])
                     return 'succeeded'
 
             return 'aborted'
