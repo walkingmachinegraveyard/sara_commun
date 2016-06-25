@@ -1,0 +1,12 @@
+<launch>
+
+	<include file="$(find sara_launch)/safety/arduino_safety_stop.launch" />
+	<include file="$(find wm_2dnav)/launch/move_base.launch" />
+	<include file="$(find zbar_ros)/launch/wm_zbar_ros.launch" />
+	<include file="$(find wm_tts)/launch/wm_tts.launch"/>
+  	<include file="$(find sara_vocab)/launch/sara_vocab.launch"/>
+	<include file="$(find wm_people_follower)/launch/wm_people_follower.launch" />
+	<include file="$(find sara_launch)/people_launch/wm_leg_detector.launch" />
+	<include file="$(find sara_launch)/people_launch/wm_face_detector.launch" />
+	<node name="robocup_following" pkg="wm_robocup2016" type="stage1_following_guiding.py" output="screen" />
+</launch>
