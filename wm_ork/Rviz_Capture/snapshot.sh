@@ -2,7 +2,8 @@
 
 sleep 5
 ID_RVIZ=$(pidof rviz)
-cd /home/samuel/Pictures/snapshots_rviz
+mkdir ~/sam_temp
+cd ~/sam_temp
 
 name=camera
 if [[ -e $name.png ]] ; then
@@ -15,7 +16,7 @@ fi
 touch $name.png  
 
 DISPLAY=":0.0"; export DISPLAY
-import -window root -display $DISPLAY -screen /home/samuel/Pictures/snapshots_rviz/$name.png
+import -window root -display $DISPLAY -screen ~/sam_temp/$name.png
 kill $ID_RVIZ
 exit
 
