@@ -147,7 +147,7 @@ class GetDropPose(smach.State):
 
         def execute(self, ud):
 
-            # TODO get planes and select an horizontal where to drop picked objects
+            # TODO get planes and select an horizontal plane where to drop picked objects
 
             return 'drop_pose_acquired'
 
@@ -354,6 +354,55 @@ class GraspArmSupervisor(smach.State):
         rospy.sleep(5.0)
 
         return 'grasp_arm_estop'
+
+
+class GraspPlan(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['grasp_plan_succeeded',
+                                             'grasp_plan_failed'],
+                             input_keys=['grasp_target_pose'],
+                             output_keys=['grasp_arm_plan'])
+        self.make_plan_srv = rospy.ServiceProxy('/wm_arm_driver_node/compute_manipulator_plan', computePlan)
+
+    def execute(self, ud):
+        rospy.logdebug("Entered 'GRASP_PLAN' state.")
+
+        tp = ud.grasp_target_pose
+        tp.pose.position.x += 0.1
+
+        try:
+            res = self.make_plan_srv(targetPose=tp, jointPos=[], planningSpace=computePlanRequest.CARTESIAN_SPACE, collisionObject=None)
+        except rospy.ServiceException:
+            rospy.logerr("Failed to connect to the planning service.")
+            return 'grasp_plan_failed'
+
+        if res.planningResult == computePlanResponse.PLANNING_FAILURE:
+            return 'grasp_plan_failed'
+
+        else:
+            ud.grasp_arm_plan = res.trajectory
+            rospy.sleep(rospy.Duration(10))
+            return 'grasp_plan_succeeded'
+
+
+class GraspSupervisor(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['grasp_ok', 'grasp_estop'])
+        self.supervisor_srv = rospy.ServiceProxy('robot_status', wm_supervisor.srv.robotStatus)
+
+    def execute(self, ud):
+        rospy.logdebug("Entered 'GRASP_SUPERVISOR' state.")
+
+        try:
+            res = self.supervisor_srv()
+            if res.status == wm_supervisor.srv.robotStatusResponse.STATUS_OK:
+                return 'grasp_ok'
+
+        except rospy.ServiceException:
+            rospy.sleep(5.0)
+            rospy.logerr("Failed to connect to the supervising service.")
+
+        return 'grasp_estop'
 
 
 class CloseEef(smach.State):
@@ -851,9 +900,30 @@ if __name__ == '__main__':
                                SimpleActionState('/wm_arm_driver_node/execute_plan',
                                                  executePlanAction,
                                                  goal_slots=['trajectory']),
-                               transitions={'succeeded': 'CLOSE_EEF',
+                               transitions={'succeeded': 'GRASP_PLAN',
                                             'aborted': 'GRASP_ARM_PLAN',
                                             'preempted': 'GRASP_ARM_PLAN'},
+                               remapping={'trajectory': 'arm_plan'})
+
+        smach.StateMachine.add('GRASP_PLAN',
+                               GraspPlan(),
+                               transitions={'grasp_plan_succeeded': 'GRASP_SUPERVISOR',
+                                            'grasp_plan_failed': 'RESET_POSITION'},
+                               remapping={'grasp_arm_plan': 'arm_plan',
+                                          'grasp_target_pose': 'grasp_target_pose'})
+
+        smach.StateMachine.add('GRASP_SUPERVISOR',
+                               GraspSupervisor(),
+                               transitions={'grasp_ok': 'EXECUTE_GRASP',
+                                            'grasp_estop': 'GRASP_SUPERVISOR'})
+
+        smach.StateMachine.add('EXECUTE_GRASP',
+                               SimpleActionState('/wm_arm_driver_node/execute_plan',
+                                                 executePlanAction,
+                                                 goal_slots=['trajectory']),
+                               transitions={'succeeded': 'CLOSE_EEF',
+                                            'aborted': 'GRASP_PLAN',
+                                            'preempted': 'GRASP_PLAN'},
                                remapping={'trajectory': 'arm_plan'})
 
         smach.StateMachine.add('CLOSE_EEF',
