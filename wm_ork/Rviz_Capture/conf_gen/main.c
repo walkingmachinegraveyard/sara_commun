@@ -28,7 +28,7 @@ int main (int argc, char **argv){
 
 	/*Écriture du config file pour le PDF_Generator***********/
 	FILE * fHandle = NULL;
-	int i =0;
+	int i =1;
 
 	fHandle = fopen("/home/samuel/sam_temp/pdf_config.conf","w");
 	if(fHandle != NULL){

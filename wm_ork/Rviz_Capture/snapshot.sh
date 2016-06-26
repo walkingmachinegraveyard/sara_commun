@@ -2,8 +2,10 @@
 
 sleep 5
 ID_RVIZ=$(pidof rviz)
-mkdir ~/sam_temp/snapshots
-cd ~/sam_temp/snapshots
+mkdir ~/sam_temp
+cd ~/sam_temp
+mkdir snapshots
+cd snapshots
 
 name=camera
 if [[ -e $name.png ]] ; then
