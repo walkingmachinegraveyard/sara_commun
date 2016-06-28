@@ -488,6 +488,7 @@ class MonitorEef(smach.State):
                              input_keys=['eef_picked_objects', 'eef_target_object'],
                              output_keys=['eef_picked_objects', 'eef_target_object'])
         self.eef_sub = rospy.Subscriber('/CModelRobotInput', eef_status, self.eef_cb, queue_size=10)
+        self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1, latch=True)
 
         self.mutex = threading.Lock()
 
@@ -532,6 +533,9 @@ class MonitorEef(smach.State):
 
         if self.eef_closed:
             ud.eef_picked_objects.append(ud.eef_target_object)
+            tts_msg = String()
+            tts_msg.data = "I picked up the " + ud.eef_target_object
+            self.tts_pub.publish(tts_msg)
             ud.eef_target_object = ''
             return 'close_eef_ok'
         else:
