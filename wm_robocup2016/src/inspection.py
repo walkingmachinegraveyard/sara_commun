@@ -5,7 +5,7 @@ import smach
 from smach_ros import SimpleActionState
 import wm_supervisor.srv
 from move_base_msgs.msg import MoveBaseAction
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped
 import threading
 from std_msgs.msg import Float64, String, Bool
 
@@ -15,12 +15,20 @@ class InitRobot(smach.State):
         smach.State.__init__(self, outcomes=['init_done'])
         self.neck_pub = rospy.Publisher('neckHead_controller/command', Float64, queue_size=1, latch=True)
         self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1, latch=True)
+        self.amcl_initial_pose_pub = rospy.Publisher('initialpose', PoseWithCovarianceStamped, queue_size=1, latch=True)
 
     def execute(self, ud):
 
-        tts_msg = String()
-        tts_msg.data = "I am ready to begin the inspection."
-        self.tts_pub.publish(tts_msg)
+        initial_pose = PoseWithCovarianceStamped()
+        initial_pose.header.frame_id = 'map'
+        initial_pose.pose.pose.position.x = 0.0
+        initial_pose.pose.pose.position.y = 0.0
+        initial_pose.pose.pose.orientation.x = 0.0
+        initial_pose.pose.pose.orientation.y = 0.0
+        initial_pose.pose.pose.orientation.z = 0.0
+        initial_pose.pose.pose.orientation.w = 1.0
+
+        self.amcl_initial_pose_pub.publish(initial_pose)
 
         neck_cmd = Float64()
         neck_cmd.data = -2.0
@@ -29,6 +37,12 @@ class InitRobot(smach.State):
         rospy.sleep(rospy.Duration(2))
         neck_cmd.data = -0.7
         self.neck_pub.publish(neck_cmd)
+
+        rospy.sleep(rospy.Duration(4))
+
+        tts_msg = String()
+        tts_msg.data = "I am ready to begin the inspection."
+        self.tts_pub.publish(tts_msg)
 
         return 'init_done'
 
