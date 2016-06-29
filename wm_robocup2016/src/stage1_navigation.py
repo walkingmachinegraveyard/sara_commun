@@ -42,12 +42,22 @@ class InitState(smach.State):
 
         initial_pose = PoseWithCovarianceStamped()
         initial_pose.header.frame_id = 'map'
-        initial_pose.pose.pose.position.x = 1.0
-        initial_pose.pose.pose.position.y = 2.0
-        initial_pose.pose.pose.orientation.x = 0.0
-        initial_pose.pose.pose.orientation.y = 0.0
-        initial_pose.pose.pose.orientation.z = 0.0
-        initial_pose.pose.pose.orientation.w = 1.0
+
+        if not ARENA_A:
+            initial_pose.pose.pose.position.x = 15.322
+            initial_pose.pose.pose.position.y = 5.537
+            initial_pose.pose.pose.orientation.x = 0.0
+            initial_pose.pose.pose.orientation.y = 0.0
+            initial_pose.pose.pose.orientation.z = 0.693
+            initial_pose.pose.pose.orientation.w = 0.721
+        else:
+            initial_pose.pose.pose.position.x = 0.0
+            initial_pose.pose.pose.position.y = 0.0
+            initial_pose.pose.pose.orientation.x = 0.0
+            initial_pose.pose.pose.orientation.y = 0.0
+            initial_pose.pose.pose.orientation.z = 0.0
+            initial_pose.pose.pose.orientation.w = 1.0
+
 
         self.amcl_initial_pose_pub.publish(initial_pose)
 
@@ -215,7 +225,7 @@ class AttemptMonitor(smach.State):
         self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1, latch=True)
         self.face_cmd = rospy.Publisher('/face_mode', UInt8, queue_size=1, latch=True)
 
-        self.grasp_distance = 1.2
+        self.grasp_distance = 1.6
 
     def execute(self, ud):
         rospy.logdebug("Entered 'MONITOR_ATTEMPTS' state.")
@@ -543,33 +553,33 @@ if __name__ == '__main__':
 
         wp1 = PoseStamped()
         wp1.header.frame_id = 'map'
-        wp1.pose.position.x = 1.0
-        wp1.pose.position.y = 0.0
+        wp1.pose.position.x = 3.6831
+        wp1.pose.position.y = -7.25051
         wp1.pose.position.z = 0.0
         wp1.pose.orientation.x = 0.0
         wp1.pose.orientation.y = 0.0
-        wp1.pose.orientation.z = 0.0
-        wp1.pose.orientation.w = 1.0
+        wp1.pose.orientation.z = 0.696826
+        wp1.pose.orientation.w = 0.71724
 
         wp2 = PoseStamped()
         wp2.header.frame_id = 'map'
-        wp2.pose.position.x = 3.0
-        wp2.pose.position.y = 0.0
+        wp2.pose.position.x = 7.01055
+        wp2.pose.position.y = -7.66038
         wp2.pose.position.z = 0.0
         wp2.pose.orientation.x = 0.0
         wp2.pose.orientation.y = 0.0
-        wp2.pose.orientation.z = 0.0
-        wp2.pose.orientation.w = 1.0
+        wp2.pose.orientation.z = -0.307491
+        wp2.pose.orientation.w = 0.951551
 
         wp3 = PoseStamped()
         wp3.header.frame_id = 'map'
-        wp3.pose.position.x = 3.0
-        wp3.pose.position.y = 1.0
+        wp3.pose.position.x = 5.83367
+        wp3.pose.position.y = -10.265
         wp3.pose.position.z = 0.0
         wp3.pose.orientation.x = 0.0
         wp3.pose.orientation.y = 0.0
-        wp3.pose.orientation.z = 0.0
-        wp3.pose.orientation.w = 1.0
+        wp3.pose.orientation.z = -0.721783
+        wp3.pose.orientation.w = 0.69212
 
         wp4 = PoseStamped()
         wp4.header.frame_id = 'map'
@@ -584,33 +594,33 @@ if __name__ == '__main__':
     else:
         wp1 = PoseStamped()
         wp1.header.frame_id = 'map'
-        wp1.pose.position.x = 1.0
-        wp1.pose.position.y = 0.0
+        wp1.pose.position.x = 10.148
+        wp1.pose.position.y = -1.117
         wp1.pose.position.z = 0.0
         wp1.pose.orientation.x = 0.0
         wp1.pose.orientation.y = 0.0
-        wp1.pose.orientation.z = 0.0
-        wp1.pose.orientation.w = 1.0
+        wp1.pose.orientation.z = 1.0
+        wp1.pose.orientation.w = 0.0
 
         wp2 = PoseStamped()
         wp2.header.frame_id = 'map'
-        wp2.pose.position.x = 3.0
-        wp2.pose.position.y = 0.0
+        wp2.pose.position.x = 13.899
+        wp2.pose.position.y = -1.083
         wp2.pose.position.z = 0.0
         wp2.pose.orientation.x = 0.0
         wp2.pose.orientation.y = 0.0
-        wp2.pose.orientation.z = 0.0
-        wp2.pose.orientation.w = 1.0
+        wp2.pose.orientation.z = 0.728
+        wp2.pose.orientation.w = 0.685
 
         wp3 = PoseStamped()
         wp3.header.frame_id = 'map'
-        wp3.pose.position.x = 3.0
-        wp3.pose.position.y = 1.0
+        wp3.pose.position.x = 2.545
+        wp3.pose.position.y = 1.487
         wp3.pose.position.z = 0.0
         wp3.pose.orientation.x = 0.0
         wp3.pose.orientation.y = 0.0
-        wp3.pose.orientation.z = 0.0
-        wp3.pose.orientation.w = 1.0
+        wp3.pose.orientation.z = 1.0
+        wp3.pose.orientation.w = 0.0
 
         wp4 = PoseStamped()
         wp4.header.frame_id = 'map'
@@ -677,17 +687,16 @@ if __name__ == '__main__':
 
         smach.StateMachine.add('INIT_STATE',
                                InitState(),
-                               transitions={'init_done': 'WAIT_FOR_OPEN_DOOR'})
-
-        smach.StateMachine.add('WAIT_FOR_OPEN_DOOR',
-                               WaitDoor(),
-                               transitions={'wait_timed_out': 'START_OVERRIDE',
-                                            'door_is_open': 'ANNOUNCE_ACTION',
-                                            'door_is_closed': 'WAIT_FOR_OPEN_DOOR'})
+                               transitions={'init_done': 'START_OVERRIDE'})
 
         smach.StateMachine.add('START_OVERRIDE',
                                StartOverride(),
-                               transitions={'start_signal_received': 'ANNOUNCE_ACTION'})
+                               transitions={'start_signal_received': 'WAIT_FOR_OPEN_DOOR'})
+
+        smach.StateMachine.add('WAIT_FOR_OPEN_DOOR',
+                               WaitDoor(),
+                               transitions={'door_is_open': 'ANNOUNCE_ACTION',
+                                            'door_is_closed': 'WAIT_FOR_OPEN_DOOR'})
 
         smach.StateMachine.add('ANNOUNCE_ACTION',
                                AnnounceAction(),
