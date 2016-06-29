@@ -69,12 +69,16 @@ class InspectionPoseSupervisor(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['inspection_pose_estop', 'inspection_pose_ok'])
         self.supervisor_srv = rospy.ServiceProxy('robot_status', wm_supervisor.srv.robotStatus)
+        self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1, latch=True)
 
     def execute(self, ud):
 
         try:
             res = self.supervisor_srv()
             if res.status == wm_supervisor.srv.robotStatusResponse.STATUS_OK:
+                tts_msg = String()
+                tts_msg.data = "I am moving toward the inspection point."
+                self.tts_pub.publish(tts_msg)
                 return 'inspection_pose_ok'
 
         except rospy.ServiceException:
@@ -89,6 +93,7 @@ class WaitForContinue(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['continue_inspection'])
         self.barcode_sub = rospy.Subscriber('barcode', String, self.sub_cb, queue_size=4)
+        self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1, latch=True)
 
         self.mutex = threading.Lock()
         self.continue_code_received = False
@@ -103,6 +108,10 @@ class WaitForContinue(smach.State):
         self.mutex.release()
 
     def execute(self, ud):
+
+        tts_msg = String()
+        tts_msg.data = "I have arrived at the inspection pose."
+        self.tts_pub.publish(tts_msg)
 
         while True:
             self.mutex.acquire()
@@ -120,12 +129,16 @@ class ExitPoseSupervisor(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['exit_pose_estop', 'exit_pose_ok'])
         self.supervisor_srv = rospy.ServiceProxy('robot_status', wm_supervisor.srv.robotStatus)
+        self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1, latch=True)
 
     def execute(self, ud):
 
         try:
             res = self.supervisor_srv()
             if res.status == wm_supervisor.srv.robotStatusResponse.STATUS_OK:
+                tts_msg = String()
+                tts_msg.data = "I am moving toward the exit point."
+                self.tts_pub.publish(tts_msg)
                 return 'exit_pose_ok'
 
         except rospy.ServiceException:
@@ -143,24 +156,24 @@ if __name__ == '__main__':
     sm.userdata.inspection_pose = PoseStamped()
     sm.userdata.inspection_pose.header.frame_id = 'map'
     sm.userdata.inspection_pose.header.stamp = rospy.Time.now()
-    sm.userdata.inspection_pose.pose.position.x = 4.0
-    sm.userdata.inspection_pose.pose.position.y = 2.0
+    sm.userdata.inspection_pose.pose.position.x = 9.16863
+    sm.userdata.inspection_pose.pose.position.y = -1.37198
     sm.userdata.inspection_pose.pose.position.z = 0.0
     sm.userdata.inspection_pose.pose.orientation.x = 0.0
     sm.userdata.inspection_pose.pose.orientation.y = 0.0
-    sm.userdata.inspection_pose.pose.orientation.z = 0.0
-    sm.userdata.inspection_pose.pose.orientation.w = 1.0
+    sm.userdata.inspection_pose.pose.orientation.z = -0.0479196
+    sm.userdata.inspection_pose.pose.orientation.w = 0.998851
 
     sm.userdata.exit_pose = PoseStamped()
     sm.userdata.exit_pose.header.frame_id = 'map'
     sm.userdata.exit_pose.header.stamp = rospy.Time.now()
-    sm.userdata.exit_pose.pose.position.x = 0.0
-    sm.userdata.exit_pose.pose.position.y = 0.0
+    sm.userdata.exit_pose.pose.position.x = 15.4889
+    sm.userdata.exit_pose.pose.position.y = 5.22395
     sm.userdata.exit_pose.pose.position.z = 0.0
     sm.userdata.exit_pose.pose.orientation.x = 0.0
     sm.userdata.exit_pose.pose.orientation.y = 0.0
-    sm.userdata.exit_pose.pose.orientation.z = 0.0
-    sm.userdata.exit_pose.pose.orientation.w = 1.0
+    sm.userdata.exit_pose.pose.orientation.z = 0.689411
+    sm.userdata.exit_pose.pose.orientation.w = 0.72437
 
     with sm:
         smach.StateMachine.add('INIT',

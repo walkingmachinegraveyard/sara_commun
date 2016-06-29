@@ -24,6 +24,8 @@ GREEN_FACE = 3
 YELLOW_FACE = 4
 RED_FACE = 5
 
+ARENA_A = True
+
 
 class InitState(smach.State):
     def __init__(self):
@@ -96,8 +98,9 @@ class WaitDoor(smach.State):
         else:
             self.face_cmd.publish(YELLOW_FACE)
             tts_msg = String()
-            tts_msg.data = "I do not see the door. I require you to press the start button."
+            tts_msg.data = "I did not detect an opened door in the allocated time."
             self.tts_pub.publish(tts_msg)
+            tts_msg.data = "I require that you press the start button."
             return 'wait_timed_out'
 
 
@@ -430,10 +433,11 @@ class TellInstructions(smach.State):
                 rospy.sleep(rospy.Duration(8))
                 pass
 
-        tts_msg.data = "When you want me to stop following you, say 'SARA go back home'"
+        tts_msg.data = "When you want me to stop following you, say 'SARA go back home'."
         self.tts_pub.publish(tts_msg)
-        tts_msg.data = "You must start your instructions by calling my name."
+        tts_msg.data = "You must start your instructions by calling my name. Otherwise, I will ignore your instructions."
         self.tts_pub.publish(tts_msg)
+        rospy.sleep(rospy.Duration(8))
         tts_msg.data = "I am now ready to follow you."
         self.tts_pub.publish(tts_msg)
 
@@ -460,7 +464,7 @@ class MonitorFollowing(smach.State):
         self.mutex.acquire()
 
         if msg.data.lower().find('sara') != -1 or msg.data.lower().find('sarah') != -1:
-            if msg.data.find('home') != -1:
+            if msg.data.lower().find('home') != -1:
                 self.stop_following = True
 
         self.mutex.release()
@@ -517,9 +521,12 @@ class FailTest(smach.State):
         # TODO
         # connect to service to turn face red, announce the robot cannot recover autonomously
         self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1, latch=True)
+        self.face_cmd = rospy.Publisher('/face_mode', UInt8, queue_size=1, latch=True)
 
     def execute(self, ud):
         # TODO
+        self.face_cmd.publish(RED_FACE)
+
         tts_msg = String
         tts_msg.data = "I can't continue the test. I have encountered an error from which I can't recover."
         self.tts_pub.publish(tts_msg)
@@ -532,45 +539,88 @@ if __name__ == '__main__':
     rospy.init_node('stage1_navigation_node')
     sm = smach.StateMachine(outcomes=['test_failed', 'test_succeeded'])
 
-    wp1 = PoseStamped()
-    wp1.header.frame_id = 'map'
-    wp1.pose.position.x = 1.0
-    wp1.pose.position.y = 0.0
-    wp1.pose.position.z = 0.0
-    wp1.pose.orientation.x = 0.0
-    wp1.pose.orientation.y = 0.0
-    wp1.pose.orientation.z = 0.0
-    wp1.pose.orientation.w = 1.0
+    if ARENA_A:
 
-    wp2 = PoseStamped()
-    wp2.header.frame_id = 'map'
-    wp2.pose.position.x = 3.0
-    wp2.pose.position.y = 0.0
-    wp2.pose.position.z = 0.0
-    wp2.pose.orientation.x = 0.0
-    wp2.pose.orientation.y = 0.0
-    wp2.pose.orientation.z = 0.0
-    wp2.pose.orientation.w = 1.0
+        wp1 = PoseStamped()
+        wp1.header.frame_id = 'map'
+        wp1.pose.position.x = 1.0
+        wp1.pose.position.y = 0.0
+        wp1.pose.position.z = 0.0
+        wp1.pose.orientation.x = 0.0
+        wp1.pose.orientation.y = 0.0
+        wp1.pose.orientation.z = 0.0
+        wp1.pose.orientation.w = 1.0
 
-    wp3 = PoseStamped()
-    wp3.header.frame_id = 'map'
-    wp3.pose.position.x = 3.0
-    wp3.pose.position.y = 1.0
-    wp3.pose.position.z = 0.0
-    wp3.pose.orientation.x = 0.0
-    wp3.pose.orientation.y = 0.0
-    wp3.pose.orientation.z = 0.0
-    wp3.pose.orientation.w = 1.0
+        wp2 = PoseStamped()
+        wp2.header.frame_id = 'map'
+        wp2.pose.position.x = 3.0
+        wp2.pose.position.y = 0.0
+        wp2.pose.position.z = 0.0
+        wp2.pose.orientation.x = 0.0
+        wp2.pose.orientation.y = 0.0
+        wp2.pose.orientation.z = 0.0
+        wp2.pose.orientation.w = 1.0
 
-    wp4 = PoseStamped()
-    wp4.header.frame_id = 'map'
-    wp4.pose.position.x = 4.0
-    wp4.pose.position.y = 1.0
-    wp4.pose.position.z = 0.0
-    wp4.pose.orientation.x = 0.0
-    wp4.pose.orientation.y = 0.0
-    wp4.pose.orientation.z = 0.0
-    wp4.pose.orientation.w = 1.0
+        wp3 = PoseStamped()
+        wp3.header.frame_id = 'map'
+        wp3.pose.position.x = 3.0
+        wp3.pose.position.y = 1.0
+        wp3.pose.position.z = 0.0
+        wp3.pose.orientation.x = 0.0
+        wp3.pose.orientation.y = 0.0
+        wp3.pose.orientation.z = 0.0
+        wp3.pose.orientation.w = 1.0
+
+        wp4 = PoseStamped()
+        wp4.header.frame_id = 'map'
+        wp4.pose.position.x = 4.0
+        wp4.pose.position.y = 1.0
+        wp4.pose.position.z = 0.0
+        wp4.pose.orientation.x = 0.0
+        wp4.pose.orientation.y = 0.0
+        wp4.pose.orientation.z = 0.0
+        wp4.pose.orientation.w = 1.0
+
+    else:
+        wp1 = PoseStamped()
+        wp1.header.frame_id = 'map'
+        wp1.pose.position.x = 1.0
+        wp1.pose.position.y = 0.0
+        wp1.pose.position.z = 0.0
+        wp1.pose.orientation.x = 0.0
+        wp1.pose.orientation.y = 0.0
+        wp1.pose.orientation.z = 0.0
+        wp1.pose.orientation.w = 1.0
+
+        wp2 = PoseStamped()
+        wp2.header.frame_id = 'map'
+        wp2.pose.position.x = 3.0
+        wp2.pose.position.y = 0.0
+        wp2.pose.position.z = 0.0
+        wp2.pose.orientation.x = 0.0
+        wp2.pose.orientation.y = 0.0
+        wp2.pose.orientation.z = 0.0
+        wp2.pose.orientation.w = 1.0
+
+        wp3 = PoseStamped()
+        wp3.header.frame_id = 'map'
+        wp3.pose.position.x = 3.0
+        wp3.pose.position.y = 1.0
+        wp3.pose.position.z = 0.0
+        wp3.pose.orientation.x = 0.0
+        wp3.pose.orientation.y = 0.0
+        wp3.pose.orientation.z = 0.0
+        wp3.pose.orientation.w = 1.0
+
+        wp4 = PoseStamped()
+        wp4.header.frame_id = 'map'
+        wp4.pose.position.x = 4.0
+        wp4.pose.position.y = 1.0
+        wp4.pose.position.z = 0.0
+        wp4.pose.orientation.x = 0.0
+        wp4.pose.orientation.y = 0.0
+        wp4.pose.orientation.z = 0.0
+        wp4.pose.orientation.w = 1.0
 
     sm.userdata.target_wp = 1
     sm.userdata.waypoints = [wp1, wp2, wp3, wp4]
