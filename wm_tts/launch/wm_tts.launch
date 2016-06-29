@@ -3,10 +3,10 @@
     <node name="wm_tts_node" pkg="wm_tts" type="wm_tts_node.py" output="screen" >
      <!-- abs path to engine or symlink -->
       <param name="tts_engine" value="espeak" />
-      <param name="voice_file" value="en+f5" />
-      <param name="speech_rate" value="150" />
+      <param name="voice_file" value="en-us+f5" />
+      <param name="speech_rate" value="135" />
       <param name="speech_volume" value="100" />
-      <param name="pitch" value="60" />
+      <param name="pitch" value="50" />
     </node>
 
 </launch>
