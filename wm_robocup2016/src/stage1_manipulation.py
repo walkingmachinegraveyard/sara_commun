@@ -225,6 +225,7 @@ class SetObjectTarget(smach.State):
         rospy.logdebug("Entered 'SET_OBJECT_TARGET' state.")
 
         new_target = ''
+        is_new_obj = False
 
         # loop through all found objects
         for i in range(len(ud.sot_object_array)):
@@ -534,7 +535,7 @@ class MonitorEef(smach.State):
         if self.eef_closed:
             ud.eef_picked_objects.append(ud.eef_target_object)
             tts_msg = String()
-            tts_msg.data = "I picked up the " + ud.eef_target_object
+            tts_msg.data = "I picked up the " + ud.eef_target_object + "."
             self.tts_pub.publish(tts_msg)
             ud.eef_target_object = ''
             return 'close_eef_ok'
