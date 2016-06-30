@@ -334,7 +334,7 @@ class StartGuiding(smach.State):
         rospy.sleep(rospy.Duration(5))
 
         self.face_cmd.publish(YELLOW_FACE)
-        tts_msg.data = "I can not guide you back. I will go back to the stating location on my own."
+        tts_msg.data = "I can not guide you back safely. I will go back to the stating location on my own."
         self.tts_pub.publish(tts_msg)
 
         tf_stamped = self.tf_buffer.lookup_transform('map', 'base_link', rospy.Time(0))
