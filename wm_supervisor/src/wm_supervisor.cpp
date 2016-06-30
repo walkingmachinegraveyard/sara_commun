@@ -107,6 +107,7 @@ namespace wm
 		{
 			safeVelocityPub_.publish(msg);
 		}
+
 		return;
 	}
 

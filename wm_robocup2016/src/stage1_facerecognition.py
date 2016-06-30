@@ -23,6 +23,7 @@ from geometry_msgs.msg import Twist
 from move_base_msgs.msg import *
 
 DISTANCE_DETECTION = 2
+PERSON = "operator"
 
 class InitState(smach.State):
     def __init__(self):
@@ -59,6 +60,7 @@ class People_Detector(smach.State):
                     self.found = True
 
     def execute(self, userdata):
+        rospy.sleep(10)
         rospy.loginfo('Executing state PEOPLE_DETECTOR')
 
         rospy.loginfo('Looking for someone...')
@@ -154,7 +156,7 @@ class Record_Face(smach.State):
             self.pub_voice.publish("Stay still while I memorize your face")
             # Goal du Actionlib
             datagoal = addDataGoal()
-            datagoal.label = userdata.record_name_in
+            datagoal.label = "operator1"
             datagoal.capture_mode = 1
             datagoal.continuous_mode_images_to_capture = 30
             datagoal.continuous_mode_delay = 0
@@ -202,7 +204,7 @@ class Wait_10(smach.State):
 
     def execute(self, userdata):
         rospy.loginfo('Executing state WAITING')
-        self.pub_voice.publish("I'm waiting 10 seconds before turning")
+        self.pub_voice.publish("I'm waiting 10 seconds, you can hide in the crowd")
         #TODO waiting face
         rospy.sleep(10);
         #TODO green face
@@ -252,7 +254,7 @@ class Find_Crowd(smach.State):
         self.face_sub = rospy.Subscriber('face_detector/face_positions', ColorDepthImageArray, self.face_callback)
 
     def face_callback(self, data):
-        if len(data.head_detections) >= 1 and len(data.head_detections) <= 10 :
+        if len(data.head_detections) >= 5 and len(data.head_detections) <= 10 :
             self.found = True
             self.number = len(data.head_detections)
 
@@ -284,12 +286,12 @@ class Find_Operator(smach.State):
 
     def face_callback(self, data):
         for face in data.detections:
-            if face.label == self.name and not self.name == "":
+            if face.label == PERSON and not self.name == "":
                 self.found = True
 
 
     def execute(self, userdata):
-        self.name = userdata.finding_name_in
+        #self.name = userdata.finding_name_in
         rospy.loginfo('Executing state FINDING_OPERATOR')
 
         # TODO dire la position
@@ -299,10 +301,7 @@ class Find_Operator(smach.State):
             rospy.sleep(1)
 
         rospy.loginfo('Operator found')
-        if userdata.finding_name_in == "":
-            self.pub_voice.publish("I found the operator !")
-        else:
-            self.pub_voice.publish("I found you," + str(userdata.finding_name_in))
+        self.pub_voice.publish("I found the operator !")
 
         return 'found'
 
@@ -328,13 +327,13 @@ def main():
 
 
         smach.StateMachine.add('INIT', InitState(),
-                               transitions={'init_done': 'PEOPLE_DETECTOR'})
+                               transitions={'init_done': 'FACE_DETECTOR'})
 
         smach.StateMachine.add('PEOPLE_DETECTOR', People_Detector(),
                                transitions={'found': 'FACE_DETECTOR','not_found':'PEOPLE_DETECTOR'})
 
         smach.StateMachine.add('FACE_DETECTOR', Face_Detector(),
-                               transitions={'found': 'ASK_NAME', 'not_found': 'FACE_DETECTOR'})
+                               transitions={'found': 'RECORDING', 'not_found': 'FACE_DETECTOR'})
 
         smach.StateMachine.add('ASK_NAME', Ask_Name(),
                                transitions={'name_found': 'RECORDING', 'name_not_found': 'ASK_NAME'},
@@ -345,7 +344,7 @@ def main():
                                remapping={'record_name_in': 'operator_name'})
 
         smach.StateMachine.add('WAITING', Wait_10(),
-                               transitions={'finished': 'TURNING_180'})
+                               transitions={'finished': 'FINDING_CROWD'})
 
         smach.StateMachine.add('TURNING_180', Turn_180(),
                                transitions={'finished': 'FINDING_CROWD'})

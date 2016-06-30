@@ -101,7 +101,7 @@ class WaitDoor(smach.State):
             pass
 
         self.iter += 1
-        if self.iter < 7:
+        if self.iter < 5:
             rospy.sleep(1.0)
             return 'door_is_closed'
         else:
@@ -145,6 +145,7 @@ class StartOverride(smach.State):
             rospy.sleep(rospy.Duration(1))
 
         self.face_cmd.publish(GREEN_FACE)
+        rospy.sleep(rospy.Duration(10))
         return 'start_signal_received'
 
 
@@ -200,7 +201,7 @@ class Move(smach.State):
         goal.target_pose.header.stamp = rospy.Time.now()
 
         self.move_base_client.send_goal(goal)
-        self.move_base_client.wait_for_result(rospy.Duration(20))
+        self.move_base_client.wait_for_result(rospy.Duration(30))
 
         status = self.move_base_client.get_state()
         if status == GoalStatus.SUCCEEDED:
@@ -582,13 +583,13 @@ if __name__ == '__main__':
 
         wp4 = PoseStamped()
         wp4.header.frame_id = 'map'
-        wp4.pose.position.x = 4.0
-        wp4.pose.position.y = 1.0
+        wp4.pose.position.x = 5.83367
+        wp4.pose.position.y = -10.265
         wp4.pose.position.z = 0.0
         wp4.pose.orientation.x = 0.0
         wp4.pose.orientation.y = 0.0
-        wp4.pose.orientation.z = 0.0
-        wp4.pose.orientation.w = 1.0
+        wp4.pose.orientation.z = -0.721783
+        wp4.pose.orientation.w = 0.69212
 
     else:
         wp1 = PoseStamped()
@@ -623,13 +624,13 @@ if __name__ == '__main__':
 
         wp4 = PoseStamped()
         wp4.header.frame_id = 'map'
-        wp4.pose.position.x = 4.0
-        wp4.pose.position.y = 1.0
+        wp4.pose.position.x = 2.545
+        wp4.pose.position.y = 1.487
         wp4.pose.position.z = 0.0
         wp4.pose.orientation.x = 0.0
         wp4.pose.orientation.y = 0.0
-        wp4.pose.orientation.z = 0.0
-        wp4.pose.orientation.w = 1.0
+        wp4.pose.orientation.z = 1.0
+        wp4.pose.orientation.w = 0.0
 
     sm.userdata.target_wp = 1
     sm.userdata.waypoints = [wp1, wp2, wp3, wp4]
@@ -690,12 +691,13 @@ if __name__ == '__main__':
 
         smach.StateMachine.add('START_OVERRIDE',
                                StartOverride(),
-                               transitions={'start_signal_received': 'WAIT_FOR_OPEN_DOOR'})
-
+                               transitions={'start_signal_received': 'ANNOUNCE_ACTION'})
+        """
         smach.StateMachine.add('WAIT_FOR_OPEN_DOOR',
                                WaitDoor(),
                                transitions={'door_is_open': 'ANNOUNCE_ACTION',
                                             'door_is_closed': 'WAIT_FOR_OPEN_DOOR'})
+        """
 
         smach.StateMachine.add('ANNOUNCE_ACTION',
                                AnnounceAction(),
