@@ -201,7 +201,7 @@ class Move(smach.State):
         goal.target_pose.header.stamp = rospy.Time.now()
 
         self.move_base_client.send_goal(goal)
-        self.move_base_client.wait_for_result(rospy.Duration(20))
+        self.move_base_client.wait_for_result(rospy.Duration(30))
 
         status = self.move_base_client.get_state()
         if status == GoalStatus.SUCCEEDED:

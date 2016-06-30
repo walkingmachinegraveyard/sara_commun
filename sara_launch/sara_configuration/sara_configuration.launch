@@ -2,8 +2,8 @@
 
 <launch>
    
-     <arg name="auto_mode" default="false" />
-     <arg name="dynamic_mapping" default="true" />
+     <arg name="auto_mode" default="true" />
+     <arg name="dynamic_mapping" default="false" />
 
 	 <node name="wm_supervisor" pkg="wm_supervisor" type="wm_supervisor_node" required="true" output="screen" />
 
@@ -44,7 +44,7 @@
      </group>
 
 	<group unless="$(arg dynamic_mapping)">
-		<node pkg="map_server" type="map_server" name="map_server" output="screen" args="$(find wm_2dnav)/maps/ArenaB.yaml" />
+		<node pkg="map_server" type="map_server" name="map_server" output="screen" args="$(find wm_2dnav)/maps/ArenaA.yaml" />
 		<include file="$(find sara_launch)/amcl/wm_amcl.launch" />
 	</group>
 
