@@ -11,4 +11,4 @@ local_costmap:
   origin_y: 4.0
   resolution: 0.05
   track_unknown_space: true
-  cost_scaling_factor: 2.0 # default = 10.0
+  cost_scaling_factor: 10.0 # default = 10.0
