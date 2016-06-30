@@ -58,7 +58,6 @@ class InitState(smach.State):
             initial_pose.pose.pose.orientation.z = 0.0
             initial_pose.pose.pose.orientation.w = 1.0
 
-
         self.amcl_initial_pose_pub.publish(initial_pose)
 
         neck_cmd = Float64()
@@ -102,8 +101,8 @@ class WaitDoor(smach.State):
             pass
 
         self.iter += 1
-        if self.iter < 5:
-            rospy.sleep(4.0)
+        if self.iter < 7:
+            rospy.sleep(1.0)
             return 'door_is_closed'
         else:
             self.face_cmd.publish(YELLOW_FACE)
