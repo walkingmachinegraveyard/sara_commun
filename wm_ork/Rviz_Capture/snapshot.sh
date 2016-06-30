@@ -2,8 +2,8 @@
 
 sleep 5
 ID_RVIZ=$(pidof rviz)
-mkdir ~/sam_temp
-cd ~/sam_temp
+mkdir /tmp/snpsht_tmp
+cd /tmp/snpsht_tmp
 mkdir snapshots
 cd snapshots
 
@@ -17,10 +17,10 @@ if [[ -e $name.png ]] ; then
 fi
 touch $name.png  
 
-DISPLAY=":0.0"; export DISPLAY
-import -window root -display $DISPLAY -screen ~/sam_temp/snapshots/$name.png
-kill $ID_RVIZ
-exit
+export DISPLAY=:1 
+import -window root -display $DISPLAY -screen /tmp/snpsht_tmp/snapshots/$name.png
+kill $ID
+
 
 
 

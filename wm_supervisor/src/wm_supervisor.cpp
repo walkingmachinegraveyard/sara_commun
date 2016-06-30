@@ -15,6 +15,10 @@ namespace wm
 		status_ = wm::STATUS_OK;
 
 		safeVelocityPub_ = nh_.advertise<geometry_msgs::Twist>("safe_cmd_vel", 1);
+		FLWdrivePub_ = nh_.advertise<roboteq_msgs::Command>("/roboteq_driver_FLW/cmd", 1);
+		FRWdrivePub_ = nh_.advertise<roboteq_msgs::Command>("/roboteq_driver_FRW/cmd", 1);
+		RLWdrivePub_ = nh_.advertise<roboteq_msgs::Command>("/roboteq_driver_RLW/cmd", 1);
+		RRWdrivePub_ = nh_.advertise<roboteq_msgs::Command>("/roboteq_driver_RRW/cmd", 1);
 
 		audioStreamSub_ = nh_.subscribe("output", 10, &wmSupervisor::audioSubscriberCallback, this);
 		safeVelocitySub_ = nh_.subscribe("cmd_vel", 10, &wmSupervisor::safeVelocityCallback, this);
@@ -107,6 +111,20 @@ namespace wm
 		{
 			safeVelocityPub_.publish(msg);
 		}
+<<<<<<< HEAD
+		else
+		{
+			roboteq_msgs::Command cmd;
+			cmd.mode = cmd.MODE_STOPPED;
+			cmd.setpoint = 0.0;
+
+			FLWdrivePub_.publish(cmd);
+			FRWdrivePub_.publish(cmd);
+			RLWdrivePub_.publish(cmd);
+			RRWdrivePub_.publish(cmd);
+		}
+=======
+>>>>>>> 405e6f7c6bc00333a3d418a8ca5b4b8e08b23fb2
 
 		return;
 	}

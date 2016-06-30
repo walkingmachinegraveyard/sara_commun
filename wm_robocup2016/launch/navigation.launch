@@ -10,5 +10,9 @@
 	<include file="$(find sara_launch)/people_launch/wm_face_detector.launch" />
 	<node name="robocup_navigation" pkg="wm_robocup2016" type="stage1_navigation.py" output="screen" />
 	<node pkg="open_door_detector" type="detect_open_door" name="detect_open_door" output="screen" />
+<<<<<<< HEAD
+	<node pkg="rosbag" type="record" name="rosbag_recorder" args="-O ~/WalkingMachine_navigation1.bag /move_base/NavfnROS/plan /move_base/global_costmap/costmap" />
+=======
 	<node pkg="rosbag" type="record" name="rosbag_recorder" args="/move_base/NavfnROS/plan /move_base/global_costmap/costmap" />
+>>>>>>> 405e6f7c6bc00333a3d418a8ca5b4b8e08b23fb2
 </launch>
