@@ -851,7 +851,7 @@ if __name__ == '__main__':
     sm.userdata.ork_goal.use_roi = False
     sm.userdata.ork_frame = ''
 
-    sm.userdata.picked_objects = ['apple']
+    sm.userdata.picked_objects = ['apple', 'big coffee', 'monster']
     sm.userdata.target_object = ''
 
     with sm:
@@ -863,7 +863,7 @@ if __name__ == '__main__':
                     userdata.ork_object_array = result.recognized_objects.objects
                     userdata.ork_action_frame = result.recognized_objects.header.frame_id
                     bash_str = 'sh ' + PATH_TO_PDF_CREATOR
-                    check_call([bash_str])
+                    # check_call([bash_str])
                     return 'succeeded'
 
             return 'aborted'

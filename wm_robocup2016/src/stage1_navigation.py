@@ -163,6 +163,62 @@ class AnnounceAction(smach.State):
         return 'announcement_done'
 
 
+class InitSupervisor(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['status_ok', 'status_estop'])
+        self.status_service = rospy.ServiceProxy('robot_status', wm_supervisor.srv.robotStatus)
+
+    def execute(self, ud):
+        rospy.logdebug("Entered 'ROBOT_STATUS' state.")
+
+        try:
+            res = self.status_service()
+
+        except rospy.ServiceException:
+            rospy.logfatal("Could not get the robot's status. Aborting...")
+            return 'status_estop'
+
+        if res.status == wm_supervisor.srv.robotStatusResponse.STATUS_OK:
+            return 'status_ok'
+
+        rospy.sleep(5.0)
+
+        return 'status_estop'
+
+
+class InitMove(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['succeeded', 'supervise'])
+        self.move_base_client = SimpleActionClient('move_base', MoveBaseAction)
+
+    def execute(self, ud):
+
+        self.move_base_client.wait_for_server()
+
+        goal = MoveBaseGoal()
+        pose = PoseStamped()
+        pose.header.frame_id = 'map'
+        pose.header.stamp = rospy.Time.now()
+        pose.pose.position.x = 2.0
+        pose.pose.position.y = 0.0
+        pose.pose.orientation.x = 0.0
+        pose.pose.orientation.y = 0.0
+        pose.pose.orientation.z = 0.0
+        pose.pose.orientation.w = 1.0
+
+        goal.target_pose = pose
+        goal.target_pose.header.stamp = rospy.Time.now()
+
+        self.move_base_client.send_goal(goal)
+        self.move_base_client.wait_for_result(rospy.Duration(30))
+
+        status = self.move_base_client.get_state()
+        if status == GoalStatus.SUCCEEDED:
+            return 'succeeded'
+        else:
+            return 'supervise'
+
+
 class RobotStatus(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['status_ok', 'status_error', 'status_estop'])
@@ -176,7 +232,7 @@ class RobotStatus(smach.State):
 
         except rospy.ServiceException:
             rospy.logfatal("Could not get the robot's status. Aborting...")
-            return 'status_error'
+            return 'status_estop'
 
         if res.status == wm_supervisor.srv.robotStatusResponse.STATUS_OK:
             return 'status_ok'
@@ -701,9 +757,19 @@ if __name__ == '__main__':
 
         smach.StateMachine.add('ANNOUNCE_ACTION',
                                AnnounceAction(),
-                               transitions={'announcement_done': 'ROBOT_STATUS'},
+                               transitions={'announcement_done': 'INIT_SUPERVISOR'},
                                remapping={'aa_target_wp': 'target_wp',
                                           'aa_wp_str': 'wp_str'})
+
+        smach.StateMachine.add('INIT_SUPERVISOR',
+                               InitSupervisor(),
+                               transitions={'status_ok': 'INIT_MOVE',
+                                            'status_estop': 'INIT_SUPERVISOR'})
+
+        smach.StateMachine.add('INIT_MOVE',
+                               InitMove(),
+                               transitions={'succeeded': 'ROBOT_STATUS',
+                                            'supervise': 'INIT_SUPERVISOR'})
 
         smach.StateMachine.add('ROBOT_STATUS',
                                RobotStatus(),
