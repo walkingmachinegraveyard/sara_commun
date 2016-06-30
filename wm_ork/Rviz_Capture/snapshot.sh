@@ -17,7 +17,6 @@ if [[ -e $name.png ]] ; then
 fi
 touch $name.png  
 
-export DISPLAY=:1 
 import -window root -display $DISPLAY -screen /tmp/snpsht_tmp/snapshots/$name.png
 kill $ID
 
