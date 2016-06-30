@@ -73,8 +73,8 @@ namespace object_recognition_ros
                           rviz::MovableText::V_CENTER);
   name_->setCharacterHeight(0.08);
   name_->showOnTop();
-  name_->setColor(Ogre::ColourValue::White);
-  name_->setVisible(false);
+  name_->setColor(Ogre::ColourValue::Black);
+  name_->setVisible(true);
 
   object_node_->attachObject(name_.get());
 }
