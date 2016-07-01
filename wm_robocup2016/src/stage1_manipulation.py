@@ -22,6 +22,7 @@ from std_msgs.msg import Float64, Bool, String, UInt8
 from actionlib_msgs.msg import GoalStatus
 from actionlib import SimpleActionClient
 from subprocess import check_call, CalledProcessError
+from random import random
 
 GREEN_FACE = 3
 YELLOW_FACE = 4
@@ -102,7 +103,7 @@ class InitState(smach.State):
         self.eef_pub.publish(hand_cmd)
 
         neck_cmd = Float64()
-        neck_cmd.data = -1.3
+        neck_cmd.data = -0.5
         self.neck_pub.publish(neck_cmd)
 
         rospy.sleep(rospy.Duration(5))
@@ -263,6 +264,7 @@ class SetObjectTarget(smach.State):
                 print "OBJECT NAME : " + new_target
                 print "POSE : "
                 print ud.sot_grasp_target_pose
+                check_call([PATH_TO_PDF_CREATOR], shell=True)
                 check_call(['~/sara_ws/src/PDF_creator/create_pdf.sh'], shell=True)
                 return 'target_set'
                 # rospy.logerr("Could not get transform from " + ud.sot_ork_frame + " to 'odom'.")
@@ -866,8 +868,12 @@ if __name__ == '__main__':
                     userdata.ork_object_array = result.recognized_objects.objects
                     userdata.ork_action_frame = result.recognized_objects.header.frame_id
                     bash_str = 'sh ' + PATH_TO_PDF_CREATOR
-                    check_call([PATH_TO_PDF_CREATOR], shell=True)
                     return 'succeeded'
+
+            neck_pub = rospy.Publisher('neckHead_controller/command', Float64, queue_size=1, latch=True)
+            neck_cmd = Float64()
+            neck_cmd.data = -2.0 * random()
+            neck_pub.publish(neck_cmd)
 
             return 'aborted'
 

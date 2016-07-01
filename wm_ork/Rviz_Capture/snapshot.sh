@@ -1,7 +1,5 @@
 #!/bin/bash
 
-sleep 5
-ID_RVIZ=$(pidof RViz)
 mkdir /tmp/snpsht_tmp
 cd /tmp/snpsht_tmp
 mkdir snapshots
@@ -18,8 +16,7 @@ fi
 touch $name.png  
 
 import -window root -display $DISPLAY -screen /tmp/snpsht_tmp/snapshots/$name.png
-killall -9 rviz
-
+exit
 
 
 
