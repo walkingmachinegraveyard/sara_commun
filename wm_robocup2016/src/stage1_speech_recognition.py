@@ -86,18 +86,17 @@ class WaitingQuestion(smach.State):
     def execute(self, userdata):
         rospy.loginfo('Executing state WaitingQuestion')
 
-        self.pubEmo.publish(0)
+        self.face_cmd.publish(3)
 
-        userdata.WQ_lastState_out = self.state
+        userdata.WQ_question_out = self.state
 
         timeout = time.time() + TIMEOUT_LENGTH  # 10 sec
         while True:
-            if max(self.QUESTIONS[1]) > 1:
+            if min(self.QUESTIONS[1]) > 1:
                 userdata.WQ_lastCommand_out = self.QUESTIONS[0][max(self.QUESTIONS[1])]
                 return 'Question'
 
             if time.time() > timeout:
-                userdata.WQ_lastState_out = self.state
                 return 'Timeout'
 
     def callback(self, data):
@@ -206,7 +205,7 @@ class AskToRepeat(smach.State):
     def execute(self, userdata):
         rospy.loginfo('-- Executing state AskRepeat --')
 
-        self.SayX(self.ANSWERS())
+        self.SayX("Can you repeat the question please?")
 
     def SayX(self, ToSay_str):
         rospy.loginfo(ToSay_str)
@@ -226,8 +225,7 @@ def main():
 
     # Create a SMACH state machine
     sm = smach.StateMachine(outcomes=['success', 'aborted', 'preempted'],
-                            input_keys = [''],
-                            output_keys = ['result'])
+                            output_keys=['result'])
 
     with sm:
         # Add states to the container
@@ -251,7 +249,7 @@ def main():
     '''sis = smach_ros.IntrospectionServer('server_name', asw.wrapped_container, '/ASW_ROOT')'''
 
     # Execute SMACH plan
-    outcomes = sm.execute()
+    sm.execute()
 
     rospy.spin()
 

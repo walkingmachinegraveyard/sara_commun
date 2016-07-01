@@ -204,6 +204,8 @@ class GetDropPose(smach.State):
 
         ud.drop_pose = lst[0][1]
 
+        print ud.drop_pose
+
         return 'drop_pose_acquired'
 
 
@@ -255,12 +257,13 @@ class SetObjectTarget(smach.State):
                 # get the object's pose in odom frame
                 ud.sot_grasp_target_pose = do_transform_pose(ud.sot_object_array[i].pose.pose, transform)
                 ud.sot_target_object = new_target
-                ud.sot_grasp_target_pose.pose.position.z += 0.06
-                ud.sot_grasp_target_pose.pose.position.x -= 0.1
+                ud.sot_grasp_target_pose.pose.position.z += 0.08
+                ud.sot_grasp_target_pose.pose.position.x -= 0.15
 
                 print "OBJECT NAME : " + new_target
                 print "POSE : "
                 print ud.sot_grasp_target_pose
+                check_call(['~/sara_ws/src/PDF_creator/create_pdf.sh'], shell=True)
                 return 'target_set'
                 # rospy.logerr("Could not get transform from " + ud.sot_ork_frame + " to 'odom'.")
 
@@ -863,7 +866,7 @@ if __name__ == '__main__':
                     userdata.ork_object_array = result.recognized_objects.objects
                     userdata.ork_action_frame = result.recognized_objects.header.frame_id
                     bash_str = 'sh ' + PATH_TO_PDF_CREATOR
-                    # check_call([bash_str])
+                    check_call([PATH_TO_PDF_CREATOR], shell=True)
                     return 'succeeded'
 
             return 'aborted'

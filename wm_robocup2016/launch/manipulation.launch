@@ -1,8 +1,9 @@
 <launch>
-
+<!--
 	<include file="$(find sara_launch)/safety/arduino_safety_stop.launch" />
 	<include file="$(find wm_arm_driver)/launch/wm_arm_driver.launch" />
 	<include file="$(find wm_2dnav)/launch/move_base.launch" />
+-->
 	<include file="$(find object_recognition_ros)/launch/server.desktop.launch" />
 	<include file="$(find object_recognition_ros)/launch/object_information_server.launch" />
 	<include file="$(find wm_tts)/launch/wm_tts.launch"/>
