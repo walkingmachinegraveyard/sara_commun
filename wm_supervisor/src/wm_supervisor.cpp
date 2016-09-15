@@ -111,7 +111,7 @@ namespace wm
 		{
 			safeVelocityPub_.publish(msg);
 		}
-<<<<<<< HEAD
+
 		else
 		{
 			roboteq_msgs::Command cmd;
@@ -123,9 +123,6 @@ namespace wm
 			RLWdrivePub_.publish(cmd);
 			RRWdrivePub_.publish(cmd);
 		}
-=======
->>>>>>> 405e6f7c6bc00333a3d418a8ca5b4b8e08b23fb2
-
 		return;
 	}
 
