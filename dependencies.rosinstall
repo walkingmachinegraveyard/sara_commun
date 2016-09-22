@@ -1,5 +1,4 @@
 - git: {local-name: sara_simulation, uri: 'https://github.com/WalkingMachine/sara_simulation.git', version: master}
-- git: {local-name: sara_commun, uri: 'https://github.com/WalkingMachine/sara_commun.git', version: master}
 - git: {local-name: sara_robot, uri: 'https://github.com/WalkingMachine/sara_robot.git', version: master}
 - git: {local-name: sara_desktop, uri: 'https://github.com/WalkingMachine/sara_desktop.git', version: master}
 

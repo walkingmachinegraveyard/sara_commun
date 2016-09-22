@@ -31,7 +31,7 @@ before_install:
 # Create the catking workspace
 install:
   - mkdir -p ~/sara_ws/src
-  - cd ~/sara_ws/src
+  - cd ~/sara_ws/
   - catkin_make
   - source devel/setup.bash
 # Add the package under integration to the workspace using a symlink.
