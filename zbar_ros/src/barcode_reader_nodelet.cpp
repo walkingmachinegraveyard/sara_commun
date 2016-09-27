@@ -32,6 +32,7 @@
 #include "zbar_ros/barcode_reader_nodelet.h"
 #include "pluginlib/class_list_macros.h"
 #include "std_msgs/String.h"
+#include <unistd.h>
 
 namespace zbar_ros
 {
@@ -46,7 +47,7 @@ namespace zbar_ros
     nh_ = getNodeHandle();
     private_nh_ = getPrivateNodeHandle();
 
-    barcode_pub_ = nh_.advertise<std_msgs::String>("barcode", 10,
+    barcode_pub_ = nh_.advertise<std_msgs::String>("/recognizer_1/output", 10,
         boost::bind(&BarcodeReaderNodelet::connectCb, this),
         boost::bind(&BarcodeReaderNodelet::disconnectCb, this));
     
@@ -114,6 +115,7 @@ namespace zbar_ros
       std_msgs::String barcode_string;
       barcode_string.data = barcode;
       barcode_pub_.publish(barcode_string);
+      sleep(3);
     }
   }
 
