@@ -23,7 +23,7 @@ before_install:
   - sudo sh -c "echo \"deb http://packages.ros.org/ros/ubuntu $ROS_CI_DESKTOP main\" > /etc/apt/sources.list.d/ros-latest.list"
   - wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
   - sudo apt-get update -qq
-  - sudo apt-get install -y python-catkin-pkg python-rosdep python-wstool ros-$ROS_DISTRO-catkin ros-$ROS_DISTRO-object-recognition-core ros-$ROS_DISTRO-object-recognition-renderer
+  - sudo apt-get install -y python-catkin-pkg python-rosdep python-wstool ros-$ROS_DISTRO-catkin ros-$ROS_DISTRO-object-recognition-core ros-$ROS_DISTRO-object-recognition-renderer ros-indigo-openni2-launch ros-indigo-urg-node ros-indigo-xsens-driver ros-indigo-joystick-drivers ros-indigo-navigation ros-indigo-pocketsphinx ros-indigo-rosserial ros-indigo-roboteq-diagnostics ros-indigo-roboteq-msgs ros-indigo-smach ros-indigo-rtabmap-ros ros-indigo-gazebo-ros ros-indigo-slam-gmapping ros-indigo-map-laser ros-indigo-moveit-full ros-indigo-geographic-info ros-indigo-zbar-ros ros-indigo-dynamixel-motor couchdb python-rosinstall libyaml-dev ros-indigo-soem espeak ros-indigo-object-recognition-core  ros-indigo-object-recognition-renderer ros-indigo-tf2-geometry-msgs
   - source /opt/ros/$ROS_DISTRO/setup.bash
   - sudo rosdep init
   - rosdep update
@@ -50,9 +50,6 @@ before_script:
 script:
   - source /opt/ros/$ROS_DISTRO/setup.bash
   - cd ~/sara_ws
-  - catkin_make -DCATKIN_WHITELIST_PACKAGES="wm_arm_msgs"
-  - catkin_make -DCATKIN_WHITELIST_PACKAGES="wm_arm_driver"
-  - catkin_make -DCATKIN_WHITELIST_PACKAGES=""
   - catkin_make
   # Run the tests, ensuring the path is set correctly.
   - source devel/setup.bash
