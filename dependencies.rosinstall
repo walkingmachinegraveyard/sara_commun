@@ -1,0 +1,11 @@
+- git: {local-name: sara_simulation, uri: 'https://github.com/WalkingMachine/sara_simulation.git', version: master}
+- git: {local-name: sara_robot, uri: 'https://github.com/WalkingMachine/sara_robot.git', version: master}
+- git: {local-name: sara_desktop, uri: 'https://github.com/WalkingMachine/sara_desktop.git', version: master}
+
+- git: {local-name: robotiq, uri: 'https://github.com/ros-industrial/robotiq.git', version: indigo-devel}
+
+- git: {local-name: cob_people_perception, uri: 'https://github.com/ipa320/cob_people_perception.git', version: indigo_dev}
+
+- git: {local-name: cob_perception_common, uri: 'https://github.com/ipa320/cob_perception_common.git', version: indigo_dev}
+
+- git: {local-name: kinova-ros, uri: 'https://github.com/Kinovarobotics/kinova-ros.git', version: master}

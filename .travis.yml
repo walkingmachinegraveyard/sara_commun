@@ -1,0 +1,56 @@
+# Travis yml file that contains the build information for the ci build
+
+
+# Use ubuntu trusty (14.04) with sudo privileges.
+dist: trusty
+sudo: required
+language:
+  - generic
+cache:
+  - apt
+
+env:
+  global:
+    - ROS_DISTRO=indigo
+    - ROS_CI_DESKTOP="`lsb_release -cs`"  # e.g. [precise|trusty|...]
+    - CI_SOURCE_PATH=$(pwd)
+    - ROSINSTALL_FILE=$CI_SOURCE_PATH/dependencies.rosinstall
+    - CATKIN_OPTIONS=$CI_SOURCE_PATH/catkin.options
+    - ROS_PARALLEL_JOBS='-j8 -l6'
+
+# Install a barebone ROS
+before_install:
+  - sudo sh -c "echo \"deb http://packages.ros.org/ros/ubuntu $ROS_CI_DESKTOP main\" > /etc/apt/sources.list.d/ros-latest.list"
+  - wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
+  - sudo apt-get update -qq
+  - sudo apt-get install -y python-catkin-pkg python-rosdep python-wstool ros-$ROS_DISTRO-catkin ros-$ROS_DISTRO-object-recognition-core ros-$ROS_DISTRO-object-recognition-renderer ros-indigo-openni2-launch ros-indigo-urg-node ros-indigo-xsens-driver ros-indigo-joystick-drivers ros-indigo-navigation ros-indigo-pocketsphinx ros-indigo-rosserial ros-indigo-roboteq-diagnostics ros-indigo-roboteq-msgs ros-indigo-smach ros-indigo-rtabmap-ros ros-indigo-gazebo-ros ros-indigo-slam-gmapping ros-indigo-map-laser ros-indigo-moveit-full ros-indigo-geographic-info ros-indigo-zbar-ros ros-indigo-dynamixel-motor couchdb python-rosinstall libyaml-dev ros-indigo-soem espeak ros-indigo-object-recognition-core  ros-indigo-object-recognition-renderer ros-indigo-tf2-geometry-msgs
+  - source /opt/ros/$ROS_DISTRO/setup.bash
+  - sudo rosdep init
+  - rosdep update
+
+# Create the catking workspace
+install:
+  - mkdir -p ~/sara_ws/src
+  - cd ~/sara_ws/
+  - catkin_make
+  - source devel/setup.bash
+  - cd ~/sara_ws/src
+  - ln -s $CI_SOURCE_PATH
+
+before_script:
+# Add dependency to the server
+  - cd ~/sara_ws/src
+  - wstool init
+  - if [[ -f $ROSINSTALL_FILE ]] ; then wstool merge $ROSINSTALL_FILE ; fi
+  - wstool up
+# Package dependency
+  - cd ~/sara_ws/
+  - rosdep install -y --from-paths src --ignore-src --rosdistro $ROS_DISTRO
+
+script:
+  - source /opt/ros/$ROS_DISTRO/setup.bash
+  - cd ~/sara_ws
+  - catkin_make
+  # Run the tests, ensuring the path is set correctly.
+  - source devel/setup.bash
+  - catkin_make run_tests && catkin_make test

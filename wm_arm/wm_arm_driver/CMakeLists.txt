@@ -16,7 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 ## System dependencies are found with CMake's conventions
  find_package(Boost REQUIRED COMPONENTS system)
- find_package(cmake_modules REQUIRED)		
+ find_package(cmake_modules REQUIRED)
  find_package(Eigen REQUIRED)
 
 
@@ -56,6 +56,8 @@ find_package(catkin REQUIRED COMPONENTS
 #   Message1.msg
 #   Message2.msg
 # )
+
+generate_messages(DEPENDENCIES std_msgs sensor_msgs wm_arm_msgs)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -145,7 +147,6 @@ add_executable(wm_arm_driver_node src/node/wm_arm_driver_node.cpp
 				src/wm_arm.cpp
 				src/execute_plan_action_server.cpp
 				)
-add_executable(plan_test_node src/test.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
@@ -155,11 +156,9 @@ add_executable(plan_test_node src/test.cpp)
  target_link_libraries(wm_arm_driver_node
  ${catkin_LIBRARIES}
  dl
- ${Eigen_LIBRARIES} 
+ ${Eigen_LIBRARIES}
  )
 
-target_link_libraries(plan_test_node
-${catkin_LIBRARIES})
 
 #############
 ## Install ##
