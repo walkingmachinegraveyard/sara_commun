@@ -33,7 +33,7 @@
 
 import rospy
 
-import os
+import os, sys
 
 import time
 
@@ -47,9 +47,37 @@ from math import pi, sin, cos, sqrt, atan2
 from subprocess import Popen, PIPE
 
 
+try:
+    controler_type = sys.argv[1]
+except Exception:
+    print("no controler type defined")
 
 
-
+if( controler_type == "ps3" ):
+    B1 = 13
+    B2 = 15
+    B3 = 12
+    B4 = 10
+    B5 = 11
+    B6 = 0
+    B7 = 5
+    B8 = 8
+    B9 = 9
+    B0 = 14
+else:
+    B1 = 1
+    B2 = 2
+    B3 = 3
+    B4 = 4
+    B5 = 5
+    B6 = 6
+    B7 = 7
+    B8 = 8
+    B9 = 9
+    B0 = 0
+    
+    
+    
 
 class MecanumTeleop:
 
@@ -58,15 +86,112 @@ class MecanumTeleop:
     def __init__(self):
 
 
-        self.sub = rospy.Subscriber('joy', Joy, self.callback)
-        os.system('cd /opt/kinova/GUI ; ./DevelopmentCenter')
-        #print( "The controler is ready. You can go and start the Kinova DevelopementCenter at:\n/opt/kinova/GUI/DevelopmentCenter" )
+    
+    
 
+        self.sub = rospy.Subscriber('joy', Joy, self.callback)
+        
+        
+        #print "To use the wireless ps3 controler, execute ' $ sixad --start '"
+        os.system('cd /opt/kinova/GUI ; ./DevelopmentCenter')
+
+        
+        
+        
+        
 
 
     def callback(self, joy):
 
+        global B1
+        global B2
+        global B3
+        global B4
+        global B5
+        global B6
+        global B7
+        global B8
+        global B9
+        global B0
 
+
+
+
+
+
+        # movement Forearm Vectical (Motor4)
+        if joy.buttons[B0]*joy.axes[1] >= 0.5: # joy.buttons[B0]=button A
+        
+            os.system("xte 'keydown 8'")
+
+
+        if joy.buttons[B0]*joy.axes[1] <= -0.5: # joy.buttons[B0]=button A
+        
+            #print "A+v"
+
+            os.system("xte 'keydown 7'")
+            
+
+
+        # movement Forearm Horizontal (Motor3)
+        if joy.buttons[B0]*joy.axes[0] >= 0.5: # joy.buttons[B0]=button A
+
+            os.system("xte 'keydown 5'")
+
+
+        if joy.buttons[B0]*joy.axes[0] <= -0.5: # joy.buttons[B0]=button A
+
+            os.system("xte 'keydown 6'")
+
+
+
+
+
+
+
+        # movement Arm Vectical (Motor4)
+        if joy.buttons[B1]*joy.axes[1] >= 0.5: # joy.buttons[B1]=button B
+
+            os.system("xte 'keydown 4'")
+            
+
+        if joy.buttons[B1]*joy.axes[1] <= -0.5: # joy.buttons[B1]=button B
+
+            os.system("xte 'keydown 3'")
+
+
+
+        # movement Arm Horizontal (Motor3)
+        if joy.buttons[B1]*joy.axes[0] >= 0.5: # joy.buttons[B1]=button B
+
+            os.system("xte 'keydown 2'")
+            
+
+        if joy.buttons[B1]*joy.axes[0] <= -0.5: # joy.buttons[B1]=button B
+
+            os.system("xte 'keydown 1'")
+            
+
+
+
+
+
+
+        # movement Wrist Roll (Motor5)
+        if joy.buttons[B5] == 1: # joy.buttons[B1]=button B
+
+            os.system("xte 'keydown 9'")
+
+
+        if joy.buttons[B4] == 1: # joy.buttons[B1]=button B
+
+            os.system("xte 'keydown 0'")
+            
+            
+
+
+
+        time.sleep(0.05)
 
         os.system("xte 'keyup 1'")
         os.system("xte 'keyup 2'")
@@ -78,87 +203,6 @@ class MecanumTeleop:
         os.system("xte 'keyup 8'")
         os.system("xte 'keyup 9'")
         os.system("xte 'keyup 0'")
-
-
-
-
-
-
-        # movement Forearm Vectical (Motor4)
-        if joy.buttons[0]*joy.axes[1] >= 0.5: # joy.buttons[0]=button A
-        
-            os.system("xte 'keydown 8'")
-
-
-        if joy.buttons[0]*joy.axes[1] <= -0.5: # joy.buttons[0]=button A
-        
-            #print "A+v"
-
-            os.system("xte 'keydown 7'")
-            
-
-
-        # movement Forearm Horizontal (Motor3)
-        if joy.buttons[0]*joy.axes[0] >= 0.5: # joy.buttons[0]=button A
-
-            os.system("xte 'keydown 5'")
-
-
-        if joy.buttons[0]*joy.axes[0] <= -0.5: # joy.buttons[0]=button A
-
-            os.system("xte 'keydown 6'")
-
-
-
-
-
-
-
-        # movement Arm Vectical (Motor4)
-        if joy.buttons[1]*joy.axes[1] >= 0.5: # joy.buttons[1]=button B
-
-            os.system("xte 'keydown 4'")
-            
-
-        if joy.buttons[1]*joy.axes[1] <= -0.5: # joy.buttons[1]=button B
-
-            os.system("xte 'keydown 3'")
-
-
-
-        # movement Arm Horizontal (Motor3)
-        if joy.buttons[1]*joy.axes[0] >= 0.5: # joy.buttons[1]=button B
-
-            os.system("xte 'keydown 2'")
-            
-
-        if joy.buttons[1]*joy.axes[0] <= -0.5: # joy.buttons[1]=button B
-
-            os.system("xte 'keydown 1'")
-            
-
-
-
-
-
-
-        # movement Wrist Roll (Motor5)
-        if joy.buttons[5] == 1: # joy.buttons[1]=button B
-
-            os.system("xte 'keydown 9'")
-
-
-        if joy.buttons[4] == 1: # joy.buttons[1]=button B
-
-            os.system("xte 'keydown 0'")
-            
-
-
-
-
-
-
-
 
 
 
