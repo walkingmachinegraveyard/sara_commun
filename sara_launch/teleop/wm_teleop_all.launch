@@ -1,0 +1,38 @@
+<?xml version='1.0'?>
+<launch>
+
+	<!-- Controllerrr -->
+
+    	<node name="joy_node" pkg="joy" type="joy_node">
+    	<param name="autorepeat_rate" value="20" />
+   	<param name="deadzone" value="0.10" />
+   	<param name="coalesce_interval" value="0.1" />  
+    	</node>
+
+
+	<!-- Wheelssss -->
+
+	<include file="$(find wm_static_tf)/launch/wm_static_tf.launch"/>
+	<include file="$(find sara_launch)/roboteq_driver/wm_roboteq_driver.launch"/>
+
+	<param name="alpha" value="0.30"/>
+    	<param name="beta" value="0.31"/>
+    	<param name="wheel_radius" value="0.075"/>
+    	<param name="max_linear_vel" value="1.0"/>
+    	<!-- parameter "angular_vel_div" is the divisor of pi to compute max angular velocity -->
+    	<!-- for example, if angular_vel_div=2, then max angular velocity is pi/2 -->
+    	<param name="angular_vel_div" value="2"/>
+
+    	<node name="wm_mecanum_teleop_node" pkg="wm_mecanum_cmd" type="wm_mecanum_teleop_node.py"/> 
+    	<node name="wm_mecanum_cmd_node" pkg="wm_mecanum_cmd" type="wm_mecanum_cmd_node.py"/>
+
+
+	<!-- Armsss -->
+
+	<node name="wm_teleop" pkg="wm_arm_driver" type="wm_arm_teleop.py" output="screen" args="ps3" ></node>	
+
+	
+	<!-- Gripperrr -->
+	<include file="$(find wm_hand)/launch/TcpNode.launch"/>
+
+</launch>

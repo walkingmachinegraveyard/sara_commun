@@ -1,0 +1,6 @@
+<launch>
+  <include file="$(find wm_robocup2016)/launch/speech_FR.launch"/>
+  <include file="$(find openni2_launch)/launch/openni2.launch"/>
+  <include file="$(find zbar_ros)/launch/wm_zbar_ros.launch"/>
+  <include file="$(find sara_launch)/teleop/wm_teleop_all.launch"/>
+</launch>
