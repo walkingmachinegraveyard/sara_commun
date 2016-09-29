@@ -147,7 +147,6 @@ add_executable(wm_arm_driver_node src/node/wm_arm_driver_node.cpp
 				src/wm_arm.cpp
 				src/execute_plan_action_server.cpp
 				)
-add_executable(plan_test_node src/test.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
@@ -160,8 +159,6 @@ add_executable(plan_test_node src/test.cpp)
  ${Eigen_LIBRARIES}
  )
 
-target_link_libraries(plan_test_node
-${catkin_LIBRARIES})
 
 #############
 ## Install ##
