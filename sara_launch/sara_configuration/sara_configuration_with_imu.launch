@@ -1,0 +1,68 @@
+<?xml version="1.0" ?>
+
+<launch>
+   
+     <arg name="auto_mode" default="true" />
+     <arg name="dynamic_mapping" default="true" />
+
+	 <node name="wm_supervisor" pkg="wm_supervisor" type="wm_supervisor_node" required="true" output="screen" />
+
+     <!-- load urdf -->
+     <include file="$(find sara_description)/launch/sara_description.launch" />
+
+     <!-- motor drivers -->
+     <include file="$(find sara_launch)/roboteq_driver/wm_roboteq_driver.launch" />
+
+     <!-- neck Dynamixel
+     #<include file="$(find wm_dynamixel_controller)/launch/neckHead_controller_spawner.launch" />
+     <include file="$(find wm_dynamixel_controller)/launch/neckHead_controller_manager.launch" />
+     <node name="neckHead_dynamixel_state_publisher" pkg="wm_dynamixel_controller" type="neckHead.py" respawn="true" />
+ -->
+     <!-- Robotiq Model C Gripper -->
+     <node name="robotiq_c_model_control" pkg="robotiq_c_model_control" type="CModelTcpNode.py" args="192.168.1.11" />
+
+     <!-- cmd_vel publisher -->
+     <group if="$(arg auto_mode)">
+         <include file="$(find wm_mecanum_cmd)/launch/wm_mecanum_auto.launch" />
+     </group>
+
+     <group unless="$(arg auto_mode)">
+         <include file="$(find wm_mecanum_cmd)/launch/wm_mecanum_teleop.launch" />
+     </group>
+
+     <!-- odometry -->
+     <include file="$(find wm_odometry_feedback)/launch/wm_odometry_feedback_with_imu.launch"/>
+
+     <include file="$(find sara_launch)/localization/robot_localization.launch" />
+
+     <!-- lidar -->
+     <include file="$(find sara_launch)/urg_node/wm_urg_node.launch" />
+
+     <!-- xsens -->
+     <node pkg="xsens_driver" type="mtnode.py" name="xsens_driver" output="screen" respawn = "true">
+		<param name="frame_id" value="imu"/>
+                <param name="device" value="/dev/ttyUSB0"/>
+                <param name="baudrate" value="19200"/>
+		<param name="frame_local" value="ENU"/>
+		<param name="frame_local_imu" value="$ENU"/>
+     </node>
+     
+     <!-- Xtion -->
+     <include file="$(find sara_launch)/openni2/wm_openni2.launch" />
+
+     <group if="$(arg dynamic_mapping)">
+         <include file="$(find sara_launch)/gmapping/wm_slam_gmapping_with_imu.launch" />
+     </group>
+
+	<group unless="$(arg dynamic_mapping)">
+		<node pkg="map_server" type="map_server" name="map_server" output="screen" args="$(find wm_2dnav)/maps/ArenaA.yaml" />
+		<include file="$(find sara_launch)/amcl/wm_amcl.launch" />
+	</group>
+
+     <!-- Communication Visage 
+     <node pkg="rosserial_python" type="serial_node.py" name="serial_node">
+         <param name="port" value="/dev/ttyACM1"/>
+         <param name="baud" value="115200"/>
+     </node>-->
+
+</launch>
