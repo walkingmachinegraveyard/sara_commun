@@ -3,11 +3,11 @@
     <include file="$(find wm_odometry_feedback)/launch/wm_odometry_feedback.launch"/>
 
     <!-- SLAM -->
-    <include file="$(find wm_launch)/gmapping/wm_slam_gmapping.launch"/>
+    <include file="$(find sara_launch)/gmapping/wm_slam_gmapping.launch"/>
 
     <!-- LIDAR -->
     <include file="$(find map_laser)/lfilter.launch"/>
-    <include file="$(find wm_launch)/urg_node/wm_urg_node.launch"/>
+    <include file="$(find sara_launch)/urg_node/wm_urg_node.launch"/>
 
     <!-- CAM SETUP -->
     <include file="$(find openni2_launch)/launch/openni2.launch"/>
@@ -32,7 +32,7 @@
         <param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS" />
     </node>
 
-    <include file="$(find wm_launch)/roboteq_driver/wm_roboteq_driver.launch"/>
+    <include file="$(find sara_launch)/roboteq_driver/wm_roboteq_driver.launch"/>
 
     <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
     <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
