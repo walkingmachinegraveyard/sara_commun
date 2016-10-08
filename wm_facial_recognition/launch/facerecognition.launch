@@ -1,0 +1,6 @@
+<launch>
+	<include file="$(find cob_people_detection)/ros/launch/people_detection.launch" />
+	<include file="$(find sara_launch)/safety/arduino_safety_stop.launch" />
+	<include file="$(find wm_tts)/launch/wm_tts.launch"/>
+	<node name="robocup_face_recognition" pkg="wm_facial_recognition" type="facerecognition.py" output="screen" />
+</launch>
