@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro" >
+   <xacro:macro name="sara_head_v1" params="name parent *origin">
+      <link name="${name}_link">
+         <visual>
+            <geometry>
+               <mesh filename="package://sara_description/meshes/tete.dae" scale="0.001 0.001 0.001" />
+            </geometry>
+            <origin xyz="0 0 0" rpy="1.5708 -1.5708 1.5708" />
+         </visual>
+         <collision>
+            <geometry>
+               <mesh filename="package://sara_description/meshes/tete.dae" scale="0.001 0.001 0.001" />
+            </geometry>
+            <origin xyz="0 0 0" rpy="1.5708 -1.5708 1.5708" />
+         </collision>
+         <inertial>
+            <mass value="5" />
+            <origin xyz="0 0 0" rpy="1.5708 0 1.5708" />
+            <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001" />
+         </inertial>
+      </link>
+      <link name="neck_dynamixel_link">
+         <visual>
+            <geometry>
+               <cylinder length="0.015" radius="0.02"/>
+            </geometry>
+            <origin xyz="0 0 0.018" rpy="0 0 0"/>
+            <material name="blue">
+               <color rgba="0 0 1 1"/>
+            </material>
+         </visual>
+      </link>
+      <joint name="${name}_dynamixel_joint" type="revolute">
+         <parent link="neck_dynamixel_link"/>
+         <child link="${name}_link"/>
+         <limit effort="1000.0" lower="-1.00" upper="0.40" velocity="0.5"/>
+         <origin xyz="0 0 0" rpy="3.1416 0 0"/>
+         <axis xyz="0 0 1"/>
+      </joint>
+      <joint name="dynamixel_${parent}_joint" type="fixed">
+         <parent link="neck_link"/>
+         <child link="neck_dynamixel_link"/>
+         <origin xyz="0 0 0.0927" rpy="1.57 0 0"/>
+      </joint>
+   </xacro:macro>
+</robot>
