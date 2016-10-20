@@ -10,3 +10,4 @@
 [submodule "cob_perception_common"]
 	path = cob_perception_common
 	url = https://github.com/ipa320/cob_perception_common
+
