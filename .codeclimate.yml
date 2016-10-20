@@ -5,9 +5,11 @@ engines:
     config:
       languages:
       - ruby
-      - javascript
       - python
-      - php
+  pep8:
+    enabled: true
+  radon:
+    enabled: true
   eslint:
     enabled: true
   fixme:
@@ -23,4 +25,7 @@ ratings:
   - "**.php"
   - "**.py"
   - "**.rb"
+  - "**.cpp"
+  - "**.h"
+  - "**.cc"
 exclude_paths: []
