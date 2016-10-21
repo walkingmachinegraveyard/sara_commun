@@ -9,9 +9,9 @@ TrajectoryPlannerROS:
   acc_lim_x: 1.0
   acc_lim_y: 1.0
 
-  escape_vel: -0.2
+  escape_vel: 0.2
 
-  holonomic_robot: false
+  holonomic_robot: true
   # y_vels: [-0.4, -0.1, 0.1, 0.4]
 
  # goal tolerance parameters
@@ -20,9 +20,9 @@ TrajectoryPlannerROS:
   latch_xy_goal_tolerance: false
 
  # forward simulation parameters
-  sim_time: 1.8
+  sim_time: 0.5
   sim_granularity: 0.025    # default = 0.025
-  vx_samples: 10 # default: 3
+  vx_samples: 5 # default: 3
   vy_samples: 10 # default: 10
   vtheta_samples: 10 # default: 20
 
@@ -33,10 +33,15 @@ TrajectoryPlannerROS:
   #The weighting for how much the controller should stay close to the path it was given. default 0.6
   pdist_scale: 0.3
   # The weighting for how much the controller should attempt to avoid obstacles. default 0.01
-  occdist_scale: 0.7
+  occdist_scale: 0.2
   # The weighting for how much the controller should attempt to reach its local goal, also controls speed. default 0.8
   gdist_scale: 0.5
   heading_scoring: false
   oscillation_reset_dist: 0.10
-   
-  
+
+  # Clean up the points
+  prune_plan: true
+
+  planner_patience: 2.0
+
+  controller_patience: 5.0
