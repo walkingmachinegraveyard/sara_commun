@@ -1,8 +1,0 @@
----
-int8 armStatus
-#READY: initialization is done, but the API does not control the arm
-int8 ARM_READY=1
-#RUNNING: API is in control of the arm 
-int8 ARM_RUNNING=2
-#FAULT_TORQUE: arm is in torque fault
-int8 ARM_TORQUE_FAULT=3

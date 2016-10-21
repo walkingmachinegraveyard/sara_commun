@@ -1,8 +1,0 @@
-# Goal
-moveit_msgs/RobotTrajectory trajectory
----
-# Result
-bool fifoEmpty
----
-# Feedback
-uint16 fifoSize

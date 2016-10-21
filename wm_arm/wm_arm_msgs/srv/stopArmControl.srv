@@ -1,4 +1,0 @@
----
-int8 stopResult
-int8 STOP_SUCCESS=1
-int8 STOP_FAILURE=0

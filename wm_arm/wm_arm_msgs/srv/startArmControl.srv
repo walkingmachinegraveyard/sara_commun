@@ -1,4 +1,0 @@
----
-int8 startResult
-int8 START_SUCCESS=1
-int8 START_FAILURE=0
