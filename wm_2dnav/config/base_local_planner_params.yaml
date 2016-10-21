@@ -12,7 +12,7 @@ TrajectoryPlannerROS:
   escape_vel: 0.2
 
   holonomic_robot: true
-  # y_vels: [-0.4, -0.1, 0.1, 0.4]
+  y_vels: [-0.4, -0.2, 0.2, 0.4]
 
  # goal tolerance parameters
   yaw_goal_tolerance: 0.10
