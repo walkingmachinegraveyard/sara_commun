@@ -1,0 +1,4 @@
+---
+int8 homingResult
+int8 HOMING_SUCCESS=1
+int8 HOMING_FAILURE=0

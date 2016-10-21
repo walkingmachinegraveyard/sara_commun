@@ -1,0 +1,4 @@
+---
+int8 recoverResult
+int8 RECOVER_SUCCESS=1
+int8 RECOVER_FAILURE=0

@@ -1,0 +1,6 @@
+geometry_msgs/Pose targetPose
+---
+int8 solveResult
+int8 SOLVE_SUCCESS=1
+int8 SOLVE_FAILURE=0
+float64[6] jointPos
