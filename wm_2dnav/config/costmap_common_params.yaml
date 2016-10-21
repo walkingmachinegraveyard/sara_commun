@@ -5,7 +5,7 @@ raytrace_range: 5.0
 #             [rear right corner], [rear left corner]]
 footprint: [[0.40, -0.33], [0.40, 0.33], [-0.40, 0.33], [-0.40, -0.33]]
 
-inflation_radius: 0.20
+inflation_radius: 0.10
 
 observation_sources: laser_scan_sensor rgbd_camera_sensor
 
