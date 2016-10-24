@@ -3,9 +3,16 @@
     <!-- Inclure tous les autres urdf.xacros ici -->
     <xacro:include filename="$(find sara_description)/urdf/head_v1/head.urdf.xacro" />
     <xacro:include filename="$(find sara_description)/urdf/neck_v1/neck.urdf.xacro" />
+    <xacro:include filename="$(find sara_description)/urdf/torso_v1/torso.urdf.xacro" />
+
+    <!-- Torso -->
+    <xacro:sara_torso_v1 name="torso" parent="">
+        <origin xyz="0 0 0" 
+                rpy="1.5708 0 1.5708"/>
+    </xacro:sara_torso_v1>
 
     <!-- Neck -->
-    <xacro:sara_neck_v1 name="neck" parent="">
+    <xacro:sara_neck_v1 name="neck" parent="torso_link">
     	<origin xyz="0 0 0" 
     		    rpy="1.5708 0 1.5708"/>
     </xacro:sara_neck_v1>
