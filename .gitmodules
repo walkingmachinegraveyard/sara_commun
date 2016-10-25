@@ -1,9 +1,6 @@
 [submodule "robotiq"]
 	path = robotiq
 	url = https://github.com/ros-industrial/robotiq
-[submodule "kinova-ros"]
-	path = kinova-ros
-	url = https://github.com/Kinovarobotics/kinova-ros
 [submodule "cob_people_perception"]
 	path = cob_people_perception
 	url = https://github.com/ipa320/cob_people_perception
