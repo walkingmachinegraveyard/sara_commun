@@ -1,0 +1,10 @@
+[submodule "robotiq"]
+	path = robotiq
+	url = https://github.com/ros-industrial/robotiq
+[submodule "cob_people_perception"]
+	path = cob_people_perception
+	url = https://github.com/ipa320/cob_people_perception
+[submodule "cob_perception_common"]
+	path = cob_perception_common
+	url = https://github.com/ipa320/cob_perception_common
+
