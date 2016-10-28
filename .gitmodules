@@ -1,10 +1,12 @@
 [submodule "robotiq"]
 	path = robotiq
 	url = https://github.com/ros-industrial/robotiq
+        branch = 34e7d549f4fd7a315fb644303bd6a2fd6e411d65 
 [submodule "cob_people_perception"]
 	path = cob_people_perception
 	url = https://github.com/ipa320/cob_people_perception
+        branch = 8c669505c74e8febccfc13330bfd61a586a1ad0c
 [submodule "cob_perception_common"]
 	path = cob_perception_common
 	url = https://github.com/ipa320/cob_perception_common
-
+        branch = da2f997b263b8824ab7734c2f518fa64d15e1707
