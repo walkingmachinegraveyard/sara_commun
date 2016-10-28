@@ -1,3 +1,0 @@
-<launch>
-	<node pkg="tf" type="static_transform_publisher" name="camera_base_broadcaster" args="0.308 0.0 1.445 0.0 0.0 0.0 sara_base xtion_link 10" />
-</launch>
