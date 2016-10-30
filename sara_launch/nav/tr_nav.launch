@@ -4,7 +4,7 @@
 
     <!-- LIDAR -->
     <include file="$(find map_laser)/lfilter.launch"/>
-    <include file="$(find urg_node)/launch/wm_urg_node.launch"/>
+    <include file="$(find sara_launch)/urg_node/wm_urg_node.launch"/>
 
     <!-- CAM SETUP -->
     <include file="$(find openni2_launch)/launch/openni2.launch"/>

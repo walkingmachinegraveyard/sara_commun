@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
 <package>
-  <name>sara_description</name>
-  <version>0.0.1</version>
-  <description>URDF and description for our robot S.A.R.A.</description>
+  <name>wm_arm_msgs</name>
+  <version>0.0.0</version>
+  <description>The wm_arm_msgs package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
   <!-- <maintainer email="jane.doe@example.com">Jane Doe</maintainer> -->
-  <maintainer email="thierry@todo.todo">thierry</maintainer>
+  <maintainer email="wm@ens.etsmtl.ca">Walking Machine</maintainer>
 
 
   <!-- One license tag required, multiple allowed, one license per tag -->
@@ -19,8 +19,8 @@
   <!-- Url tags are optional, but mutiple are allowed, one per tag -->
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
   <!-- Example: -->
-  <!-- <url type="website">http://wiki.ros.org/sara_description</url> -->
-thierry@todo.todo
+  <!-- <url type="website">http://wiki.ros.org/wm_arm_msgs</url> -->
+
 
   <!-- Author tags are optional, mutiple are allowed, one per tag -->
   <!-- Authors do not have to be maintianers, but could be -->
@@ -40,8 +40,16 @@ thierry@todo.todo
   <!-- Use test_depend for packages you need only for testing: -->
   <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>urdf</build_depend>
-  <run_depend>urdf</run_depend>
+  <build_depend>actionlib</build_depend>
+  <build_depend>actionlib_msgs</build_depend>
+  <build_depend>message_generation</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>moveit_msgs</build_depend>
+  <run_depend>message_runtime</run_depend>
+  <run_depend>actionlib</run_depend>
+  <run_depend>actionlib_msgs</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>moveit_msgs</run_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->
