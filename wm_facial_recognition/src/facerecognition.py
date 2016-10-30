@@ -23,7 +23,17 @@ from geometry_msgs.msg import Twist
 from move_base_msgs.msg import *
 
 DISTANCE_DETECTION = 2
-PERSON = "operator"
+PERSON = "operator1"
+
+#Minimum and maximum headcount to detect in a crowd
+MIN_HEADCOUNT_CROWD = 2
+MAX_HEADCOUNT_CROWD = 10
+
+#Amount of pictures to take to save in databse
+NUM_FACE_CAPTURES = 40
+
+#Wait time for crowd, in seconds
+WAIT_TIME = 10
 
 class InitState(smach.State):
     def __init__(self):
@@ -158,7 +168,7 @@ class Record_Face(smach.State):
             datagoal = addDataGoal()
             datagoal.label = "operator1"
             datagoal.capture_mode = 1
-            datagoal.continuous_mode_images_to_capture = 30
+            datagoal.continuous_mode_images_to_capture = NUM_FACE_CAPTURES
             datagoal.continuous_mode_delay = 0
             dataclient.send_goal(datagoal)
 
@@ -197,16 +207,16 @@ class Record_Face(smach.State):
         return 'finished'
 
 #Wait 10 seconds
-class Wait_10(smach.State):
+class Wait_For_Crowd(smach.State):
     def __init__(self):
         self.pub_voice = rospy.Publisher('sara_tts', String, queue_size=10)
         smach.State.__init__(self, outcomes=['finished'])
 
     def execute(self, userdata):
         rospy.loginfo('Executing state WAITING')
-        self.pub_voice.publish("I'm waiting 10 seconds, you can hide in the crowd")
+        self.pub_voice.publish("I'm waiting "+ str(WAIT_TIME)+" seconds, you can hide in the crowd")
         #TODO waiting face
-        rospy.sleep(10);
+        rospy.sleep(WAIT_TIME);
         #TODO green face
         return 'finished'
 
@@ -232,8 +242,8 @@ class Turn_180(smach.State):
 
         while rospy.get_time() - timenow < 8:
         	self.pub_cmdvel.publish(twist)
-        
-		
+
+
         #quaternion = tf.transformations.quaternion_from_euler(0, 0, pi)
         #self.goal.target_pose.pose.orientation.x = quaternion[0]
         #self.goal.target_pose.pose.orientation.y = quaternion[1]
@@ -254,7 +264,7 @@ class Find_Crowd(smach.State):
         self.face_sub = rospy.Subscriber('face_detector/face_positions', ColorDepthImageArray, self.face_callback)
 
     def face_callback(self, data):
-        if len(data.head_detections) >= 5 and len(data.head_detections) <= 10 :
+        if len(data.head_detections) >= MIN_HEADCOUNT_CROWD and len(data.head_detections) <= MAX_HEADCOUNT_CROWD :
             self.found = True
             self.number = len(data.head_detections)
 
@@ -286,7 +296,8 @@ class Find_Operator(smach.State):
 
     def face_callback(self, data):
         for face in data.detections:
-            if face.label == PERSON and not self.name == "":
+            #rospy.loginfo(face.label)
+            if face.label == PERSON:
                 self.found = True
 
 
@@ -343,7 +354,7 @@ def main():
                                transitions={'finished': 'WAITING'},
                                remapping={'record_name_in': 'operator_name'})
 
-        smach.StateMachine.add('WAITING', Wait_10(),
+        smach.StateMachine.add('WAITING', Wait_For_Crowd(),
                                transitions={'finished': 'FINDING_CROWD'})
 
         smach.StateMachine.add('TURNING_180', Turn_180(),
