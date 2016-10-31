@@ -431,7 +431,8 @@ class Move(smach.State):
             return 'wp_not_reached'
 
 
-if __name__ == '__main__':
+# main
+def following_guiding_sm():
 
     rospy.init_node('stage1_following_guiding_node')
     sm = smach.StateMachine(outcomes=['test_succeeded'])
@@ -545,3 +546,6 @@ if __name__ == '__main__':
                                           'move_wp_str': 'wp_str'})
 
     outcome = sm.execute()
+
+if __name__ == '__main__':
+     following_guiding_sm()

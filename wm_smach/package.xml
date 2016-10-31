@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>wm_robocup2016</name>
+  <name>wm_smach</name>
   <version>0.0.0</version>
-  <description>The wm_robocup2016 package</description>
+  <description>The wm_smach package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
