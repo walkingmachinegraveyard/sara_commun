@@ -15,19 +15,18 @@
   <link name="${prefix}robotiq_85_base_link">
     <visual>
       <geometry>
-        <mesh filename="package://robotiq_c2_model_visualization/meshes/robotiq_c2/visual/robotiq_85_gripper_base.dae"/>
+        <mesh filename="package://sara_description/meshes/robotiq_c2/visual/robotiq_85_gripper_base.dae"/>
       </geometry>
       <origin rpy="3.1415 0 1.5707" xyz="0 0 0"/>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="package://robotiq_c2_model_visualization/meshes/robotiq_c2/collision/robotiq_85_gripper_base.dae"/>
+        <mesh filename="package://sara_description/meshes/robotiq_c2/collision/robotiq_85_gripper_base.dae"/>
       </geometry>
       <origin rpy="1.5707 0 1.5707" xyz="0 0 0"/>
     </collision>
   </link>
 
-  <!--  /\  -->
   <joint name="${prefix}robotiq_85_left_knuckle_joint" type="revolute">
     <parent link="${prefix}robotiq_85_base_link"/>
     <child link="${prefix}robotiq_85_left_knuckle_link"/>
@@ -44,7 +43,6 @@
     <limit lower="0" upper="1.5707" velocity="2.0" effort="1000"/>
     <mimic joint="${prefix}robotiq_85_left_knuckle_joint" multiplier="1"/>
   </joint>
-  <!--  \/  -->
 
   <link name="${prefix}robotiq_85_left_knuckle_link">
     <visual>
@@ -76,8 +74,6 @@
     </collision>
   </link>
 
-  <!--  /\  -->
-  <!--  /\  -->
   <joint name="${prefix}robotiq_85_left_finger_joint" type="fixed">
     <parent link="${prefix}robotiq_85_left_knuckle_link"/>
     <child link="${prefix}robotiq_85_left_finger_link"/>
@@ -92,9 +88,7 @@
     <axis xyz="1 0 0"/>
     <origin rpy="3.1415 0 0" xyz="0 .00508 .03134"/>
     <limit lower="0" upper="1.5707" velocity="2.0" effort="1000"/>
-  </joint>
-  <!--  \/  --> 
-  <!--  \/  -->  
+  </joint> 
 
   <link name="${prefix}robotiq_85_left_finger_link">
     <visual>
@@ -126,8 +120,6 @@
     </collision>
   </link> 
 
-  <!--  /\  -->
-  <!--  /\  -->
   <joint name="${prefix}robotiq_85_left_inner_knuckle_joint" type="revolute">
     <parent link="${prefix}robotiq_85_base_link"/>
     <child link="${prefix}robotiq_85_left_inner_knuckle_link"/>
@@ -145,8 +137,6 @@
     <limit lower="0" upper="1.5707" velocity="2.0" effort="1000"/>
     <mimic joint="${prefix}robotiq_85_left_knuckle_joint" offset="0"/>
   </joint>
-  <!--  \/  --> 
-  <!--  \/  -->  
 
   <link name="${prefix}robotiq_85_left_inner_knuckle_link">
     <visual>
@@ -178,8 +168,6 @@
     </collision>
   </link>
 
-  <!--  /\  -->
-  <!--  /\  -->
   <joint name="${prefix}robotiq_85_left_finger_tip_joint" type="revolute">
     <parent link="${prefix}robotiq_85_left_inner_knuckle_link"/>
     <child link="${prefix}robotiq_85_left_finger_tip_link"/>
@@ -196,9 +184,7 @@
     <origin rpy="0 0 0" xyz="0 .04196 -.0388"/>
     <limit lower="0" upper="1.5707" velocity="2.0" effort="1000"/>
     <mimic joint="${prefix}robotiq_85_left_knuckle_joint" multiplier="-1"/>
-  </joint>
-  <!--  \/  --> 
-  <!--  \/  -->  
+  </joint> 
 
   <link name="${prefix}robotiq_85_left_finger_tip_link">
     <visual>

@@ -39,7 +39,7 @@
          <axis xyz="0 0 1"/>
       </joint>
       <joint name="dynamixel_neck_joint" type="fixed">
-         <parent link="${parent}"/>
+         <parent link="${parent}_link"/>
          <child link="neck_dynamixel_link"/>
          <origin xyz="0 0 0.0927" rpy="1.57 0 0"/>
       </joint>

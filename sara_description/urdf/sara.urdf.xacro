@@ -1,9 +1,11 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface" name="sara" >
     <!-- Inclure tous les autres urdf.xacros ici -->
-    <xacro:include filename="$(find sara_description)/urdf/head_v1/head.urdf.xacro" />
-    <xacro:include filename="$(find sara_description)/urdf/neck_v1/neck.urdf.xacro" />
     <xacro:include filename="$(find sara_description)/urdf/torso_v1/torso.urdf.xacro" />
+    <xacro:include filename="$(find sara_description)/urdf/neck_v1/neck.urdf.xacro" />
+    <xacro:include filename="$(find sara_description)/urdf/head_v1/head.urdf.xacro" />
+    <xacro:include filename="$(find sara_description)/urdf/shoulder_v1/shoulder.urdf.xacro" />
+    <xacro:include filename="$(find sara_description)/urdf/arm_v1/arm.urdf.xacro" />
 
     <!-- Torso -->
     <xacro:sara_torso_v1 name="torso" parent="">
@@ -12,14 +14,24 @@
     </xacro:sara_torso_v1>
 
     <!-- Neck -->
-    <xacro:sara_neck_v1 name="neck" parent="torso_link">
-    	<origin xyz="0 0 0" 
-    		    rpy="1.5708 0 1.5708"/>
+    <xacro:sara_neck_v1 name="neck" parent="torso">
+        <origin xyz="0 0 0" 
+                rpy="1.5708 0 1.5708"/>
     </xacro:sara_neck_v1>
 
     <!-- Head -->
-    <xacro:sara_head_v1 name="head" parent="neck_link">
+    <xacro:sara_head_v1 name="head" parent="neck">
         <origin xyz="0.0 0.0 0.0" 
-        	    rpy="1.5708 -1.5708 1.5708"/>
+                rpy="1.5708 -1.5708 1.5708"/>
     </xacro:sara_head_v1>
+
+    <!-- Shoulder -->
+    <xacro:sara_shoulder_v1 name="shoulder" parent="torso">
+        <origin xyz="0 0 0" rpy="0 3.1416 0"/>
+    </xacro:sara_shoulder_v1>
+
+    <!-- Arm -->
+    <xacro:sara_arm_v1 name="arm" parent="shoulder">
+        <origin xyz="0 0 0" rpy="1.5708 -1.5708 1.5708" />
+    </xacro:sara_arm_v1>
 </robot>
