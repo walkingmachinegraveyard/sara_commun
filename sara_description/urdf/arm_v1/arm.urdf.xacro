@@ -2,7 +2,7 @@
 <robot xmlns:xacro="http://ros.org/wiki/xacro" >
     <xacro:include filename="$(find sara_description)/urdf/robotiq_c2_model_macro.xacro" />
 
-    <xacro:macro name="sara_arm_v1" params="name parent *origin">
+    <xacro:macro name="sara_arm_v1" params="name parent">
         <!-- Link and joint to raise arm at elbow level -->
         <link name="${name}_raise_link">
             <visual>

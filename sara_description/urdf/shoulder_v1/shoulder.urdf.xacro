@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro" >
-    <xacro:macro name="sara_shoulder_v1" params="name parent *origin">
+    <xacro:macro name="sara_shoulder_v1" params="name parent">
         <!-- Link and joint to raise arm at shoulder level -->
         <link name="${name}_raise_link">
             <visual>
