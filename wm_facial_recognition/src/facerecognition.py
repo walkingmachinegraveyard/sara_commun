@@ -18,8 +18,6 @@ from actionlib_msgs.msg import *
 
 from geometry_msgs.msg import Twist
 
-
-
 from move_base_msgs.msg import *
 
 DISTANCE_DETECTION = 2
@@ -100,6 +98,7 @@ class Face_Detector(smach.State):
         rospy.loginfo('Executing state FACE_DETECTOR')
 
         #TODO face yellow
+
         neck_cmd = Float64()
         neck_cmd.data = 0.0
         direction = 1;
@@ -114,6 +113,7 @@ class Face_Detector(smach.State):
             rospy.sleep(0.1);
 
         #TODO face green
+
         self.pub_voice.publish("Hi, nice to meet you !")
         return 'found'
 
@@ -145,6 +145,7 @@ class Ask_Name(smach.State):
         userdata.ask_name_out = self.name
 
         #TODO face green
+
         self.pub_voice.publish("Great " + self.name)
         return 'name_found'
 
@@ -152,17 +153,12 @@ class Ask_Name(smach.State):
 class Record_Face(smach.State):
     def __init__(self):
         self.pub_voice = rospy.Publisher('sara_tts', String, queue_size=10)
-        smach.State.__init__(self, outcomes=['finished'],
-                             input_keys=['record_name_in'])
+        smach.State.__init__(self, outcomes=['finished'], input_keys=['record_name_in'])
 
     def execute(self, userdata):
         rospy.loginfo('Executing state RECORDING')
-
-
-
         dataclient = actionlib.SimpleActionClient('/face_capture/add_data_server', addDataAction)
         if dataclient.wait_for_server(rospy.Duration.from_sec(2.0)):
-
             self.pub_voice.publish("Stay still while I memorize your face")
             # Goal du Actionlib
             datagoal = addDataGoal()
@@ -171,37 +167,28 @@ class Record_Face(smach.State):
             datagoal.continuous_mode_images_to_capture = NUM_FACE_CAPTURES
             datagoal.continuous_mode_delay = 0
             dataclient.send_goal(datagoal)
-
             rospy.loginfo('Recording face...')
             dataclient.wait_for_result()
 
             if dataclient.get_state() == GoalStatus.SUCCEEDED:
                 rospy.loginfo(userdata.record_name_in + " was added")
-
                 loadclient = actionlib.SimpleActionClient("/face_recognizer/load_model_server", loadModelAction)
 
                 if loadclient.wait_for_server(rospy.Duration.from_sec(2.0)):
-
                     # Goal du Actionlib
                     loadgoal = loadModelGoal()
-
                     # loadgoal.labels = [" ", "q"]
                     loadclient.send_goal(loadgoal)
-
                     loadclient.wait_for_result()
-
                     if loadclient.get_state() == GoalStatus.SUCCEEDED:
                         rospy.loginfo("Database refreshed")
                         self.pub_voice.publish("I finished memorizing your face")
-
                     else:
                         rospy.loginfo("Refresh failed!")
-
             else:
                 rospy.loginfo("Record failed!")
         else:
             rospy.loginfo('Recording server not found...')
-
 
         rospy.sleep(5);
         return 'finished'
@@ -234,6 +221,7 @@ class Turn_180(smach.State):
         rospy.loginfo('Executing state TURNING_180')
 
         # TODO tourner 180 degres
+
         self.pub_voice.publish("Watch out ! I'm turning")
         rospy.sleep(3)
         twist = Twist()
@@ -293,15 +281,14 @@ class Find_Operator(smach.State):
         self.pub_voice = rospy.Publisher('sara_tts', String, queue_size=10)
         self.face_sub = rospy.Subscriber('face_recognizer/face_recognitions', DetectionArray, self.face_callback)
 
-
     def face_callback(self, data):
         for face in data.detections:
-            #rospy.loginfo(face.label)
             if face.label == PERSON:
                 self.found = True
 
 
     def execute(self, userdata):
+        self.found = False
         #self.name = userdata.finding_name_in
         rospy.loginfo('Executing state FINDING_OPERATOR')
 
@@ -313,7 +300,6 @@ class Find_Operator(smach.State):
 
         rospy.loginfo('Operator found')
         self.pub_voice.publish("I found the operator !")
-
         return 'found'
 
 def main():
@@ -344,7 +330,7 @@ def main():
                                transitions={'found': 'FACE_DETECTOR','not_found':'PEOPLE_DETECTOR'})
 
         smach.StateMachine.add('FACE_DETECTOR', Face_Detector(),
-                               transitions={'found': 'RECORDING', 'not_found': 'FACE_DETECTOR'})
+                               transitions={'found': 'ASK_NAME', 'not_found': 'FACE_DETECTOR'})
 
         smach.StateMachine.add('ASK_NAME', Ask_Name(),
                                transitions={'name_found': 'RECORDING', 'name_not_found': 'ASK_NAME'},
