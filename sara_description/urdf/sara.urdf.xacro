@@ -188,7 +188,22 @@
         </inertial>
     </link>
 
-    <link name="camera_link">
+    <link name="kinect_link">
+        <visual>
+            <geometry>
+                <box size="0.02 0.1 0.01"/>
+            </geometry>            <origin xyz="0 0 0" rpy="1.5708 0 1.5708"/>
+            <material name="black"/>
+        </visual>
+
+        <inertial>
+            <mass value="0.5"/>
+            <origin xyz="0 0 0" rpy="1.5708 0 1.5708"/>
+            <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
+        </inertial>
+    </link>
+
+    <link name="xtion_link">
         <visual>
             <geometry>
                 <mesh filename="package://sara_description/meshes/xtion.dae" scale="0.001 0.001 0.001"/>
@@ -203,7 +218,6 @@
             <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
         </inertial>
     </link>
-
 
     <link name="clavicule_link">
          <visual>
@@ -344,6 +358,14 @@
         <axis xyz="0 0 1" />
     </joint>
 
+    <joint name="kinect_joint" type="fixed">
+        <parent link="spine_link"/>
+        <child link="kinect_link"/>
+        <limit effort="1000.0" lower="0" upper="0.5" velocity="0.2"/>
+        <origin xyz="0.156 0 0.165" rpy="0 0 0" />
+        <axis xyz="0 0 1" />
+    </joint>
+
     <joint name="sternoclavicular_joint" type="revolute">
         <parent link="torso_link"/>
         <child link="clavicule_link"/>
@@ -385,18 +407,18 @@
     </joint>
 
     <joint name="Wrist_joint" type="revolute"> <!-- normally fixed, dummy revolute joint -->
-      <parent link="rotLowerArm_link"/>"
-      <child link="robotiq_85_base_link"/>
-	  <limit effort="1000.0" lower="-0.26" upper="0.26" velocity="0.5" />
-      <axis xyz="0 1 0"/>
-      <origin xyz="0 0 -0.10624" rpy="0 1.5708 1.5708"/>
+        <parent link="rotLowerArm_link"/>"
+        <child link="robotiq_85_base_link"/>
+	<limit effort="1000.0" lower="-0.26" upper="0.26" velocity="0.5" />
+        <axis xyz="0 1 0"/>
+        <origin xyz="0 0 -0.10624" rpy="0 1.5708 1.5708"/>
     </joint>
 
-	<joint name="grasp_joint" type="fixed" >
-		<parent link="robotiq_85_base_link" />
-		<child link="grasp_link" />
-		<origin xyz="0.075 0 -0.012" rpy="3.1416 0 1.5708" />
-	</joint>
+    <joint name="grasp_joint" type="fixed" >
+	<parent link="robotiq_85_base_link" />
+	<child link="grasp_link" />
+	<origin xyz="0.075 0 -0.012" rpy="3.1416 0 1.5708" />
+    </joint>
 
     <joint name="torsoNeck_joint" type="fixed">  <!-- normaly revolute -->
         <parent link="torso_link"/>
@@ -422,9 +444,9 @@
          <axis xyz="0 0 1" />
      </joint>
 
-    <joint name="camera_joint" type="fixed">
+    <joint name="xtion_joint" type="fixed">
         <parent link="head_link"/>
-        <child link="camera_link"/>
+        <child link="xtion_link"/>
         <origin xyz="0.0776104 -0.13 0" rpy="1.57 0 0" />
         <axis xyz="0 1 0" />
     </joint>
