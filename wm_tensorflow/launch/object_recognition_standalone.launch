@@ -1,0 +1,9 @@
+<launch>
+	<include file="$(find openni2_launch)/launch/openni2.launch" />
+	<include file="$(find wm_tts)/launch/wm_tts_EN.launch" />
+
+	<node name="object_recognition_node" pkg="wm_tensorflow" type="object_recognition_node.py" output="screen">
+		<param name="camera_topic" value="/camera/rgb/image_raw" />		
+	</node>
+
+</launch>
