@@ -4,15 +4,15 @@ Ce script sert à faire dire à sara le nombre de persones qui ce trouvent devan
 **Comment utiliser le script**
 Pour utiliser ce script :
 
-1. Rouler le launcher de la vision 1
+* Rouler le launcher de la vision
 ```shell
 roslaunch openni2_launch openni2.launch 
 ```
-1. Rouler le launcher du script 2
+* Rouler le launcher du script
 ```shell
 roslaunch wm_facial_recognition facerecognition.launch
 ```
-1. Ordonner a sara de parler 3
+* Ordonner a sara de parler
 ```python
 #import the necessary libraries
 from std_msgs.msg import Bool
@@ -24,7 +24,7 @@ self.pub_start = rospy.Publisher('facial_recognition/start', std_msgs.msg.Bool, 
 self.pub_start.publish(True)
 ```
 
-1. Reccuperer le signal de fin de job 4
+* Reccuperer le signal de fin de job
 ```python
 #import the necessary libraries
 from std_msgs.msg import Bool
