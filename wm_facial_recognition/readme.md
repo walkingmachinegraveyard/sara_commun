@@ -1,4 +1,4 @@
-**Script pour la demo du 1^^er^^ novembre 2016.**
+**Script pour la demo du 1er novembre 2016.**
 Ce script sert à faire dire à sara le nombre de persones qui ce trouvent devant elle.
 
 **Comment utiliser le script**
@@ -8,11 +8,11 @@ Pour utiliser ce script :
 ```shell
 roslaunch openni2_launch openni2.launch 
 ```
-2. Rouler le launcher du script 2
+1. Rouler le launcher du script 2
 ```shell
 roslaunch wm_facial_recognition facerecognition.launch
 ```
-3. Ordonner a sara de parler 3
+1. Ordonner a sara de parler 3
 ```python
 #import the necessary libraries
 from std_msgs.msg import Bool
@@ -24,7 +24,7 @@ self.pub_start = rospy.Publisher('facial_recognition/start', std_msgs.msg.Bool, 
 self.pub_start.publish(True)
 ```
 
-4. Reccuperer le signal de fin de job 4
+1. Reccuperer le signal de fin de job 4
 ```python
 #import the necessary libraries
 from std_msgs.msg import Bool
