@@ -16,6 +16,52 @@ from wm_interpreter.msg import *
 
 TIMEOUT_LENGTH = 10
 
+
+# define state Idle
+class Idle(smach.State):
+    def __init__(self):
+        smach.State.__init__(self,
+                             outcomes=['Stop', 'Sarah'],
+                             input_keys=['Idle_lastWord_in',
+                                         'Idle_lastState_in'],
+                             output_keys=['Idle_lastWord_out',
+                                          'Idle_lastState_out'])
+        self.word = ""
+        self.state = "Idle"
+        rospy.Subscriber("/recognizer_1/output", String, self.callback, queue_size=1)
+        self.pub = rospy.Publisher('SaraVoice', String, queue_size=1)
+
+    def execute(self, userdata):
+        rospy.loginfo('Executing state Idle')
+        rospy.loginfo('Idle - Waiting for keyword: SARAH')
+        self.word = ""
+        while True:
+            if self.word == 'stop':
+                userdata.Idle_lastWord_out = self.word
+                userdata.Idle_lastState_out = self.state
+                return 'Stop'
+            if self.word == 'stop':
+                userdata.Idle_lastWord_out = self.word
+                userdata.Idle_lastState_out = self.state
+                return 'Stop'
+            if self.word == 'sarah':
+                userdata.Idle_lastWord_out = self.word
+                userdata.Idle_lastState_out = self.state
+                return 'Sarah'
+
+    def callback(self, data):
+        if data.data == "stop":
+            rospy.loginfo('Idle - Keyword STOP detected !!')
+            self.word = data.data
+
+        if data.data == "sarah":
+            rospy.loginfo('Idle - Keyword SARAH detected !!')
+            self.word = data.data
+
+    def SayX(self, ToSay_str):
+        rospy.loginfo(ToSay_str)
+        self.pub.publish(ToSay_str)
+
 # define state WaitingQuestion
 class WaitingQuestion(smach.State):
     def __init__(self):
@@ -194,6 +240,7 @@ class AnswerQuestion(smach.State):
         smach.State.request_preempt(self)
         rospy.logwarn("Preempted!")
 
+
 # define state AskToRepeat
 class AskToRepeat(smach.State):
     def __init__(self):
@@ -216,45 +263,30 @@ class AskToRepeat(smach.State):
         smach.State.request_preempt(self)
         rospy.logwarn("Preempted!")
 
-# main
-def main():
 
-    outcomes = ""
+class SpeechRecognition(StateMachine):
+    def __init__(self):
+        super(SpeechRecognition, self).__init__(outcomes=['success', 'aborted', 'preempted'],
+                                                output_keys=['result'])
 
-    rospy.init_node('interpreter')
+        with self:
 
-    # Create a SMACH state machine
-    sm = smach.StateMachine(outcomes=['success', 'aborted', 'preempted'],
-                            output_keys=['result'])
+            self.add('WaitingQuestion', WaitingQuestion(),
+                     transitions={'Question': 'AnswerQuestion',
+                                  'NotUnderstood': 'AskToRepeat',
+                                  'Timeout': 'WaitingQuestion'},
+                     remapping={'WQ_question_out': 'question'})
 
-    with sm:
-        # Add states to the container
-        smach.StateMachine.add('WaitingQuestion', WaitingQuestion(),
-                               transitions={'Question': 'AnswerQuestion',
-                                            'NotUnderstood': 'AskToRepeat',
-                                            'Timeout': 'WaitingQuestion'},
-                               remapping={'WQ_question_out': 'question'})
+            self.add('AnswerQuestion', AnswerQuestion(),
+                     transitions={'Done': 'WaitingQuestion'},
+                     remapping={'AQ_question_in': 'question'})
 
-        smach.StateMachine.add('AnswerQuestion', AnswerQuestion(),
-                               transitions={'Done': 'WaitingQuestion'},
-                               remapping={'AQ_question_in': 'question'})
+            self.add('AskToRepeat', AskToRepeat(),
+                     transitions={'Done': 'WaitingQuestion'}, )
 
-        smach.StateMachine.add('AskToRepeat', AskToRepeat(),
-                               transitions={'Done': 'WaitingQuestion'},
-)
-
-
-
-
-    '''sis = smach_ros.IntrospectionServer('server_name', asw.wrapped_container, '/ASW_ROOT')'''
-
-    # Execute SMACH plan
-    sm.execute()
-
-    rospy.spin()
-
-    # Request the container to preempt
-    sm.request_preempt()
 
 if __name__ == '__main__':
-    main()
+    rospy.init_node('interpreter')
+    SpeechRecognition().execute()
+    while not rospy.is_shutdown():
+        rospy.spin()
