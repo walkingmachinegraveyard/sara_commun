@@ -1,5 +1,5 @@
 <launch>
-	<node name="recognizer_1" pkg="pocketsphinx" type="recognizer.py" output="screen">
+	<node name="recognizer_questions" pkg="pocketsphinx" type="recognizer.py" output="screen">
 		<param name="mic_name" value="alsa_input.pci-0000_00_1b.0.analog-stereo"/>
 		<param name="lm" value="$(find sara_vocab)/question_vocab/question.lm"/>
 		<param name="dict" value="$(find sara_vocab)/question_vocab/question.dic"/>
