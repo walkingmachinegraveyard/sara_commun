@@ -1,4 +1,4 @@
 <launch>
-	<node name="supreme_planer" pkg="wm_supreme_planer" type="wm_surpeme_planer.py" output="screen">
+	<node name="supreme_planer" pkg="wm_smach" type="wm_supreme_planer_node.py" output="screen">
 	</node>
 </launch>

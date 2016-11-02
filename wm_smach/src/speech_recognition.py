@@ -13,6 +13,7 @@ from smach_ros import ActionServerWrapper
 from std_msgs.msg import String
 from std_msgs.msg import UInt8
 from wm_interpreter.msg import *
+from collections import Counter
 
 TIMEOUT_LENGTH = 10
 
@@ -29,7 +30,7 @@ class Idle(smach.State):
         self.word = ""
         self.state = "Idle"
         rospy.Subscriber("/recognizer_1/output", String, self.callback, queue_size=1)
-        self.pub = rospy.Publisher('SaraVoice', String, queue_size=1)
+        self.pub = rospy.Publisher('sara_tts', String, queue_size=1)
 
     def execute(self, userdata):
         rospy.loginfo('Executing state Idle')
@@ -66,7 +67,7 @@ class Idle(smach.State):
 class WaitingQuestion(smach.State):
     def __init__(self):
         smach.State.__init__(self,
-                             outcomes=['NotUnderstood', 'Question', 'Timeout'],
+                             outcomes=['NotUnderstood', 'Question', 'Timeout', 'aborted'],
                              input_keys=[],
                              output_keys=['WQ_question_out'])
 
@@ -123,11 +124,13 @@ class WaitingQuestion(smach.State):
                                "What city are you from",
                                "Who used first the word Robot",
                                "What origin has the word Robot"])
-        self.QUESTIONS.append([0, 0])
+        self.QUESTIONS.append([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
 
         self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1, latch=True)
         self.face_cmd = rospy.Publisher('/face_mode', UInt8, queue_size=1, latch=True)
-        self.sub = rospy.Subscriber("/recognizer_1/output", String, self.callback, queue_size=1)
+        self.sub = rospy.Subscriber("/recognizer_questions/output", String, self.callback, queue_size=1)
+        self.sub2 = rospy.Subscriber("/recognizer_1/output", String, self.callback2, queue_size=1)
+        self.word = ""
 
     def execute(self, userdata):
         rospy.loginfo('Executing state WaitingQuestion')
@@ -135,11 +138,19 @@ class WaitingQuestion(smach.State):
         self.face_cmd.publish(3)
 
         userdata.WQ_question_out = self.state
-
+        self.word = ''
         timeout = time.time() + TIMEOUT_LENGTH  # 10 sec
         while True:
-            if min(self.QUESTIONS[1]) > 1:
-                userdata.WQ_lastCommand_out = self.QUESTIONS[0][max(self.QUESTIONS[1])]
+
+            if self.word == 'stop':
+                userdata.Idle_lastWord_out = self.word
+                userdata.Idle_lastState_out = self.state
+                return 'aborted'
+
+            if max(self.QUESTIONS[1]) > 70:
+                userdata.WQ_question_out = self.QUESTIONS[0][self.QUESTIONS[1].index(max(self.QUESTIONS[1]))]
+                for idx in range(len(self.QUESTIONS[1])):
+                    self.QUESTIONS[1][idx] = 0
                 return 'Question'
 
             if time.time() > timeout:
@@ -147,13 +158,22 @@ class WaitingQuestion(smach.State):
 
     def callback(self, data):
         self.RecoString = data.data.split()
-        for idx in self.QUESTIONS[1]:
-            self.QUESTION[1][idx] = 0
+        for idx in range(len(self.QUESTIONS[1])):
+            self.QUESTIONS[1][idx] = 0
 
         for RecoWord in self.RecoString:
-            for idx in self.QUESTIONS[1]:
-                if self.QUESTIONS[idx].lower().find(RecoWord) != -1:
+            for idx in range(len(self.QUESTIONS[1])):
+                if self.QUESTIONS[0][idx].lower().find(RecoWord) != -1:
                     self.QUESTIONS[1][idx] += 1
+
+        for idx in range(len(self.QUESTIONS[1])):
+            self.QUESTIONS[1][idx] = self.QUESTIONS[1][idx]*100/len(self.QUESTIONS[0][idx].split())
+
+    def callback2(self, data):
+        if data.data == "stop":
+            rospy.loginfo('Idle - Keyword STOP detected !!')
+            self.word = data.data
+        
 
 
     def SayX(self, ToSay_str):
@@ -173,72 +193,70 @@ class AnswerQuestion(smach.State):
                              outcomes=['Done'],
                              input_keys=['AQ_question_in'])
 
-        self.ANSWERS = {"Who are the inventors of the C programming language": "The inventors of the C programming language is Ken Thompson and Dennis Ritchie",
-                               "Who is the inventor of the Python programming language": "The inventors of the Python programming language Guido van Rossum",
-                               "Which robot was the star in the movie Wall-E": "The robot star int he movie Wall-E was Wall-E",
-                               "Where does the term computer bug come from": "The term computer bug come from a moth trapped in a relay",
-                               "What is the name of the round robot in the new Star Wars movie": " The name of the round robot in the new Star Wars movie is B B 8",
-                               "How many curry sausages are eaten in Germany each year": "About 800 million currywurst every year",
-                               "Who is president of the galaxy in The Hitchhiker Guide to the Galaxy": "The president of the galaxy in The Hitchhiker's Guide to the Galaxy is Zaphod Beeblebrox",
-                               "Which robot is the love interest in Wall-E": "The robot that is the love interest in Wall-E is Eve",
-                               "Which company makes ASIMO": "The company that makes ASIMO is Honda",
-                               "What company makes Big Dog": "The company that makes Big Dog is Boston Dynamics",
-                               "What is the funny clumsy character of the Star Wars prequels": "The funny clumsy character of the Star Wars prequels is Jar-Jar Binks",
-                               "How many people live in the Germany": "A little over 80 million people live in the Germany",
-                               "What are the colours of the German flag": "The colours of the German flag are black red and yellow",
-                               "What city is the capital of the Germany": "The capital of the Germany is Berlin",
-                               "How many arms do you have": "I only have one arm for now. Ask me again next year",
-                               "What is the heaviest element": "the heaviest element is plutonium when measured by the mass of the element but Osmium is densest",
-                               "what did Alan Turing create": "Alan Turing created many things like Turing machines and the Turing test",
-                               "Who is the helicopter pilot in the A-Team": "The helicopter pilot in the A-Team is Captain Howling Mad Murdock",
-                               "What Apollo was the last to land on the moon": "The last to land on the moon was Apollo 17",
-                               "Who was the last man to step on the moon": "The last man to step on the moon was Gene Cernan",
-                               "In which county is the play of Hamlet set": "The play of Hamlet set is in Denmark",
-                               "What are names of Donald Duck nephews": "The names of Donald Duck's nephews is Huey Dewey and Louie Duck",
-                               "How many metres are in a mile": "There is about 1609 metres metres are in a mile",
-                               "Name a dragon in The Lord of the Rings": "A dragon name in The Lord of the Rings is Smaug",
-                               "Who is the Chancellor of Germany": "The Chancellor of Germany is Angela Merkel",
-                               "Who developed the first industrial robot": "The first to develope a industrial robot are the American physicist Joseph Engelberg. He is also considered the father of robotics.",
-                               "What's the difference between a cyborg and an android": "The difference between a cyborg and an android",
-                               "Do you know any cyborg": "Professor Kevin Warwick. He implanted a chip in in his left arm to remotely operate doors an artificial hand and an electronic wheelchair",
-                                "In which city is this year's RoboCup hosted": "Robocup 2016 is hosted in Leipzig Germany",
-                                "Which city hosted last year's RoboCup": "robocup 2015 was hosted in Hefei China",
-                                "In which city will next year's RoboCup be hosted": "robocup 2017 will be in Nagoya in Japan",
-                                "Name the main rivers surrounding Leipzig": "he Parthe Pleisse and the White Elster",
-                                "Where is the zoo of this city located": "the zoo is located Near the central station",
-                                "Where did the peaceful revolution of 1989 start": "The peaceful revolution started in September 4 1989 in Leipzig at the Saint Nicholas Church",
-                                "Where is the worlds oldest trade fair hosted": "The worlds oldest trade fair is in Leipzig",
-                                "Where is one of the worlds largest dark music festivals hosted": "Leipzig hosts one of the worlds largest dark music festivals",
-                                "Where is Europes oldest continuous coffee shop hosted": "Europes oldest continuous coffee shop is in Leipzig",
-                                "Name one of the greatest German composers": "Johann Sebastian Bach",
-                                "Where is Johann Sebastian Bach buried": "Johann Sebastian Bach is buried in Saint Thomas Church here in Leipzig",
-                                "Do you have dreams": "I dream of Electric Sheeps",
-                                "Hey what's up": "I don't know since I've never been there",
-                                "There are seven days in a week. True or false": "True there are seven days in a week",
-                                "There are eleven days in a week. True or false": "False there are seven days in a week not eleven",
-                                "January has 31 days. True or false": "True January has 31 days",
-                                "January has 28 days. True or false": "False January has 31 days not 28",
-                                "February has 28 days. True or false": "True but in leap-years has 29",
-                                "February has 31 days. True or false": "False February has either 28 or 29 days. Depend on the year",
-                                "What city are you from": "I am from Montreal",
-                                "Who used first the word Robot": "The word robot was first used by tchek writer Karel Capek",
-                                "What origin has the word Robot": "The tchek word robota that means forced work or labour"}
+        self.ANSWERS = {"What is your name":"Mon nom est Sara, ce qui signifie Systeme dassistance robotiser autonome",
+                               "Do a little presentation":"Je suis un robot dassistance robotiser autonome. Jai eter concu par le club Walking Machine de ler-cole de technologie superieure specialement pour la comper-tition Robocup at Home.",
+                               "Who are the inventors of the C programming language": "Les inventeur du language de programmation C sont Ken Thompson et Dennis Ritchie",
+                               "Who is the inventor of the Python programming language": "Linventeur du language de programation python est Guido van Rossum",
+                               "Which robot was the star in the movie Wall-E": "Le robot qui est lacteur principale dans le film Wall-E est Wall-E",
+                               "Where does the term computer bug come from": "Le terme bogue informatique vient dun papillon de nuit coince dans un relais",
+                               "What is the name of the round robot in the new Star Wars movie": "Le nom du petit robot rond dans le nouveau film de Star Wars est B B 8",
+                               "How many curry sausages are eaten in Germany each year": "Environ 800 million currywurst par anner",
+                               "Who is president of the galaxy in The Hitchhiker Guide to the Galaxy": "Le president de la galaxie dans le film Le Guide du voyageur galactique est Zaphod Beeblebrox",
+                               "Which robot is the love interest in Wall-E": "Le robot companion de Wall-E est Eve",
+                               "Which company makes ASIMO": "La compagnie qui fabrique ASIMO est Honda",
+                               "What company makes Big Dog": "La compagnie qui fabrique Big Dog est Boston Dynamics",
+                               "What is the funny clumsy character of the Star Wars prequels": "Le personnage drole mais maladroit des prelude de Star Wars est Jar-Jar Binks",
+                               "How many people live in the Germany": "Il y a 80 millions dhabitant en Allemagne ",
+                               "What are the colours of the German flag": "Les couleurs du drapeau de lAllemagne sont rouge, noir et jaune",
+                               "What city is the capital of the Germany": "La capital de lAllemagne est Berlin",
+                               "How many arms do you have": "Jai seulement un bras pour le moment. Veuillez me le redemander lannnee prochain",
+                               "What is the heaviest element": "Lelement le plus lourd est le plutonium lorsquil est mesure par la masse de lelement mais lOsmium est plus dense",
+                               "What did Alan Turing create": "Alan Turing a cree plusieurs choses comme les machines de Turing et le test de Turing",
+                               "Who is the helicopter pilot in the A-Team": "Le pilote dhelicoptere dans A-Team est le capitaine Howling Mad Murdock",
+                               "What Apollo was the last to land on the moon": "Le dernier a avoir atteris sur la lune etait Apollo 17",
+                               "Who was the last man to step on the moon": "Le dernier homme a avoir marcher sur la lune etait Gene Cernan",
+                               "In which county is the play of Hamlet set": "Il etait au Danemark",
+                               "What are names of Donald Duck nephews": "The nom des neveux de Donald Duck etaient Huey Dewey et Louie Duck",
+                               "How many metres are in a mile": "Il y a environ 1609 metres dans un mile",
+                               "Name a dragon in The Lord of the Rings": "Le nom du dragon dans le Seigneur des anneaux etait Smaug",
+                               "Who is the Chancellor of Germany": "La chancelliere de lAllemagne est Angela Merkel",
+                               "Who developed the first industrial robot": "Le premier a developper un robot industriel etait le physicien americain Joseph Engelberg. Il est aussi considere comme le pere de la robotique.",
+                               "What's the difference between a cyborg and an android": "Les cyborgs sont des etres biologiques avec des ameliorations electromecaniques. Les androids sont des robots avec une apparence humaine.",
+                               "Do you know any cyborg": "Le professeur Kevin Warwick. Il a implemente un circuit dans son avant-bras gauche.",
+                                "In which city is this year's RoboCup hosted": "La Robocup 2016 etait a Leipzig en Allemagne",
+                                "Which city hosted last year's RoboCup": "La robocup 2015 etait a Heifei en Chine.",
+                                "In which city will next year's RoboCup be hosted": "Robocup 2017 sera a Nagoya au Japon.",
+                                "Name the main rivers surrounding Leipzig": "La Parthe Pleisse et la White Elster",
+                                "Where is the zoo of this city located": "Le zoo est situe pres de la gare centrale.",
+                                "Where did the peaceful revolution of 1989 start": "La revolution tranquille commenca le 4 septembre 1989 a Leipzig a la leglise Saint Nicholas.",
+                                "Where is the world's oldest trade fair hosted": "La Foire de Leipzig est la plus ancienne du monde",
+                                "Where is one of the world's largest dark music festivals hosted": "La ville de Leipzig accueille lun des plus grand festival de musique gothique du monde",
+                                "Where is Europe's oldest continuous coffee shop hosted": "Le plus ancien cafe deurope ce trouve a Leipzig",
+                                "Name one of the greatest German composers": "Jean Sebastien Bach est le plus grand compositeur dAllemagne",
+                                "Where is Johann Sebastian Bach buried": "La sepulture de Jean Sebastien Bach se trouve a leglise Saint Thomas a  Leipzig",
+                                "Do you have dreams": "Je reve de moutons electriques.",
+                                "Hey what's up": "Comment le saurai-je?",
+                                "There are seven days in a week. True or false": "Cest vrais, il y a bel et bien sept jours dans une semaine.",
+                                "There are eleven days in a week. True or false": "Cest faux, il y a plutot sept jours dans une semaine.",
+                                "January has 31 days. True or false": "Cest vrai, le mois de Janvier compte 31 jours.",
+                                "January has 28 days. True or false": "Faux, Janvier contient 31 jours, pas 28",
+                                "February has 28 days. True or false": "Vrai, sauf dans une annee bissextile qui en contient 29",
+                                "February has 31 days. True or false": "Faux, Fevrier a soit 28 jours, ou 29 selon lannee.",
+                                "What city are you from": "Je viens de Mont-rer al",
+                                "Who used first the word Robot": "Le mot robot fut utilise pour la premiere fois par lecrivain tcheque Karel Capek",
+                                "What origin has the word Robot": "Il provient du mot tcheque Robota qui signifie travail force ou esclavage"}
 
         self.tts_pub = rospy.Publisher('sara_tts', String, queue_size=1, latch=True)
  
     def execute(self, userdata):
         rospy.loginfo('-- Executing state WaitingConfirmation --')
-
-        self.SayX(self.ANSWERS(userdata.AQ_question_in))
+        self.SayX(self.ANSWERS[userdata.AQ_question_in])
+        return 'Done'
 
     def SayX(self, ToSay_str):
         rospy.loginfo(ToSay_str)
-        self.pub.publish(ToSay_str)
+        self.tts_pub.publish(ToSay_str)
 
-    def request_preempt(self):
-        """Overload the preempt request method just to spew an error."""
-        smach.State.request_preempt(self)
-        rospy.logwarn("Preempted!")
 
 
 # define state AskToRepeat
@@ -274,7 +292,8 @@ class SpeechRecognition(StateMachine):
             self.add('WaitingQuestion', WaitingQuestion(),
                      transitions={'Question': 'AnswerQuestion',
                                   'NotUnderstood': 'AskToRepeat',
-                                  'Timeout': 'WaitingQuestion'},
+                                  'Timeout': 'WaitingQuestion',
+                                   'aborted': 'aborted'},
                      remapping={'WQ_question_out': 'question'})
 
             self.add('AnswerQuestion', AnswerQuestion(),

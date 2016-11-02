@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import roslib
 import rospy
 import smach
@@ -12,6 +14,7 @@ from std_msgs.msg import String
 from wm_interpreter.msg import *
 from move_base_msgs.msg import *
 from speech_recognition import SpeechRecognition
+from tensorflow import Tensorflow
 from following import Following
 
 """
@@ -48,7 +51,7 @@ class Idle(smach.State):
         self.word = ""
         self.state = "Idle"
         rospy.Subscriber("/recognizer_1/output", String, self.callback, queue_size=1)
-        self.pub = rospy.Publisher('SaraVoice', String, queue_size=1)
+        self.pub = rospy.Publisher('sara_tts', String, queue_size=1)
 
     def execute(self, userdata):
         rospy.loginfo('Executing state Idle')
@@ -98,13 +101,13 @@ class WaitingCommand(smach.State):
         self.word = ""
         self.state = "WaitingCommand"
         rospy.Subscriber("/recognizer_1/output", String, self.callback, queue_size=1)
-        self.pub = rospy.Publisher('SaraVoice', String, queue_size=1)
+        self.pub = rospy.Publisher('sara_tts', String, queue_size=1)
 
     def execute(self, userdata):
         rospy.loginfo('Executing state WaitingCommand')
         userdata.WComm_lastState_out = self.state
 
-        self.SayX('Yes master')
+        self.SayX('Oui maitre')
         self.word = ""
         timeout = time.time() + 15  # 15 sec
         while True:
@@ -117,7 +120,7 @@ class WaitingCommand(smach.State):
                 userdata.WComm_lastWord_out = self.word
                 userdata.WComm_lastCommand_out = self.word
                 self.SayX(
-                    'Hi. I am a assistance robot here to serve you. Soon i will be able to do the chores for you.')
+                    "Bonjour, je suis un robot d'assistance personnelle autonome. Bientot je pourrai accomplir une multitude de taches pour vous !")
                 return 'Timeout'
 
             if self.word == 'follow me':
@@ -125,7 +128,12 @@ class WaitingCommand(smach.State):
                 userdata.WComm_lastCommand_out = self.word
                 return 'Command'
 
-            if self.word == 'I have a question':
+            if self.word == 'question':
+                userdata.WComm_lastWord_out = self.word
+                userdata.WComm_lastCommand_out = self.word
+                return 'Command'
+
+            if self.word == 'what do you see':
                 userdata.WComm_lastWord_out = self.word
                 userdata.WComm_lastCommand_out = self.word
                 return 'Command'
@@ -180,6 +188,14 @@ class WaitingCommand(smach.State):
             rospy.loginfo('Wcomm - Phrase FOLLOW ME detected !!')
             self.word = data.data
 
+        if data.data == "question":
+            rospy.loginfo('Wcomm - Phrase QUESTION detected !!')
+            self.word = data.data
+
+        if data.data == "what do you see":
+            rospy.loginfo('Wcomm - Phrase TENSORFLOW detected !!')
+            self.word = data.data
+
         '''
         if data.data == "get me the beer":
             rospy.loginfo('Wcomm - Phrase SAY HELLO detected !!')
@@ -218,20 +234,22 @@ class WaitingConfirmation(smach.State):
         smach.State.__init__(self,
                              outcomes=['Timeout', 'Yes', 'No', 'Stop', 'Sarah'],
                              input_keys=['WConf_lastWord_in',
-                                         'WConf_lastState_in'],
+                                         'WConf_lastState_in',
+                                         'WConf_lastCommand_in'],
                              output_keys=['WConf_lastWord_out',
-                                          'WConf_lastState_out'])
+                                          'WConf_lastState_out',
+                                          'WConf_lastCommand_out'])
         self.word = ""
         self.state = "WaitingConfirmation"
         self.lastWord = ''
         rospy.Subscriber("/recognizer_1/output", String, self.callback)
-        self.pub = rospy.Publisher('SaraVoice', String, queue_size=10)
+        self.pub = rospy.Publisher('sara_tts', String, queue_size=10)
 
     def execute(self, userdata):
         rospy.loginfo('Executing state WaitingConfirmation')
         userdata.WConf_lastState_out = self.state
         self.lastWord = userdata.WConf_lastWord_in
-        self.SayX('Did you say')
+        self.SayX('Avez-vous dit ')
         self.SayX(self.lastWord)
         self.word = ""
         timeout = time.time() + 15  # 15 sec
@@ -240,7 +258,7 @@ class WaitingConfirmation(smach.State):
                 userdata.WConf_lastWord_out = self.word
                 return 'Stop'
 
-            if self.word == 'No':
+            if self.word == 'no':
                 userdata.WConf_lastWord_out = self.word
                 return 'No'
 
@@ -277,15 +295,23 @@ class WaitingConfirmation(smach.State):
 class Selector(smach.State):
     def __init__(self):
         smach.State.__init__(self,
-                             outcomes=['Idle', 'SpeechRecognition', 'Following'],
-                             input_keys=[],
-                             output_keys=['Init_Comm_goal'])
+                             outcomes=['Idle', 'SpeechRecognition', 'Following', 'Tensorflow'],
+                             input_keys=['Sel_lastWord_in',
+                                         'Sel_lastState_in',
+                                         'Sel_lastCommand_in'],
+                             output_keys=['Sel_lastWord_out',
+                                          'Sel_lastState_out'])
         self.state = "Selector"
         rospy.Subscriber("/recognizer_1/output", String, self.callback, queue_size=1)
 
     def execute(self, userdata):
-        userdata.Init_Comm_goal = "WaitForCommand"
-        return 'Idle'
+        if userdata.Sel_lastCommand_in == "follow me":
+            return 'Following'
+        if userdata.Sel_lastCommand_in == "question":
+            return 'SpeechRecognition'
+        if userdata.Sel_lastCommand_in == "what do you see":
+            return 'Tensorflow'
+
 
     def callback(self, data):
         if data.data == "stop":
@@ -511,17 +537,26 @@ class SupremePlanner(StateMachine):
                                                 'Sarah': 'WaitingCommand'},
                                    remapping={'WConf_lastWord_in': 'lastWord',
                                               'WConf_lastState_in': 'lastState',
+                                              'WConf_lastCommand_in': 'lastCommand',
                                               'WConf_lastWord_out': 'lastWord',
-                                              'WConf_lastState_out': 'lastState'})
+                                              'WConf_lastState_out': 'lastState',
+                                              'WConf_lastCommand_out': 'lastCommand',})
 
             self.add('Selector', Selector(),
-                     transitions={'Idle': 'Idle', 'SpeechRecognition': 'SpeechRecognition', 'Following': 'Following'},
-                     remapping={'Init_Comm_goal': 'sm_top_Comm_goal'})
+                     transitions={'Idle': 'Idle', 'SpeechRecognition': 'SpeechRecognition', 'Following': 'Following', 'Tensorflow': 'Tensorflow'},
+	           remapping={'Sel_lastWord_in': 'lastWord',
+	                      'Sel_lastState_in': 'lastState',
+                              'Sel_lastCommand_in': 'lastCommand',
+	                      'Sel_lastWord_out': 'lastWord',
+	                      'Sel_lastState_out': 'lastState'})
 
             smach.StateMachine.add('SpeechRecognition', SpeechRecognition(),
                                    transitions={'success': 'Idle', 'aborted': 'Idle', 'preempted': 'Idle'})
 
             smach.StateMachine.add('Following', Following(),
+                                   transitions={'success': 'Idle', 'aborted': 'Idle', 'preempted': 'Idle'})
+
+            smach.StateMachine.add('Tensorflow', Tensorflow(),
                                    transitions={'success': 'Idle', 'aborted': 'Idle', 'preempted': 'Idle'})
 
         ''' DESACTIVATED FOR NOW
