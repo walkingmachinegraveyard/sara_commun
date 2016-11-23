@@ -19,6 +19,5 @@
         <rosparam command="load" file="$(find sara_description)/config/neckHead.yaml"/>
         <rosparam param="source_list">['/neckHead/state', '/arm_base_joint_states']</rosparam>
             <param name="publish_default_positions" value="true" />
-	<param name="publish_default_positions" value="true" />
     </node>
 </launch>
