@@ -1,4 +1,5 @@
-<node pkg="move_base" type="move_base" respawn="false" name="move_base" clear_params="true" >
+<launch>
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" clear_params="true" >
         <rosparam file="$(find wm_2dnav)/config/dwa/costmap_common_params.yaml" command="load" ns="global_costmap" />
         <rosparam file="$(find wm_2dnav)/config/dwa/costmap_common_params.yaml" command="load" ns="local_costmap" />
         <rosparam file="$(find wm_2dnav)/config/dwa/local_costmap_params.yaml" command="load" />
@@ -8,3 +9,4 @@
 
         <param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS" />
     </node>
+</launch>
