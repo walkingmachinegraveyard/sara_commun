@@ -9,7 +9,7 @@ TrajectoryPlannerROS:
   acc_lim_x: 1.0
   acc_lim_y: 1.0
 
-  escape_vel: 0.2
+  escape_vel: -0.2
 
   holonomic_robot: true
   y_vels: [-0.4, -0.2, 0.2, 0.4]
