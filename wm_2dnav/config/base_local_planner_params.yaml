@@ -11,6 +11,7 @@ TrajectoryPlannerROS:
 
   escape_vel: -0.2
 
+  simple_attractor: true
   holonomic_robot: true
   y_vels: [-0.4, -0.2, 0.2, 0.4]
 
@@ -36,7 +37,7 @@ TrajectoryPlannerROS:
   occdist_scale: 0.2
   # The weighting for how much the controller should attempt to reach its local goal, also controls speed. default 0.8
   gdist_scale: 0.5
-  heading_scoring: false
+  heading_scoring: true
   oscillation_reset_dist: 0.10
 
   # Clean up the points
