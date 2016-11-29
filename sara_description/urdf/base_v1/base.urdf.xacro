@@ -24,13 +24,13 @@
         <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
       </inertial>
     </link>
-    <joint name="spine_torso_joint" type="fixed">
+    <!--<joint name="spine_torso_joint" type="fixed">
       <parent link="spine_link"/>
       <child link="${parent}_link"/>
       <limit effort="1000.0" lower="0" upper="0.5" velocity="0.2"/>
       <origin xyz="0 0 1.112" rpy="0 0 0" />
       <axis xyz="0 0 1" />
-    </joint>
+    </joint>-->
     <!-- Lien entre la colonne vertebrale et la base-->
     <link name="base_link">
       <visual>
