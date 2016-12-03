@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+   <xacro:macro name="sara_torso_gazebo_v1">
+      <gazebo reference="torso_link">
+         <gravity>false</gravity>
+      </gazebo>
+   </xacro:macro>
+</robot>
