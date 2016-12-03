@@ -10,3 +10,6 @@
 	path = cob_perception_common
 	url = https://github.com/ipa320/cob_perception_common
         branch = da2f997b263b8824ab7734c2f518fa64d15e1707
+[submodule "knowrob"]
+	path = knowrob
+	url = https://github.com/knowrob/knowrob.git
