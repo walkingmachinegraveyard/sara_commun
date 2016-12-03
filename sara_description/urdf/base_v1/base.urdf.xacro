@@ -1,106 +1,97 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro" >
-   <xacro:include filename="$(find sara_description)/urdf/base_v1/base.gazebo.xacro" />
-   <xacro:macro name="sara_base_v1" params="name parent">
-      <!-- Lien entre le torse et la colonne vertebrale -->
-      <link name="spine_link">
-         <visual>
-            <geometry>
-               <cylinder length="0.9" radius="0.04"/>
-            </geometry>
-            <origin xyz="0 0 0.49" rpy="0 0 0"/>
-            <material name="grey">
-               <color rgba="0.62 0.62 0.62 1"/>
-            </material>
-         </visual>
-         <collision>
-            <geometry>
-               <cylinder length="0.9" radius="0.07"/>
-            </geometry>
-            <origin xyz="0 0 0.49" rpy="0 0 0"/>
-         </collision>
-         <inertial>
-            <mass value="10"/>
-            <origin xyz="0 0 0.49" rpy="0 0 0"/>
-            <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
-         </inertial>
-      </link>
-      <joint name="spine_torso_joint" type="fixed">
-         <parent link="spine_link"/>
-         <child link="${parent}_link"/>
-         <limit effort="1000.0" lower="0" upper="0.5" velocity="0.2"/>
-         <origin xyz="0 0 1.112" rpy="0 0 0" />
-         <axis xyz="0 0 1" />
-      </joint>
-      <!-- Lien entre la colonne vertebrale et la base-->
-      <link name="base_link">
-         <visual>
-            <geometry>
-               <box size="0.7637 0.64311 0.14"/>
-            </geometry>
-            <origin xyz="0.0 0 0.07" rpy="0 0 0"/>
-            <material name="grey">
-               <color rgba="0.62 0.62 0.62 1"/>
-            </material>
-         </visual>
-         <visual>
-            <geometry>
-               <box size="0.55 0.64311 0.57"/>
-            </geometry>
-            <origin xyz="-0.115 0 0.42" rpy="0 0 0"/>
-         </visual>
-         <collision>
-            <geometry>
-               <box size="0.7637 0.64311 0.14"/>
-            </geometry>
-            <origin xyz="0.0 0 0.07" rpy="0 0 0"/>
-         </collision>
-         <collision>
-            <geometry>
-               <box size="0.55 0.64311 0.57"/>
-            </geometry>
-            <origin xyz="-0.115 0 0.42" rpy="0 0 0"/>
-         </collision>
-         <inertial>
-            <mass value="10"/>
-            <origin xyz="-0.115 0 0.42" rpy="0 0 0"/>
-            <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
-         </inertial>
-      </link>
-      <joint name="base_spine_joint" type="fixed">
-         <parent link="base_link"/>
-         <child link="spine_link"/>
-         <origin xyz="0.2 0 0" rpy="0 0 0" />
-         <axis xyz="0 0 1" />
-      </joint>
-      <!-- Lidar -->
-      <link name="lidar_link">
-         <visual>
-            <geometry>
-               <cylinder length="0.1" radius="0.03"/>
-            </geometry>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
-            <material name="orange">
-               <color rgba="1 0.5 0 1"/>
-            </material>
-         </visual>
-         <collision>
-            <geometry>
-               <cylinder length="0.1" radius="0.03"/>
-            </geometry>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
-         </collision>
-         <inertial>
-            <mass value="0.5"/>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
-            <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
-         </inertial>
-      </link>
-      <joint name="laser_joint" type="fixed">
-         <parent link="base_link"/>
-         <child link="lidar_link"/>
-         <origin xyz="0.34 0 0.19" rpy="0 0 0" />
-      </joint>
-      <xacro:sara_base_gazebo_v1 />
-   </xacro:macro>
+  <xacro:macro name="sara_base_v1" params="name parent">
+    <!-- Lien entre le torse et la colonne vertebrale -->
+    <link name="spine_link">
+      <visual>
+        <geometry>
+          <cylinder length="0.9" radius="0.04"/>
+        </geometry>
+        <origin xyz="0 0 0.49" rpy="0 0 0"/>
+        <material name="grey">
+          <color rgba="0.62 0.62 0.62 1"/>
+        </material>
+      </visual>
+      <collision>
+        <geometry>
+          <cylinder length="0.9" radius="0.07"/>
+        </geometry>
+        <origin xyz="0 0 0.49" rpy="0 0 0"/>
+      </collision>
+      <inertial>
+        <mass value="10"/>
+        <origin xyz="0 0 0.49" rpy="0 0 0"/>
+        <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
+      </inertial>
+    </link>
+    <!-- Lien entre la colonne vertebrale et la base-->
+    <link name="base_link">
+      <visual>
+        <geometry>
+          <box size="0.7637 0.64311 0.14"/>
+        </geometry>
+        <origin xyz="0.0 0 0.07" rpy="0 0 0"/>
+        <material name="grey">
+          <color rgba="0.62 0.62 0.62 1"/>
+        </material>
+      </visual>
+      <visual>
+        <geometry>
+          <box size="0.55 0.64311 0.57"/>
+        </geometry>
+        <origin xyz="-0.115 0 0.42" rpy="0 0 0"/>
+      </visual>
+      <collision>
+        <geometry>
+          <box size="0.7637 0.64311 0.14"/>
+        </geometry>
+        <origin xyz="0.0 0 0.07" rpy="0 0 0"/>
+      </collision>
+      <collision>
+        <geometry>
+          <box size="0.55 0.64311 0.57"/>
+        </geometry>
+        <origin xyz="-0.115 0 0.42" rpy="0 0 0"/>
+      </collision>
+      <inertial>
+        <mass value="10"/>
+        <origin xyz="-0.115 0 0.42" rpy="0 0 0"/>
+        <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
+      </inertial>
+    </link>
+    <joint name="base_spine_joint" type="fixed">
+      <parent link="base_link"/>
+      <child link="spine_link"/>
+      <origin xyz="0.2 0 0" rpy="0 0 0" />
+      <axis xyz="0 0 1" />
+    </joint>
+    <!-- Lidar -->
+    <link name="lidar_link">
+      <visual>
+        <geometry>
+          <cylinder length="0.1" radius="0.03"/>
+        </geometry>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <material name="orange">
+          <color rgba="1 0.5 0 1"/>
+        </material>
+      </visual>
+      <collision>
+        <geometry>
+          <cylinder length="0.1" radius="0.03"/>
+        </geometry>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+      </collision>
+      <inertial>
+        <mass value="0.5"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
+      </inertial>
+    </link>
+    <joint name="laser_joint" type="fixed">
+      <parent link="base_link"/>
+      <child link="lidar_link"/>
+      <origin xyz="0.34 0 0.19" rpy="0 0 0" />
+    </joint>
+  </xacro:macro>
 </robot>
