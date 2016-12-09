@@ -4,9 +4,11 @@
     <xacro:include filename="$(find sara_description)/urdf/torso_v1/torso.urdf.xacro"/>
     <xacro:include filename="$(find sara_description)/urdf/neck_v1/neck.urdf.xacro"/>
     <xacro:include filename="$(find sara_description)/urdf/head_v1/head.urdf.xacro"/>
-    <xacro:include filename="$(find sara_description)/urdf/shoulder_v1/shoulder.urdf.xacro"/>
     <xacro:include filename="$(find sara_description)/urdf/arm_v1/arm.urdf.xacro"/>
     <xacro:include filename="$(find sara_description)/urdf/base_v1/base.urdf.xacro"/>
+
+    <!-- Base -->
+    <xacro:sara_base_v1 name="base" parent=""/>
 
     <!-- Torso -->
     <xacro:sara_torso_v1 name="torso" parent="spine"/>
@@ -17,12 +19,6 @@
     <!-- Head -->
     <xacro:sara_head_v1 name="head" parent="neck"/>
 
-    <!-- Shoulder -->
-    <xacro:sara_shoulder_v1 name="shoulder" parent="torso"/>
-
     <!-- Arm -->
-    <xacro:sara_arm_v1 name="arm" parent="shoulder"/>
-
-    <!-- Base -->
-    <xacro:sara_base_v1 name="base" parent=""/>
+    <xacro:sara_arm_v1 name="arm" parent="torso"/>
 </robot>

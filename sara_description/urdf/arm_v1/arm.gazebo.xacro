@@ -1,6 +1,15 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
    <xacro:macro name="sara_arm_gazebo_v1">
+      <gazebo reference="shoulder_raise_link">
+         <gravity>false</gravity>
+      </gazebo>
+      <gazebo reference="shoulder_upper_link">
+         <gravity>false</gravity>
+      </gazebo>
+      <gazebo reference="shoulder_lower_link">
+         <gravity>false</gravity>
+      </gazebo>
       <gazebo reference="arm_raise_link">
          <gravity>false</gravity>
       </gazebo>
