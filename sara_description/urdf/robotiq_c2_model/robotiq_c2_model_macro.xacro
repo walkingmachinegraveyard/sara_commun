@@ -11,7 +11,7 @@
 
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
   <xacro:macro name="robotiq_c2_model" params="prefix">
-
+  <xacro:robotic_c2_model_gazebo prefix="${prefix}"/>
   <link name="${prefix}robotiq_85_base_link">
     <visual>
       <geometry>
@@ -25,6 +25,11 @@
       </geometry>
       <origin rpy="1.5707 0 1.5707" xyz="0 0 0"/>
     </collision>
+    <inertial>
+      <mass value="0.1" />
+      <origin xyz="0 0 0" rpy="1.5708 0 1.5708" />
+      <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001" />
+    </inertial>
   </link>
 
   <joint name="${prefix}robotiq_85_left_knuckle_joint" type="revolute">
@@ -57,6 +62,11 @@
       </geometry>
       <origin rpy="1.5707 -1.5707 0" xyz="0 .04191 -.0306"/>
     </collision>
+    <inertial>
+      <mass value="0.1" />
+      <origin xyz="0 0 0" rpy="1.5708 -1.5708 0"/>
+      <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001" />
+    </inertial>
   </link> 
 
   <link name="${prefix}robotiq_85_right_knuckle_link">
@@ -72,6 +82,11 @@
       </geometry>
       <origin rpy="1.5707 1.5707 0" xyz="0 .04191 -.0306"/>
     </collision>
+    <inertial>
+      <mass value="0.1" />
+      <origin xyz="0 0 0" rpy="1.5708 1.5708 0" />
+      <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001" />
+    </inertial>
   </link>
 
   <joint name="${prefix}robotiq_85_left_finger_joint" type="fixed">
@@ -103,6 +118,11 @@
       </geometry>
       <origin rpy="-1.5707 1.5707 0" xyz="0 -.03683 .06194"/>
     </collision>
+    <inertial>
+      <mass value="0.1" />
+      <origin xyz="0 0 0" rpy="-1.5708 1.5708 0" />
+      <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001" />
+    </inertial>
   </link> 
 
   <link name="${prefix}robotiq_85_right_finger_link">
@@ -118,6 +138,11 @@
       </geometry>
       <origin rpy="-1.5707 -1.5707 0" xyz="0 -.03683 .06194"/>
     </collision>
+    <inertial>
+      <mass value="0.1" />
+      <origin xyz="0 0 0" rpy="-1.5707 -1.5707 0" />
+      <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001" />
+    </inertial>
   </link> 
 
   <joint name="${prefix}robotiq_85_left_inner_knuckle_joint" type="revolute">
@@ -151,6 +176,11 @@
       </geometry>
       <origin rpy="-1.5707 1.5707 0" xyz="0 -.04843 .0127"/>
     </collision>
+    <inertial>
+      <mass value="0.1" />
+      <origin xyz="0 0 0" rpy="-1.5707 1.5707 0" />
+      <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001" />
+    </inertial>
   </link>
 
   <link name="${prefix}robotiq_85_right_inner_knuckle_link">
@@ -166,6 +196,11 @@
       </geometry>
       <origin rpy="-1.5707 -1.5707 0" xyz="0 -.04843 .0127"/>
     </collision>
+    <inertial>
+      <mass value="0.1" />
+      <origin xyz="0 0 0" rpy="-1.5707 -1.5707 0" />
+      <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001" />
+    </inertial>
   </link>
 
   <joint name="${prefix}robotiq_85_left_finger_tip_joint" type="revolute">
@@ -199,6 +234,11 @@
       </geometry>
       <origin rpy="-1.5707 1.5707 0" xyz="0 -.090381 .051505"/>
     </collision>
+    <inertial>
+      <mass value="0.1" />
+      <origin xyz="0 0 0" rpy="-1.5707 1.5707 0" />
+      <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001" />
+    </inertial>
   </link> 
 
   <link name="${prefix}robotiq_85_right_finger_tip_link">
@@ -214,6 +254,11 @@
       </geometry>
       <origin rpy="-1.5707 -1.5707 0" xyz="0 -.090381 .051505"/>
     </collision>
+    <inertial>
+      <mass value="0.1" />
+      <origin xyz="0 0 0" rpy="-1.5707 -1.5707 0" />
+      <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001" />
+    </inertial>
   </link>
 
   </xacro:macro>

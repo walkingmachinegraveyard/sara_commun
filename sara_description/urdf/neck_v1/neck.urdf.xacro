@@ -2,7 +2,8 @@
 <robot xmlns:xacro="http://ros.org/wiki/xacro" >
    <xacro:include filename="$(find sara_description)/urdf/neck_v1/neck.gazebo.xacro" />
    <xacro:macro name="sara_neck_v1" params="name parent">
-      <link name="${name}_link">
+     <xacro:sara_neck_gazebo_v1 name="${name}" parent="${parent}"/>
+     <link name="${name}_link">
          <visual>
             <geometry>
                <mesh filename="package://sara_description/meshes/cou.dae" scale="0.001 0.001 0.001"/>
@@ -23,6 +24,5 @@
          <origin xyz="0.032295 0 0.2438" rpy="0 0 0"/>
          <axis xyz="0 0 1"/>
       </joint>
-      <xacro:sara_neck_gazebo_v1 />
    </xacro:macro>
 </robot>

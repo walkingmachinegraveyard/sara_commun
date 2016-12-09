@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
-   <xacro:macro name="sara_neck_gazebo_v1">
-      <gazebo reference="neck_link">
+   <xacro:macro name="sara_neck_gazebo_v1" params="name parent">
+      <gazebo reference="${name}_link">
          <gravity>false</gravity>
       </gazebo>
    </xacro:macro>

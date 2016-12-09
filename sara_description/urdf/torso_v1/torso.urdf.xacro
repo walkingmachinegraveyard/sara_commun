@@ -2,7 +2,8 @@
 <robot xmlns:xacro="http://ros.org/wiki/xacro" >
    <xacro:include filename="$(find sara_description)/urdf/torso_v1/torso.gazebo.xacro" />
    <xacro:macro name="sara_torso_v1" params="name parent">
-      <link name="${name}_link">
+       <xacro:sara_torso_gazebo_v1 name="${name}" parent="${parent}"/>
+       <link name="${name}_link">
          <visual>
             <geometry>
                <mesh filename="package://sara_description/meshes/torse.dae" scale="0.001 0.001 0.001"/>
@@ -24,7 +25,7 @@
             <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
          </inertial>
      </link>
-     <joint name="spine_torso_joint" type="fixed">
+     <joint name="${parent}_${name}_joint" type="fixed">
          <parent link="${parent}_link"/>
          <child link="${name}_link"/>
          <limit effort="1000.0" lower="0" upper="0.5" velocity="0.2"/>

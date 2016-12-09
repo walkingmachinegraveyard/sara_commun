@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
-   <xacro:macro name="sara_base_gazebo_v1">
-      <gazebo reference="base_link">
+   <xacro:macro name="sara_base_gazebo_v1" params="name parent">
+       <gazebo reference="{name}_link">
          <gravity>false</gravity>
       </gazebo>
       <gazebo reference="spine_link">
-         <gravity>false</gravity>
+          <gravity>false</gravity>
       </gazebo>
       <!-- hokuyo -->
       <gazebo reference="lidar_link">
