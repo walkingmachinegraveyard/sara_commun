@@ -17,7 +17,7 @@
     <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
         <param name="use_gui" value="$(arg gui)"/>
         <rosparam command="load" file="$(find sara_description)/config/neckHead.yaml"/>
-        <!--<rosparam param="source_list">['/neckHead/state', '/arm_base_joint_states']</rosparam>
-            <param name="publish_default_positions" value="true" />-->
+        <rosparam param="source_list">['/neckHead/state', '/arm_base_joint_states']</rosparam>
+            <param name="publish_default_positions" value="true" />
     </node>
 </launch>
