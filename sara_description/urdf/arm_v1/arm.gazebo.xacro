@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+   <xacro:macro name="sara_arm_gazebo_v1" params="name parent">
+       <gazebo reference="${name}_clavicular_link">
+         <gravity>false</gravity>
+       </gazebo>
+       <gazebo reference="$${name}_fix_upper_link">
+         <gravity>false</gravity>
+       </gazebo> 
+       <gazebo reference="${name}_rot_upper_link">
+         <gravity>false</gravity>
+       </gazebo>
+       <gazebo reference="${name}_fix_lower_link">
+         <gravity>false</gravity>
+       </gazebo>
+       <gazebo reference="${name}_rot_lower_link">
+         <gravity>false</gravity>
+       </gazebo>
+       <gazebo reference="grasp_link">
+         <gravity>false</gravity>
+       </gazebo>
+  </xacro:macro>
+</robot>
