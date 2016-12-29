@@ -7,7 +7,7 @@
 #include <boost/assign.hpp>
 #include <ros/console.h>
 
-#include <_controller/aawd_controller.h>
+#include <mecanum_controller/mecanum_controller.h>
 
 #define PI 3.1415926535
 
@@ -48,11 +48,11 @@ namespace wm_controller
         // get parameters
         // x axis distance between wheel axis and the robot's centroid
         // python code // self.alpha = rospy.get_param('alpha', 0.31)    # in meter
-        controller_nh.param<double>("alpha", alpha_, 0.31 );
+        controller_nh.param<double>("x_wheel_to_center", x_wheel_to_center_, 0.31 );
     
         // y axis distance between wheel radial median and the robot'S centroid
         // python code // self.beta = rospy.get_param('beta', 0.30)    # in meter
-        controller_nh.param<double>("beta", beta_, 0.30 );
+        controller_nh.param<double>("y_wheel_to_center", y_wheel_to_center_, 0.30 );
     
         // Wheel radius
         // python code // self.radius = rospy.get_param('wheel_radius', 0.075)    # wheel radius, in meter
@@ -60,14 +60,15 @@ namespace wm_controller
     
         // max linear velocity, in m/s
         // python code // self.maxLinearVelocity = float(rospy.get_param('max_linear_vel', 1))
-    
+        controller_nh.param<double>("lin_max_vel", lin_max_vel_ , 1.0); 
 
         // max angular velocity, in rad/s
-        divisor = rospy.get_param('angular_vel_div', 6)
-        self.maxAngularVelocity = pi/divisor
-    
+        // python code // divisor = rospy.get_param('angular_vel_div', 6)
+        // python code // self.maxAngularVelocity = pi/divisor
+        controller_nh.param<double>("ang_max_vel", ang_max_vel_, 1.0);
+
         // gearbox ratio
-        self.gb_ratio = rospy.get_param('gearbox_ratio', 15.0)
+        // python code // self.gb_ratio = rospy.get_param('gearbox_ratio', 15.0)
 
 
         // Get joint names from the parameter server
@@ -103,49 +104,6 @@ namespace wm_controller
 
         controller_nh.param("enable_odom_tf", enable_odom_tf_, enable_odom_tf_);
         ROS_INFO_STREAM_NAMED(name_, "Publishing to tf is " << (enable_odom_tf_?"enabled":"disabled"));
-
-        // Velocity and acceleration limits:
-        controller_nh.param("linear/has_velocity_limits"    , limiter_lin_.has_velocity_limits    , limiter_lin_.has_velocity_limits    );
-        controller_nh.param("linear/has_acceleration_limits", limiter_lin_.has_acceleration_limits, limiter_lin_.has_acceleration_limits);
-        controller_nh.param("linear/has_jerk_limits"        , limiter_lin_.has_jerk_limits        , limiter_lin_.has_jerk_limits        );
-        controller_nh.param("linear/max_velocity"           , limiter_lin_.max_velocity           ,  limiter_lin_.max_velocity          );
-        controller_nh.param("linear/min_velocity"           , limiter_lin_.min_velocity           , -limiter_lin_.max_velocity          );
-        controller_nh.param("linear/max_acceleration"       , limiter_lin_.max_acceleration       ,  limiter_lin_.max_acceleration      );
-        controller_nh.param("linear/min_acceleration"       , limiter_lin_.min_acceleration       , -limiter_lin_.max_acceleration      );
-        controller_nh.param("linear/max_jerk"               , limiter_lin_.max_jerk               ,  limiter_lin_.max_jerk              );
-        controller_nh.param("linear/min_jerk"               , limiter_lin_.min_jerk               , -limiter_lin_.max_jerk              );
-
-        controller_nh.param("angular/has_velocity_limits"    , limiter_ang_.has_velocity_limits    , limiter_ang_.has_velocity_limits    );
-        controller_nh.param("angular/has_acceleration_limits", limiter_ang_.has_acceleration_limits, limiter_ang_.has_acceleration_limits);
-        controller_nh.param("angular/has_jerk_limits"        , limiter_ang_.has_jerk_limits        , limiter_ang_.has_jerk_limits        );
-        controller_nh.param("angular/max_velocity"           , limiter_ang_.max_velocity           ,  limiter_ang_.max_velocity          );
-        controller_nh.param("angular/min_velocity"           , limiter_ang_.min_velocity           , -limiter_ang_.max_velocity          );
-        controller_nh.param("angular/max_acceleration"       , limiter_ang_.max_acceleration       ,  limiter_ang_.max_acceleration      );
-        controller_nh.param("angular/min_acceleration"       , limiter_ang_.min_acceleration       , -limiter_ang_.max_acceleration      );
-        controller_nh.param("angular/max_jerk"               , limiter_ang_.max_jerk               ,  limiter_ang_.max_jerk              );
-        controller_nh.param("angular/min_jerk"               , limiter_ang_.min_jerk               , -limiter_ang_.max_jerk              );
-
-        // Robot kinematic parameters
-        controller_nh.param<double>("wheel_radius",        wheel_radius_, 0.5 );
-        controller_nh.param<double>("front_wheelbase",     front_wheelbase_, 0.5 );
-        controller_nh.param<double>("rear_wheelbase",      rear_wheelbase_, 0.5 );
-        controller_nh.param<double>("front_dist_to_center", front_dist_to_center_, 0.5 );
-        controller_nh.param<double>("rear_dist_to_center", rear_dist_to_center_, 0.5 );
-
-        ROS_INFO_STREAM_NAMED(name_,
-                              "Parameter loaded with wheel_radius: "   << wheel_radius_
-                              << " and front_wheelbase: "              << front_wheelbase
-                              << " and rear_wheelbase: "               << rear_wheelbase_
-                              << " and front_dist_to_center: "         << front_dist_to_center_
-                              << " and rear_dist_to_center: "          << rear_dist_to_center_ );
-
-        // Get the joint object to use in the realtime loop
-
-        ROS_INFO_STREAM_NAMED(name_,
-                            "Adding  front left wheel with joint name: "   << front_left_wheel_name_
-                            << " and front right wheel with joint name: " << front_right_wheel_name_
-                            << " and rear left  wheel with joint name: "    << rear_left_wheel_name_
-                            << " and rear right wheel with joint name: "   << rear_right_wheel_name_ );
 
         front_left_wheel_joint_    = hw->getHandle(front_left_wheel_name_);  // throws on failure
         front_right_wheel_joint_    = hw->getHandle(front_right_wheel_name_);  // throws on failure
@@ -302,17 +260,66 @@ namespace wm_controller
         last1_cmd_ = last0_cmd_;
         last0_cmd_ = curr_cmd;
 
-        ROS_DEBUG_STREAM_NAMED(name_,
-                               "Throttle position " << throttle_effort << ", "
-                               << "Steering Position: "   << steering_position << "Max velocity "   << limiter_lin_.max_velocity );
-        // TODO 
-        compute_....; 
+        InverseKinematics(); 
    
         front_left_wheel_joint_.setCommand(front_left_wheel_velocity);
         front_right_wheel_joint_.setCommand(front_right_wheel_velocity);
         front_left_wheel_joint_.setCommand(front_left_wheel_velocity);
         front_right_wheel_joint_.setCommand(front_right_wheel_velocity);
     }
+
+    void InverseKinematics(command cmd, *double W[4])
+    {
+        // Reference:
+        // Maulana, E.; Muslim, M.A.; Hendrayawan, V.,
+        // "Inverse kinematic implementation of four-wheels mecanum drive mobile robot using stepper motors,"
+        //  in Intelligent Technology and Its Applications (ISITIA), 2015 International Seminar on ,
+        // vol., no., pp.51-56, 20-21 May 2015
+
+        // linear velocity
+        vLinear = sqrt(cmd.lin.x**2 + cmd.lin.y**2)
+
+        if(vLinear > lin_max_vel_)
+        {
+            vLinear = lin_max_vel_;
+        }
+            
+        // movement orientation
+        Heading = atan2(cmd.lin.y, cmd.lin.x)
+
+        // x axis linear velocity
+        x_vel = vLinear * cos(Heading)
+        // y axis linear velocity
+        y_vel = vLinear * sin(Heading)
+
+        // YAW axis rotational velocity
+        ang_vel = cmd.ang.z
+// TODO Tu est rendu ici >>><<< 
+        if yawVel**2 > self.maxAngularVelocity**2:
+            yawVel = self.maxAngularVelocity * yawVel / abs(yawVel)
+
+ 
+
+        // Inverse Kinematics matrix
+        double J[4][3] = {{1, -1, -1*(x_wheel_to_center_ + y_wheel_to_center_)},
+                          {1, 1, (x_wheel_to_center_ + y_wheel_to_center_)},
+                          {1, 1, -1*(x_wheel_to_center_ + y_wheel_to_center_)},
+                          {1, -1, (x_wheel_to_center_ + y_wheel_to_center_)}};
+
+        // wheel angular velocity, in rad/s
+        double W[4] = {0.0, 0.0, 0.0, 0.0};
+
+        double V[3] = 
+
+        for(i = 0; i < 3; ++i)
+        {
+            for(k = 0; k < 4; ++k)
+            {
+                W[i] += J[i][k] * V[k];
+            }
+            W[i] = W[i] * gb_ratio_ * 1/wheel_radius_; 
+        } 
+    } 
 
     void AawdController::starting(const ros::Time& time)
     {
