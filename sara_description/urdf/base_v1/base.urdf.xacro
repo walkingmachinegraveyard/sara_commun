@@ -8,29 +8,18 @@
          <geometry>
             <mesh filename="package://sara_description/meshes/base.STL" scale="0.001 0.001 0.001"/>
          </geometry>
-         <origin xyz="0 0 0" rpy="-1.57 0 1.57"/>
+         <origin xyz="0.295 -0.250 0.85635" rpy="-1.57 0 1.57"/>
+         <material name="blue">
+            <color rgba="0 0 1 1"/>
+         </material>
       </visual>
       <collision>
          <geometry>
             <mesh filename="package://sara_description/meshes/base.STL" scale="0.001 0.001 0.001"/>
          </geometry>
-         <origin xyz="0 0 0" rpy="0 0 0"/>
+         <origin xyz="0.295 -0.250 0.85635" rpy="-1.57 0 1.57"/>
       </collision>
     </link>
-
-    <joint name="${name}_spine_joint" type="fixed">
-      <parent link="base_link"/>
-      <child link="spine_link"/>
-      <origin xyz="0 0 0" rpy="0 0 0" />
-      <axis xyz="0 0 0" />
-    </joint>
-
-
-  <!-- Lien entre le torse et la colonne vertebrale -->
-    <link name="spine_link">
-    </link>
-
-
 
     <!-- Lidar -->
     <link name="lidar_link">
@@ -62,37 +51,5 @@
     </joint>
     </xacro:macro>
 
-
-    <!-- Wheel -->
-    <xacro:macro name="wheel" params="prefix y_reflect x_reflect x_axis_rotation">
-        <link name="${prefix}_wheel">
-            <visual>
-                <geometry>
-                    <cylinder length="0.04" radius="0.15"/>
-                </geometry>
-                <origin xyz="0 0 0" rpy="0 0 0"/>
-                <material name="black">
-                    <color rgba="0 0 0 0"/>
-                </material>
-            </visual>
-            <collision>
-                <geometry>
-                    <cylinder length="0.04" radius="0.15"/>
-                </geometry>
-                <origin xyz="0 0 0" rpy="0 0 0"/>
-            </collision>
-        </link>
-
-        <joint name="base_to_${prefix}_wheel" type="continuous">
-            <parent link="base_link"/>
-            <child link="${prefix}_wheel"/>
-            <axis xyz="0 0 1"/>
-            <origin xyz="${y_reflect * 0.230631} ${x_reflect * 0.22735} 0" rpy=" ${x_axis_rotation * 1.57079632679} 0 0"/>
-        </joint>
-     </xacro:macro>
-     <xacro:wheel prefix="front_left" y_reflect="1" x_reflect="1" x_axis_rotation="-1"/>
-     <xacro:wheel prefix="front_right" y_reflect="1" x_reflect="-1" x_axis_rotation="1"/>
-     <xacro:wheel prefix="rear_left" y_reflect="-1" x_reflect="1" x_axis_rotation="-1"/>
-     <xacro:wheel prefix="rear_right" y_reflect="-1" x_reflect="-1" x_axis_rotation="1"/>
 
   </robot>
