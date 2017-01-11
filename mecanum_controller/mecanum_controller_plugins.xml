@@ -1,9 +1,0 @@
-<library path="lib/libmecanum_controller">
-
-  <class name="mecanum_controller/MecanumController" type="mecanum_controller::MecanumController" base_class_type="controller_interface::ControllerBase">
-    <description>
-      mecanum controller.
-    </description>
-  </class>
-
-</library>

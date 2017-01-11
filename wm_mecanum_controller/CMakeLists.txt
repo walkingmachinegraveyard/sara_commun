@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(mecanum_controller)
+project(wm_mecanum_controller)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -10,7 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   message_generation
   nav_msgs
-  realtim_tools
+  realtime_tools
   std_msgs
   tf
   urdf
@@ -107,7 +107,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES mecanum_controller
+  LIBRARIES ${PROJECT_NAME}
 #  CATKIN_DEPENDS control_toolbox controller_interface geometry_msgs message_generation nav_msgs realtim_tools std_msgs tf urdf
 #  DEPENDS system_lib
 )
@@ -120,18 +120,18 @@ catkin_package(
 ## Your package locations should be listed before other locations
 # include_directories(include)
 include_directories(
-  ${catkin_INCLUDE_DIRS}
+  include ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
-# add_library(mecanum_controller
-#   src/${PROJECT_NAME}/mecanum_controller.cpp
-# )
+ add_library(${PROJECT_NAME}
+   src/wm_mecanum_controller.cpp
+ )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-# add_dependencies(mecanum_controller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+#add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
 # add_executable(mecanum_controller_node src/mecanum_controller_node.cpp)
@@ -160,7 +160,7 @@ target_link_libraries(${PROJECT_NAME}
 # )
 
 ## Mark executables and/or libraries for installation
-install(TARGETS ${PROJECT_NAME} 
+install(TARGETS ${PROJECT_NAME}
    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -174,7 +174,7 @@ install(TARGETS ${PROJECT_NAME}
 # )
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
- install(FILES diff_drive_controller_plugins.xml
+ install(FILES wm_mecanum_controller_plugins.xml
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 
 #############

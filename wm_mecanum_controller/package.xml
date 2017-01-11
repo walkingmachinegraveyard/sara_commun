@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>mecanum_controller</name>
+  <name>wm_mecanum_controller</name>
   <version>0.0.0</version>
-  <description>The mecanum_controller package</description>
+  <description>The Walking Machine mecanum_controller package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 
   <!-- Example:  -->

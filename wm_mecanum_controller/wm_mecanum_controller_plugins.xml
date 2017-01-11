@@ -1,0 +1,9 @@
+<library path="lib/libwm_mecanum_controller">
+
+  <class name="wm_mecanum_controller/WMMecanumController" type="wm_mecanum_controller::WMMecanumController" base_class_type="controller_interface::ControllerBase">
+    <description>
+      Walking Machine mecanum controller.
+    </descrition>
+  </class>
+
+</library>
