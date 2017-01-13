@@ -10,7 +10,7 @@
          </geometry>
          <origin xyz="0.295 -0.250 0.85635" rpy="-1.57 0 1.57"/>
          <material name="blue">
-            <color rgba="0 0 1 1"/>
+            <color rgba="1 0 1 1"/>
          </material>
       </visual>
       <collision>
@@ -25,16 +25,16 @@
     <link name="lidar_link">
       <visual>
         <geometry>
-          <cylinder length="0.1" radius="0.03"/>
+          <cylinder length="0.085" radius="0.03"/>
         </geometry>
-        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <origin xyz="0 0 0.0425" rpy="0 0 0"/>
         <material name="orange">
           <color rgba="1 0.5 0 1"/>
         </material>
       </visual>
       <collision>
         <geometry>
-          <cylinder length="0.1" radius="0.03"/>
+          <cylinder length="0.085" radius="0.03"/>
         </geometry>
         <origin xyz="0 0 0" rpy="0 0 0"/>
       </collision>
@@ -47,7 +47,7 @@
     <joint name="laser_joint" type="fixed">
       <parent link="base_link"/>
       <child link="lidar_link"/>
-      <origin xyz="0.34 0 0.19" rpy="0 0 0" />
+      <origin xyz="0.2516879 0 -0.0288348" rpy="0 0 0" />
     </joint>
     </xacro:macro>
 
