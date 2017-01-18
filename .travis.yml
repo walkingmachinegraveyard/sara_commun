@@ -21,7 +21,7 @@ before_install:
   ros-indigo-openni2-launch ros-indigo-urg-node ros-indigo-xsens-driver ros-indigo-joystick-drivers
   ros-indigo-navigation ros-indigo-pocketsphinx ros-indigo-rosserial ros-indigo-roboteq-diagnostics
   ros-indigo-roboteq-msgs ros-indigo-smach ros-indigo-rtabmap-ros ros-indigo-gazebo-ros
-  ros-indigo-slam-gmapping ros-indigo-map-laser ros-indigo-moveit-full ros-indigo-geographic-info
+  ros-indigo-slam-gmapping ros-indigo-map-laser ros-indigo-moveit ros-indigo-geographic-info
   ros-indigo-zbar-ros ros-indigo-dynamixel-motor couchdb python-rosinstall libyaml-dev
   ros-indigo-soem espeak ros-indigo-object-recognition-core  ros-indigo-object-recognition-renderer
   ros-indigo-tf2-geometry-msgs
