@@ -10,3 +10,39 @@
 	path = cob_perception_common
 	url = https://github.com/ipa320/cob_perception_common
         branch = da2f997b263b8824ab7734c2f518fa64d15e1707
+[submodule "wm_ork/obj_recognition"]
+	path = wm_ork/obj_recognition
+	url = http://github.com/wg-perception/object_recognition_core
+[submodule "wm_ork/object_recognition_core"]
+	path = wm_ork/object_recognition_core
+	url = http://github.com/wg-perception/object_recognition_core
+[submodule "wm_ork/capture"]
+	path = wm_ork/capture
+	url = http://github.com/wg-perception/capture
+[submodule "wm_ork/reconstruction"]
+	path = wm_ork/reconstruction
+	url = http://github.com/wg-perception/reconstruction
+[submodule "wm_ork/linemod"]
+	path = wm_ork/linemod
+	url = http://github.com/wg-perception/linemod
+[submodule "wm_ork/ork_renderer"]
+	path = wm_ork/ork_renderer
+	url = http://github.com/wg-perception/ork_renderer
+[submodule "wm_ork/tabletop"]
+	path = wm_ork/tabletop
+	url = http://github.com/wg-perception/tabletop
+[submodule "wm_ork/tod"]
+	path = wm_ork/tod
+	url = http://github.com/wg-perception/tod
+[submodule "wm_ork/transparent_objects"]
+	path = wm_ork/transparent_objects
+	url = http://github.com/wg-perception/transparent_objects
+[submodule "wm_ork/object_recognition_msgs"]
+	path = wm_ork/object_recognition_msgs
+	url = http://github.com/wg-perception/object_recognition_msgs
+[submodule "wm_ork/object_recognition_ros"]
+	path = wm_ork/object_recognition_ros
+	url = http://github.com/wg-perception/object_recognition_ros
+[submodule "wm_ork/object_recognition_ros_visualization"]
+	path = wm_ork/object_recognition_ros_visualization
+	url = http://github.com/wg-perception/object_recognition_ros_visualization
