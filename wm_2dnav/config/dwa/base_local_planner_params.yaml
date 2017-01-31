@@ -7,7 +7,7 @@ DWAPlannerROS:
   acc_lim_x: 10.0
 
   #The maximum x velocity for the robot in m/s.
-  #default: 0.55s
+  #default: 0.55
   max_vel_x: 1.0
 
   #The minimum x velocity for the robot in m/s, negative for backwards motion.
@@ -36,7 +36,7 @@ DWAPlannerROS:
 
   # The absolute value of the maximum rotational velocity for the robot in rad/s
   # default: 1.0
-  max_rot_vel: 1aas.0
+  max_rot_vel: 1.0
 
   # The absolute value of the minimum rotational velocity for the robot in rad/s
   # default: 0.4
