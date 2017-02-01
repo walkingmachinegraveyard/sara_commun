@@ -28,8 +28,8 @@ class wm_tts():
         self.engine.endLoop()
 
     def say(self, req):
-        rospy.loginfo(req.say)
-        self.engine.say(req.say)
+        rospy.loginfo(req.say.sentence)
+        self.engine.say(req.say.sentence)
         while self.engine.isBusy():
             time.sleep(0.1)
 
