@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<robot xmlns:xacro="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface" name="sara" >
+<robot xmlns:xacro="http://ros.org/wiki/xacro" name="sara" >
     <!-- Inclure tous les autres urdf.xacros ici -->
     <xacro:include filename="$(find sara_description)/urdf/torso_v1/torso.urdf.xacro"/>
     <xacro:include filename="$(find sara_description)/urdf/neck_v1/neck.urdf.xacro"/>
