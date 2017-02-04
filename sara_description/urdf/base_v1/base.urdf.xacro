@@ -9,8 +9,8 @@
             <mesh filename="package://sara_description/meshes/base.STL" scale="0.001 0.001 0.001"/>
          </geometry>
          <origin xyz="0.295 -0.250 0.85635" rpy="-1.57 0 1.57"/>
-         <material name="blue">
-            <color rgba="1 0 1 1"/>
+         <material name="black">
+               <color rgba="0.12 0.12 0.12 1"/>
          </material>
       </visual>
       <collision>
