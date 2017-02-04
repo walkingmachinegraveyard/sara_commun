@@ -1,0 +1,1204 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Started on 2010-07-27 08:54:55 PDT
+
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = off;
+SET check_function_bodies = false;
+SET client_min_messages = warning;
+SET escape_string_warning = off;
+
+--
+-- TOC entry 350 (class 2612 OID 26710)
+-- Name: plpgsql; Type: PROCEDURAL LANGUAGE; Schema: -; Owner: willow
+--
+
+CREATE PROCEDURAL LANGUAGE plpgsql;
+
+
+ALTER PROCEDURAL LANGUAGE plpgsql OWNER TO willow;
+
+SET search_path = public, pg_catalog;
+
+--
+-- TOC entry 259 (class 1247 OID 26713)
+-- Dependencies: 6 1522
+-- Name: model_result; Type: TYPE; Schema: public; Owner: willow
+--
+
+CREATE TYPE model_result AS (
+	f1 text,
+	f2 text,
+	f3 double precision,
+	f4 double precision,
+	f5 double precision
+);
+
+
+ALTER TYPE public.model_result OWNER TO willow;
+
+--
+-- TOC entry 261 (class 1247 OID 26716)
+-- Dependencies: 6 1523
+-- Name: point3d; Type: TYPE; Schema: public; Owner: willow
+--
+
+CREATE TYPE point3d AS (
+	x double precision,
+	y double precision,
+	z double precision
+);
+
+
+ALTER TYPE public.point3d OWNER TO willow;
+
+--
+-- TOC entry 299 (class 1247 OID 26719)
+-- Dependencies: 6 1524
+-- Name: triangle3d; Type: TYPE; Schema: public; Owner: willow
+--
+
+CREATE TYPE triangle3d AS (
+	p1 point3d,
+	p2 point3d,
+	p3 point3d
+);
+
+
+ALTER TYPE public.triangle3d OWNER TO willow;
+
+--
+-- TOC entry 20 (class 1255 OID 26720)
+-- Dependencies: 6
+-- Name: compute_grasp_robustness(); Type: FUNCTION; Schema: public; Owner: willow
+--
+
+CREATE FUNCTION compute_grasp_robustness() RETURNS void
+    AS $$INSERT INTO grasp_quality
+SELECT nextval('grasp_quality_score_id_seq'), 0, avg(score), stddev(score), grasp_id, 0 --(select count(score) from grasp_analysis where score < 10 and grasp_id = g.grasp_id) --NOTE: change 0 here to whichever energy function is used
+FROM grasp_analysis g
+GROUP BY grasp_id
+ORDER BY grasp_id$$
+    LANGUAGE sql;
+
+
+ALTER FUNCTION public.compute_grasp_robustness() OWNER TO willow;
+
+--
+-- TOC entry 21 (class 1255 OID 26721)
+-- Dependencies: 6
+-- Name: get_grasps(text, text); Type: FUNCTION; Schema: public; Owner: willow
+--
+
+CREATE FUNCTION get_grasps(scaledmodelname text, handname text, OUT grasp_pregrasp_joints double precision[], OUT grasp_grasp_joints double precision[], OUT grasp_pregrasp_position double precision[], OUT grasp_grasp_position double precision[], OUT grasp_id integer, OUT grasp_energy double precision, OUT grasp_epsilon_quality double precision, OUT grasp_volume_quality double precision, OUT grasp_contacts double precision[], OUT grasp_pregrasp_clearance double precision, OUT grasp_source_name text, OUT grasp_cluster_rep boolean) RETURNS SETOF record
+    AS $_$
+ SELECT grasp_pregrasp_joints,
+        grasp_grasp_joints,
+        grasp_pregrasp_position,
+        grasp_grasp_position,
+        grasp_id,
+	grasp_energy,
+        grasp_epsilon_quality,
+        grasp_volume_quality,
+        grasp_contacts,
+	grasp_pregrasp_clearance, 
+        grasp_source_name,
+	grasp_cluster_rep
+        FROM grasp 
+             JOIN grasp_source USING (grasp_source_id) 
+             JOIN hand USING (hand_id) 
+             JOIN scaled_model USING (scaled_model_id)
+        WHERE  hand_name = $2 AND scaled_model_name = $1
+$_$
+    LANGUAGE sql;
+
+
+ALTER FUNCTION public.get_grasps(scaledmodelname text, handname text, OUT grasp_pregrasp_joints double precision[], OUT grasp_grasp_joints double precision[], OUT grasp_pregrasp_position double precision[], OUT grasp_grasp_position double precision[], OUT grasp_id integer, OUT grasp_energy double precision, OUT grasp_epsilon_quality double precision, OUT grasp_volume_quality double precision, OUT grasp_contacts double precision[], OUT grasp_pregrasp_clearance double precision, OUT grasp_source_name text, OUT grasp_cluster_rep boolean) OWNER TO willow;
+
+--
+-- TOC entry 22 (class 1255 OID 26722)
+-- Dependencies: 350 6
+-- Name: get_mark_next_task(); Type: FUNCTION; Schema: public; Owner: willow
+--
+
+CREATE FUNCTION get_mark_next_task() RETURNS integer
+    AS $$
+ DECLARE next_id INTEGER;
+ BEGIN
+ SELECT task_id INTO next_id FROM task
+        WHERE task_outcome_name = 'TO_RUN'
+	LIMIT 1 FOR UPDATE;
+ UPDATE task SET task_outcome_name = 'RUNNING'
+	WHERE task_id = next_id;
+ return next_id;
+ END; 
+$$
+    LANGUAGE plpgsql;
+
+
+ALTER FUNCTION public.get_mark_next_task() OWNER TO willow;
+
+--
+-- TOC entry 23 (class 1255 OID 26723)
+-- Dependencies: 6
+-- Name: get_models(); Type: FUNCTION; Schema: public; Owner: willow
+--
+
+CREATE FUNCTION get_models(OUT original_model_model text, OUT approximate_radius double precision, OUT grasping_rescale double precision, OUT scale double precision, OUT thumbnail_path text, OUT geometry_path text, OUT tags text[], OUT scaled_model_id integer) RETURNS SETOF record
+    AS $$
+SELECT original_model_model, 
+       original_model_approximate_radius, 
+       original_model_grasping_rescale, 
+       scaled_model_scale,
+       geometry_thumbnail_path,
+       geometry_path,
+       original_model_tags,
+       scaled_model_id
+  FROM scaled_model 
+  JOIN original_model USING(original_model_id) 
+  JOIN geometry USING(original_model_id)
+  ORDER BY original_model_id
+$$
+    LANGUAGE sql;
+
+
+ALTER FUNCTION public.get_models(OUT original_model_model text, OUT approximate_radius double precision, OUT grasping_rescale double precision, OUT scale double precision, OUT thumbnail_path text, OUT geometry_path text, OUT tags text[], OUT scaled_model_id integer) OWNER TO willow;
+
+--
+-- TOC entry 24 (class 1255 OID 26724)
+-- Dependencies: 6 350
+-- Name: save_grasp(text, text, double precision[], double precision[], double precision[], double precision[], double precision[], double precision, double precision, double precision, double precision, text, boolean); Type: FUNCTION; Schema: public; Owner: willow
+--
+
+CREATE FUNCTION save_grasp(text, text, double precision[], double precision[], double precision[], double precision[], double precision[], double precision, double precision, double precision, double precision, text, boolean) RETURNS integer
+    AS $_$
+BEGIN
+LOCK TABLE grasp IN ROW EXCLUSIVE MODE;
+INSERT INTO grasp (scaled_model_id, hand_id, grasp_pregrasp_joints, grasp_pregrasp_position,
+                   grasp_grasp_joints, grasp_grasp_position, grasp_contacts,
+                   grasp_energy, grasp_epsilon_quality, grasp_volume_quality, grasp_pregrasp_clearance, grasp_source_id, grasp_cluster_rep)
+VALUES(get_model_id($1), get_hand_id($2), $3, $4, $5, $6, $7, $8, $9, $10, $11, get_source_id($12), $13);
+return currval('grasp_grasp_id_seq');
+END;
+$_$
+    LANGUAGE plpgsql;
+
+
+ALTER FUNCTION public.save_grasp(text, text, double precision[], double precision[], double precision[], double precision[], double precision[], double precision, double precision, double precision, double precision, text, boolean) OWNER TO willow;
+
+--
+-- TOC entry 25 (class 1255 OID 26725)
+-- Dependencies: 6
+-- Name: update_grasp(integer, double precision[], double precision[], double precision[], double precision, double precision, double precision); Type: FUNCTION; Schema: public; Owner: willow
+--
+
+CREATE FUNCTION update_grasp(integer, double precision[], double precision[], double precision[], double precision, double precision, double precision) RETURNS void
+    AS $_$
+UPDATE grasp SET grasp_grasp_joints = $2, grasp_grasp_position = $3, grasp_contacts = $4,
+                 grasp_energy = $5, grasp_epsilon_quality = $6, grasp_volume_quality = $7
+WHERE
+		 grasp_id = $1
+$_$
+    LANGUAGE sql;
+
+
+ALTER FUNCTION public.update_grasp(integer, double precision[], double precision[], double precision[], double precision, double precision, double precision) OWNER TO willow;
+
+SET default_tablespace = '';
+
+SET default_with_oids = false;
+
+--
+-- TOC entry 1525 (class 1259 OID 26726)
+-- Dependencies: 6
+-- Name: acquisition_method; Type: TABLE; Schema: public; Owner: willow; Tablespace: 
+--
+
+CREATE TABLE acquisition_method (
+    acquisition_method_name text NOT NULL
+);
+
+
+ALTER TABLE public.acquisition_method OWNER TO willow;
+
+--
+-- TOC entry 1876 (class 0 OID 0)
+-- Dependencies: 1525
+-- Name: TABLE acquisition_method; Type: COMMENT; Schema: public; Owner: willow
+--
+
+COMMENT ON TABLE acquisition_method IS 'Lists the acquisition methods for 3D models.';
+
+
+--
+-- TOC entry 1526 (class 1259 OID 26732)
+-- Dependencies: 6
+-- Name: energy_functions_energy_id_seq; Type: SEQUENCE; Schema: public; Owner: willow
+--
+
+CREATE SEQUENCE energy_functions_energy_id_seq
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.energy_functions_energy_id_seq OWNER TO willow;
+
+--
+-- TOC entry 1545 (class 1259 OID 28008)
+-- Dependencies: 6
+-- Name: file_path_sequence; Type: SEQUENCE; Schema: public; Owner: willow
+--
+
+CREATE SEQUENCE file_path_sequence
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.file_path_sequence OWNER TO willow;
+
+--
+-- TOC entry 1542 (class 1259 OID 27610)
+-- Dependencies: 1821 6
+-- Name: file_path; Type: TABLE; Schema: public; Owner: willow; Tablespace: 
+--
+
+CREATE TABLE file_path (
+    original_model_id integer NOT NULL,
+    file_type text NOT NULL,
+    file_path_path text NOT NULL,
+    file_path_id integer DEFAULT nextval('file_path_sequence'::regclass) NOT NULL
+);
+
+
+ALTER TABLE public.file_path OWNER TO willow;
+
+--
+-- TOC entry 1877 (class 0 OID 0)
+-- Dependencies: 1542
+-- Name: TABLE file_path; Type: COMMENT; Schema: public; Owner: willow
+--
+
+COMMENT ON TABLE file_path IS 'Stores paths to files of various types for the original models in the database.';
+
+
+--
+-- TOC entry 1878 (class 0 OID 0)
+-- Dependencies: 1542
+-- Name: COLUMN file_path.original_model_id; Type: COMMENT; Schema: public; Owner: willow
+--
+
+COMMENT ON COLUMN file_path.original_model_id IS 'The original model that this file is for.';
+
+
+--
+-- TOC entry 1879 (class 0 OID 0)
+-- Dependencies: 1542
+-- Name: COLUMN file_path.file_type; Type: COMMENT; Schema: public; Owner: willow
+--
+
+COMMENT ON COLUMN file_path.file_type IS 'The type of the file. This must be externally enforced.';
+
+
+--
+-- TOC entry 1880 (class 0 OID 0)
+-- Dependencies: 1542
+-- Name: COLUMN file_path.file_path_path; Type: COMMENT; Schema: public; Owner: willow
+--
+
+COMMENT ON COLUMN file_path.file_path_path IS 'The path itself, generally relative to the model_root specified in the database.';
+
+
+--
+-- TOC entry 1543 (class 1259 OID 27623)
+-- Dependencies: 6
+-- Name: file_type; Type: TABLE; Schema: public; Owner: willow; Tablespace: 
+--
+
+CREATE TABLE file_type (
+    file_type text NOT NULL
+);
+
+
+ALTER TABLE public.file_type OWNER TO willow;
+
+--
+-- TOC entry 1881 (class 0 OID 0)
+-- Dependencies: 1543
+-- Name: TABLE file_type; Type: COMMENT; Schema: public; Owner: willow
+--
+
+COMMENT ON TABLE file_type IS 'A table for keeping track of the file types that are referenced by the database.';
+
+
+--
+-- TOC entry 1882 (class 0 OID 0)
+-- Dependencies: 1543
+-- Name: COLUMN file_type.file_type; Type: COMMENT; Schema: public; Owner: willow
+--
+
+COMMENT ON COLUMN file_type.file_type IS 'The type of a file (e.g. GEOMETRY_BINARY_PLY).';
+
+
+--
+-- TOC entry 1527 (class 1259 OID 26747)
+-- Dependencies: 1813 1814 1815 6
+-- Name: grasp; Type: TABLE; Schema: public; Owner: willow; Tablespace: 
+--
+
+CREATE TABLE grasp (
+    grasp_id integer NOT NULL,
+    scaled_model_id integer NOT NULL,
+    grasp_pregrasp_joints double precision[] NOT NULL,
+    grasp_grasp_joints double precision[],
+    grasp_energy double precision NOT NULL,
+    grasp_pregrasp_position double precision[] NOT NULL,
+    grasp_grasp_position double precision[],
+    grasp_source_id integer,
+    grasp_pregrasp_clearance double precision DEFAULT (-1),
+    grasp_cluster_rep boolean DEFAULT false,
+    hand_name text NOT NULL,
+    grasp_table_clearance double precision DEFAULT (-1) NOT NULL
+);
+
+
+ALTER TABLE public.grasp OWNER TO willow;
+
+--
+-- TOC entry 1883 (class 0 OID 0)
+-- Dependencies: 1527
+-- Name: COLUMN grasp.grasp_id; Type: COMMENT; Schema: public; Owner: willow
+--
+
+COMMENT ON COLUMN grasp.grasp_id IS 'Unique ID for each grasp.';
+
+
+--
+-- TOC entry 1884 (class 0 OID 0)
+-- Dependencies: 1527
+-- Name: COLUMN grasp.scaled_model_id; Type: COMMENT; Schema: public; Owner: willow
+--
+
+COMMENT ON COLUMN grasp.scaled_model_id IS 'The ID of the model being grasped.';
+
+
+--
+-- TOC entry 1885 (class 0 OID 0)
+-- Dependencies: 1527
+-- Name: COLUMN grasp.grasp_pregrasp_joints; Type: COMMENT; Schema: public; Owner: willow
+--
+
+COMMENT ON COLUMN grasp.grasp_pregrasp_joints IS 'Joint angles for the pregrasp.';
+
+
+--
+-- TOC entry 1886 (class 0 OID 0)
+-- Dependencies: 1527
+-- Name: COLUMN grasp.grasp_grasp_joints; Type: COMMENT; Schema: public; Owner: willow
+--
+
+COMMENT ON COLUMN grasp.grasp_grasp_joints IS 'Joint angles for the grasp.';
+
+
+--
+-- TOC entry 1887 (class 0 OID 0)
+-- Dependencies: 1527
+-- Name: COLUMN grasp.grasp_energy; Type: COMMENT; Schema: public; Owner: willow
+--
+
+COMMENT ON COLUMN grasp.grasp_energy IS 'The energy function associated with the pregrasp.';
+
+
+--
+-- TOC entry 1888 (class 0 OID 0)
+-- Dependencies: 1527
+-- Name: COLUMN grasp.grasp_pregrasp_position; Type: COMMENT; Schema: public; Owner: willow
+--
+
+COMMENT ON COLUMN grasp.grasp_pregrasp_position IS 'World coordinates and quaternion representing the position and orientation of the hand (X, Y, Z, qW, qX, qY, qZ) for the pregrasp.';
+
+
+--
+-- TOC entry 1889 (class 0 OID 0)
+-- Dependencies: 1527
+-- Name: COLUMN grasp.grasp_grasp_position; Type: COMMENT; Schema: public; Owner: willow
+--
+
+COMMENT ON COLUMN grasp.grasp_grasp_position IS 'World coordinates and quaternion representing the position and orientation of the hand (X, Y, Z, qW, qX, qY, qZ) for the grasp.';
+
+
+--
+-- TOC entry 1528 (class 1259 OID 26775)
+-- Dependencies: 6 1527
+-- Name: grasp_grasp_id_seq; Type: SEQUENCE; Schema: public; Owner: willow
+--
+
+CREATE SEQUENCE grasp_grasp_id_seq
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.grasp_grasp_id_seq OWNER TO willow;
+
+--
+-- TOC entry 1890 (class 0 OID 0)
+-- Dependencies: 1528
+-- Name: grasp_grasp_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: willow
+--
+
+ALTER SEQUENCE grasp_grasp_id_seq OWNED BY grasp.grasp_id;
+
+
+--
+-- TOC entry 1530 (class 1259 OID 26789)
+-- Dependencies: 6
+-- Name: grasp_source; Type: TABLE; Schema: public; Owner: willow; Tablespace: 
+--
+
+CREATE TABLE grasp_source (
+    grasp_source_id integer NOT NULL,
+    grasp_source_description text,
+    grasp_source_name text NOT NULL
+);
+
+
+ALTER TABLE public.grasp_source OWNER TO willow;
+
+--
+-- TOC entry 1531 (class 1259 OID 26795)
+-- Dependencies: 6
+-- Name: hand; Type: TABLE; Schema: public; Owner: willow; Tablespace: 
+--
+
+CREATE TABLE hand (
+    hand_name text NOT NULL
+);
+
+
+ALTER TABLE public.hand OWNER TO willow;
+
+--
+-- TOC entry 1544 (class 1259 OID 27636)
+-- Dependencies: 6
+-- Name: mesh; Type: TABLE; Schema: public; Owner: willow; Tablespace: 
+--
+
+CREATE TABLE mesh (
+    original_model_id integer NOT NULL,
+    mesh_vertex_list bytea,
+    mesh_triangle_list bytea
+);
+
+
+ALTER TABLE public.mesh OWNER TO willow;
+
+--
+-- TOC entry 1891 (class 0 OID 0)
+-- Dependencies: 1544
+-- Name: TABLE mesh; Type: COMMENT; Schema: public; Owner: willow
+--
+
+COMMENT ON TABLE mesh IS 'Holds a simple mesh, as a list of vertices and triangles. Both lists are stored as binary blobs, so the database can not provide any introspection. ROS code for retrieving this is provided in the package household_objects_database.';
+
+
+--
+-- TOC entry 1892 (class 0 OID 0)
+-- Dependencies: 1544
+-- Name: COLUMN mesh.original_model_id; Type: COMMENT; Schema: public; Owner: willow
+--
+
+COMMENT ON COLUMN mesh.original_model_id IS 'The original model that this mesh refers to.';
+
+
+--
+-- TOC entry 1893 (class 0 OID 0)
+-- Dependencies: 1544
+-- Name: COLUMN mesh.mesh_vertex_list; Type: COMMENT; Schema: public; Owner: willow
+--
+
+COMMENT ON COLUMN mesh.mesh_vertex_list IS 'The list of vertices, as a binary blob. ROS code for retrieving this is provided in the household_objects_database package.';
+
+
+--
+-- TOC entry 1894 (class 0 OID 0)
+-- Dependencies: 1544
+-- Name: COLUMN mesh.mesh_triangle_list; Type: COMMENT; Schema: public; Owner: willow
+--
+
+COMMENT ON COLUMN mesh.mesh_triangle_list IS 'The list of triangles, as a binary blob. ROS code for retrieving this is provided in the household_objects_database package.';
+
+
+--
+-- TOC entry 1532 (class 1259 OID 26801)
+-- Dependencies: 6
+-- Name: scaled_model; Type: TABLE; Schema: public; Owner: willow; Tablespace: 
+--
+
+CREATE TABLE scaled_model (
+    scaled_model_id integer NOT NULL,
+    scaled_model_scale double precision NOT NULL,
+    original_model_id integer NOT NULL
+);
+
+
+ALTER TABLE public.scaled_model OWNER TO willow;
+
+--
+-- TOC entry 1895 (class 0 OID 0)
+-- Dependencies: 1532
+-- Name: COLUMN scaled_model.scaled_model_id; Type: COMMENT; Schema: public; Owner: willow
+--
+
+COMMENT ON COLUMN scaled_model.scaled_model_id IS 'Unique ID for each model.';
+
+
+--
+-- TOC entry 1896 (class 0 OID 0)
+-- Dependencies: 1532
+-- Name: COLUMN scaled_model.scaled_model_scale; Type: COMMENT; Schema: public; Owner: willow
+--
+
+COMMENT ON COLUMN scaled_model.scaled_model_scale IS 'The scale of the model, relative to its original "correct" scale.';
+
+
+--
+-- TOC entry 1897 (class 0 OID 0)
+-- Dependencies: 1532
+-- Name: COLUMN scaled_model.original_model_id; Type: COMMENT; Schema: public; Owner: willow
+--
+
+COMMENT ON COLUMN scaled_model.original_model_id IS 'The ID of the original version of this model (before scaling) in the original_model table.';
+
+
+--
+-- TOC entry 1533 (class 1259 OID 26804)
+-- Dependencies: 6 1532
+-- Name: model_model_id_seq; Type: SEQUENCE; Schema: public; Owner: willow
+--
+
+CREATE SEQUENCE model_model_id_seq
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.model_model_id_seq OWNER TO willow;
+
+--
+-- TOC entry 1899 (class 0 OID 0)
+-- Dependencies: 1533
+-- Name: model_model_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: willow
+--
+
+ALTER SEQUENCE model_model_id_seq OWNED BY scaled_model.scaled_model_id;
+
+
+--
+-- TOC entry 1546 (class 1259 OID 28022)
+-- Dependencies: 6
+-- Name: model_set; Type: TABLE; Schema: public; Owner: willow; Tablespace: 
+--
+
+CREATE TABLE model_set (
+    model_set_name text NOT NULL,
+    original_model_id integer NOT NULL
+);
+
+
+ALTER TABLE public.model_set OWNER TO willow;
+
+--
+-- TOC entry 1534 (class 1259 OID 26806)
+-- Dependencies: 6
+-- Name: model_source; Type: TABLE; Schema: public; Owner: willow; Tablespace: 
+--
+
+CREATE TABLE model_source (
+    model_source_name text NOT NULL
+);
+
+
+ALTER TABLE public.model_source OWNER TO willow;
+
+--
+-- TOC entry 1900 (class 0 OID 0)
+-- Dependencies: 1534
+-- Name: TABLE model_source; Type: COMMENT; Schema: public; Owner: willow
+--
+
+COMMENT ON TABLE model_source IS 'Lists the origin of the models that we have in the database.';
+
+
+--
+-- TOC entry 1535 (class 1259 OID 26812)
+-- Dependencies: 6
+-- Name: original_model; Type: TABLE; Schema: public; Owner: willow; Tablespace: 
+--
+
+CREATE TABLE original_model (
+    original_model_id integer NOT NULL,
+    original_model_grasping_rescale double precision NOT NULL,
+    original_model_tags text[],
+    original_model_maker text NOT NULL,
+    original_model_model text NOT NULL,
+    original_model_source text NOT NULL,
+    original_model_description text,
+    original_model_barcode text,
+    acquisition_method_name text,
+    original_model_concave_filled boolean
+);
+
+
+ALTER TABLE public.original_model OWNER TO willow;
+
+--
+-- TOC entry 1901 (class 0 OID 0)
+-- Dependencies: 1535
+-- Name: COLUMN original_model.original_model_id; Type: COMMENT; Schema: public; Owner: willow
+--
+
+COMMENT ON COLUMN original_model.original_model_id IS 'A unique ID for each unscaled model.';
+
+
+--
+-- TOC entry 1902 (class 0 OID 0)
+-- Dependencies: 1535
+-- Name: COLUMN original_model.original_model_grasping_rescale; Type: COMMENT; Schema: public; Owner: willow
+--
+
+COMMENT ON COLUMN original_model.original_model_grasping_rescale IS 'This is a multiplier that the original model was scaled by before being used in the grasp database. Some of the models we used were at scales that were inappropriate for grasping. This included models that were unrealistically scaled, and models that were realistically scaled but were either too big or too small for a reasonable sized hand to grasp effectively. Models in this latter category were treated as "toys" and scaled to a hand-held size (so cars become "toy" cars, etc.)';
+
+
+--
+-- TOC entry 1903 (class 0 OID 0)
+-- Dependencies: 1535
+-- Name: COLUMN original_model.original_model_tags; Type: COMMENT; Schema: public; Owner: willow
+--
+
+COMMENT ON COLUMN original_model.original_model_tags IS 'Text tags associated with this model';
+
+
+--
+-- TOC entry 1529 (class 1259 OID 26777)
+-- Dependencies: 6
+-- Name: pair_id_seq; Type: SEQUENCE; Schema: public; Owner: willow
+--
+
+CREATE SEQUENCE pair_id_seq
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.pair_id_seq OWNER TO willow;
+
+--
+-- TOC entry 1536 (class 1259 OID 26821)
+-- Dependencies: 6
+-- Name: task_id_seq; Type: SEQUENCE; Schema: public; Owner: willow
+--
+
+CREATE SEQUENCE task_id_seq
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.task_id_seq OWNER TO willow;
+
+--
+-- TOC entry 1537 (class 1259 OID 26823)
+-- Dependencies: 1819 6
+-- Name: task; Type: TABLE; Schema: public; Owner: willow; Tablespace: 
+--
+
+CREATE TABLE task (
+    task_type integer NOT NULL,
+    scaled_model_id integer NOT NULL,
+    task_id integer DEFAULT nextval('task_id_seq'::regclass) NOT NULL,
+    task_time integer NOT NULL,
+    task_outcome_name text NOT NULL,
+    hand_name text NOT NULL
+);
+
+
+ALTER TABLE public.task OWNER TO willow;
+
+--
+-- TOC entry 1904 (class 0 OID 0)
+-- Dependencies: 1537
+-- Name: TABLE task; Type: COMMENT; Schema: public; Owner: willow
+--
+
+COMMENT ON TABLE task IS 'A list of tasks, or experiments, to be performed using the database.';
+
+
+--
+-- TOC entry 1538 (class 1259 OID 26830)
+-- Dependencies: 6
+-- Name: task_outcome; Type: TABLE; Schema: public; Owner: willow; Tablespace: 
+--
+
+CREATE TABLE task_outcome (
+    task_outcome_name text NOT NULL
+);
+
+
+ALTER TABLE public.task_outcome OWNER TO willow;
+
+--
+-- TOC entry 1905 (class 0 OID 0)
+-- Dependencies: 1538
+-- Name: TABLE task_outcome; Type: COMMENT; Schema: public; Owner: willow
+--
+
+COMMENT ON TABLE task_outcome IS 'Codes and  text id''s for possible task outcomes';
+
+
+--
+-- TOC entry 1539 (class 1259 OID 26836)
+-- Dependencies: 1535 6
+-- Name: unscaled_model_unscaled_model_id_seq; Type: SEQUENCE; Schema: public; Owner: willow
+--
+
+CREATE SEQUENCE unscaled_model_unscaled_model_id_seq
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.unscaled_model_unscaled_model_id_seq OWNER TO willow;
+
+--
+-- TOC entry 1906 (class 0 OID 0)
+-- Dependencies: 1539
+-- Name: unscaled_model_unscaled_model_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: willow
+--
+
+ALTER SEQUENCE unscaled_model_unscaled_model_id_seq OWNED BY original_model.original_model_id;
+
+
+--
+-- TOC entry 1540 (class 1259 OID 26838)
+-- Dependencies: 6
+-- Name: variable_id_seq; Type: SEQUENCE; Schema: public; Owner: willow
+--
+
+CREATE SEQUENCE variable_id_seq
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.variable_id_seq OWNER TO willow;
+
+--
+-- TOC entry 1541 (class 1259 OID 26840)
+-- Dependencies: 1820 6
+-- Name: variable; Type: TABLE; Schema: public; Owner: willow; Tablespace: 
+--
+
+CREATE TABLE variable (
+    variable_name text NOT NULL,
+    variable_id integer DEFAULT nextval('variable_id_seq'::regclass) NOT NULL,
+    variable_value text
+);
+
+
+ALTER TABLE public.variable OWNER TO willow;
+
+--
+-- TOC entry 1907 (class 0 OID 0)
+-- Dependencies: 1541
+-- Name: TABLE variable; Type: COMMENT; Schema: public; Owner: willow
+--
+
+COMMENT ON TABLE variable IS 'Stores single variables, parameters, environment variables, etc';
+
+
+--
+-- TOC entry 1816 (class 2604 OID 26847)
+-- Dependencies: 1528 1527
+-- Name: grasp_id; Type: DEFAULT; Schema: public; Owner: willow
+--
+
+ALTER TABLE grasp ALTER COLUMN grasp_id SET DEFAULT nextval('grasp_grasp_id_seq'::regclass);
+
+
+--
+-- TOC entry 1818 (class 2604 OID 26851)
+-- Dependencies: 1539 1535
+-- Name: original_model_id; Type: DEFAULT; Schema: public; Owner: willow
+--
+
+ALTER TABLE original_model ALTER COLUMN original_model_id SET DEFAULT nextval('unscaled_model_unscaled_model_id_seq'::regclass);
+
+
+--
+-- TOC entry 1817 (class 2604 OID 26852)
+-- Dependencies: 1533 1532
+-- Name: scaled_model_id; Type: DEFAULT; Schema: public; Owner: willow
+--
+
+ALTER TABLE scaled_model ALTER COLUMN scaled_model_id SET DEFAULT nextval('model_model_id_seq'::regclass);
+
+
+--
+-- TOC entry 1823 (class 2606 OID 27473)
+-- Dependencies: 1525 1525
+-- Name: acquisition_method_pkey; Type: CONSTRAINT; Schema: public; Owner: willow; Tablespace: 
+--
+
+ALTER TABLE ONLY acquisition_method
+    ADD CONSTRAINT acquisition_method_pkey PRIMARY KEY (acquisition_method_name);
+
+
+--
+-- TOC entry 1849 (class 2606 OID 28006)
+-- Dependencies: 1542 1542 1542
+-- Name: file_path_original_model_id_key; Type: CONSTRAINT; Schema: public; Owner: willow; Tablespace: 
+--
+
+ALTER TABLE ONLY file_path
+    ADD CONSTRAINT file_path_original_model_id_key UNIQUE (original_model_id, file_type);
+
+
+--
+-- TOC entry 1851 (class 2606 OID 28020)
+-- Dependencies: 1542 1542
+-- Name: file_path_pkey; Type: CONSTRAINT; Schema: public; Owner: willow; Tablespace: 
+--
+
+ALTER TABLE ONLY file_path
+    ADD CONSTRAINT file_path_pkey PRIMARY KEY (file_path_id);
+
+
+--
+-- TOC entry 1853 (class 2606 OID 27630)
+-- Dependencies: 1543 1543
+-- Name: file_type_pkey; Type: CONSTRAINT; Schema: public; Owner: willow; Tablespace: 
+--
+
+ALTER TABLE ONLY file_type
+    ADD CONSTRAINT file_type_pkey PRIMARY KEY (file_type);
+
+
+--
+-- TOC entry 1826 (class 2606 OID 27490)
+-- Dependencies: 1527 1527
+-- Name: grasp_pkey; Type: CONSTRAINT; Schema: public; Owner: willow; Tablespace: 
+--
+
+ALTER TABLE ONLY grasp
+    ADD CONSTRAINT grasp_pkey PRIMARY KEY (grasp_id);
+
+
+--
+-- TOC entry 1829 (class 2606 OID 27494)
+-- Dependencies: 1530 1530
+-- Name: grasp_source_grasp_source_name_key; Type: CONSTRAINT; Schema: public; Owner: willow; Tablespace: 
+--
+
+ALTER TABLE ONLY grasp_source
+    ADD CONSTRAINT grasp_source_grasp_source_name_key UNIQUE (grasp_source_name);
+
+
+--
+-- TOC entry 1831 (class 2606 OID 27496)
+-- Dependencies: 1530 1530
+-- Name: grasp_source_pkey; Type: CONSTRAINT; Schema: public; Owner: willow; Tablespace: 
+--
+
+ALTER TABLE ONLY grasp_source
+    ADD CONSTRAINT grasp_source_pkey PRIMARY KEY (grasp_source_id);
+
+
+--
+-- TOC entry 1833 (class 2606 OID 27498)
+-- Dependencies: 1531 1531
+-- Name: hand_pkey; Type: CONSTRAINT; Schema: public; Owner: willow; Tablespace: 
+--
+
+ALTER TABLE ONLY hand
+    ADD CONSTRAINT hand_pkey PRIMARY KEY (hand_name);
+
+
+--
+-- TOC entry 1855 (class 2606 OID 27643)
+-- Dependencies: 1544 1544
+-- Name: mesh_pkey; Type: CONSTRAINT; Schema: public; Owner: willow; Tablespace: 
+--
+
+ALTER TABLE ONLY mesh
+    ADD CONSTRAINT mesh_pkey PRIMARY KEY (original_model_id);
+
+
+--
+-- TOC entry 1857 (class 2606 OID 28032)
+-- Dependencies: 1546 1546 1546
+-- Name: model_set_pkey; Type: CONSTRAINT; Schema: public; Owner: willow; Tablespace: 
+--
+
+ALTER TABLE ONLY model_set
+    ADD CONSTRAINT model_set_pkey PRIMARY KEY (model_set_name, original_model_id);
+
+
+--
+-- TOC entry 1837 (class 2606 OID 27500)
+-- Dependencies: 1534 1534
+-- Name: model_source_pkey; Type: CONSTRAINT; Schema: public; Owner: willow; Tablespace: 
+--
+
+ALTER TABLE ONLY model_source
+    ADD CONSTRAINT model_source_pkey PRIMARY KEY (model_source_name);
+
+
+--
+-- TOC entry 1839 (class 2606 OID 27502)
+-- Dependencies: 1535 1535 1535
+-- Name: original_model_original_model_maker_key; Type: CONSTRAINT; Schema: public; Owner: willow; Tablespace: 
+--
+
+ALTER TABLE ONLY original_model
+    ADD CONSTRAINT original_model_original_model_maker_key UNIQUE (original_model_maker, original_model_model);
+
+
+--
+-- TOC entry 1841 (class 2606 OID 27504)
+-- Dependencies: 1535 1535
+-- Name: original_model_pkey; Type: CONSTRAINT; Schema: public; Owner: willow; Tablespace: 
+--
+
+ALTER TABLE ONLY original_model
+    ADD CONSTRAINT original_model_pkey PRIMARY KEY (original_model_id);
+
+
+--
+-- TOC entry 1835 (class 2606 OID 27506)
+-- Dependencies: 1532 1532
+-- Name: scaled_model_pkey; Type: CONSTRAINT; Schema: public; Owner: willow; Tablespace: 
+--
+
+ALTER TABLE ONLY scaled_model
+    ADD CONSTRAINT scaled_model_pkey PRIMARY KEY (scaled_model_id);
+
+
+--
+-- TOC entry 1843 (class 2606 OID 27508)
+-- Dependencies: 1537 1537
+-- Name: task_list_pkey; Type: CONSTRAINT; Schema: public; Owner: willow; Tablespace: 
+--
+
+ALTER TABLE ONLY task
+    ADD CONSTRAINT task_list_pkey PRIMARY KEY (task_id);
+
+
+--
+-- TOC entry 1845 (class 2606 OID 27510)
+-- Dependencies: 1538 1538
+-- Name: task_outcome_pkey; Type: CONSTRAINT; Schema: public; Owner: willow; Tablespace: 
+--
+
+ALTER TABLE ONLY task_outcome
+    ADD CONSTRAINT task_outcome_pkey PRIMARY KEY (task_outcome_name);
+
+
+--
+-- TOC entry 1847 (class 2606 OID 27512)
+-- Dependencies: 1541 1541
+-- Name: variable_pkey; Type: CONSTRAINT; Schema: public; Owner: willow; Tablespace: 
+--
+
+ALTER TABLE ONLY variable
+    ADD CONSTRAINT variable_pkey PRIMARY KEY (variable_id);
+
+
+--
+-- TOC entry 1824 (class 1259 OID 27517)
+-- Dependencies: 1527
+-- Name: grasp_grasp_source_id_index; Type: INDEX; Schema: public; Owner: willow; Tablespace: 
+--
+
+CREATE INDEX grasp_grasp_source_id_index ON grasp USING btree (grasp_source_id);
+
+
+--
+-- TOC entry 1827 (class 1259 OID 27519)
+-- Dependencies: 1527
+-- Name: grasp_scaled_model_id_index; Type: INDEX; Schema: public; Owner: willow; Tablespace: 
+--
+
+CREATE INDEX grasp_scaled_model_id_index ON grasp USING btree (scaled_model_id);
+
+
+--
+-- TOC entry 1868 (class 2606 OID 27631)
+-- Dependencies: 1852 1542 1543
+-- Name: file_path_file_type_fkey; Type: FK CONSTRAINT; Schema: public; Owner: willow
+--
+
+ALTER TABLE ONLY file_path
+    ADD CONSTRAINT file_path_file_type_fkey FOREIGN KEY (file_type) REFERENCES file_type(file_type);
+
+
+--
+-- TOC entry 1867 (class 2606 OID 27618)
+-- Dependencies: 1840 1535 1542
+-- Name: file_path_original_model_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: willow
+--
+
+ALTER TABLE ONLY file_path
+    ADD CONSTRAINT file_path_original_model_id_fkey FOREIGN KEY (original_model_id) REFERENCES original_model(original_model_id);
+
+
+--
+-- TOC entry 1858 (class 2606 OID 27545)
+-- Dependencies: 1830 1530 1527
+-- Name: grasp_grasp_source_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: willow
+--
+
+ALTER TABLE ONLY grasp
+    ADD CONSTRAINT grasp_grasp_source_id_fkey FOREIGN KEY (grasp_source_id) REFERENCES grasp_source(grasp_source_id);
+
+
+--
+-- TOC entry 1859 (class 2606 OID 27550)
+-- Dependencies: 1832 1531 1527
+-- Name: grasp_hand_name_fkey; Type: FK CONSTRAINT; Schema: public; Owner: willow
+--
+
+ALTER TABLE ONLY grasp
+    ADD CONSTRAINT grasp_hand_name_fkey FOREIGN KEY (hand_name) REFERENCES hand(hand_name);
+
+
+--
+-- TOC entry 1860 (class 2606 OID 27575)
+-- Dependencies: 1834 1532 1527
+-- Name: grasp_scaled_model_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: willow
+--
+
+ALTER TABLE ONLY grasp
+    ADD CONSTRAINT grasp_scaled_model_id_fkey FOREIGN KEY (scaled_model_id) REFERENCES scaled_model(scaled_model_id);
+
+
+--
+-- TOC entry 1869 (class 2606 OID 27644)
+-- Dependencies: 1544 1840 1535
+-- Name: mesh_original_model_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: willow
+--
+
+ALTER TABLE ONLY mesh
+    ADD CONSTRAINT mesh_original_model_id_fkey FOREIGN KEY (original_model_id) REFERENCES original_model(original_model_id);
+
+
+--
+-- TOC entry 1870 (class 2606 OID 28033)
+-- Dependencies: 1840 1535 1546
+-- Name: model_set_original_model_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: willow
+--
+
+ALTER TABLE ONLY model_set
+    ADD CONSTRAINT model_set_original_model_id_fkey FOREIGN KEY (original_model_id) REFERENCES original_model(original_model_id);
+
+
+--
+-- TOC entry 1862 (class 2606 OID 27580)
+-- Dependencies: 1535 1525 1822
+-- Name: original_model_acquisition_method_name_fkey; Type: FK CONSTRAINT; Schema: public; Owner: willow
+--
+
+ALTER TABLE ONLY original_model
+    ADD CONSTRAINT original_model_acquisition_method_name_fkey FOREIGN KEY (acquisition_method_name) REFERENCES acquisition_method(acquisition_method_name);
+
+
+--
+-- TOC entry 1863 (class 2606 OID 27585)
+-- Dependencies: 1836 1534 1535
+-- Name: original_model_original_model_source_fkey; Type: FK CONSTRAINT; Schema: public; Owner: willow
+--
+
+ALTER TABLE ONLY original_model
+    ADD CONSTRAINT original_model_original_model_source_fkey FOREIGN KEY (original_model_source) REFERENCES model_source(model_source_name);
+
+
+--
+-- TOC entry 1861 (class 2606 OID 27590)
+-- Dependencies: 1532 1535 1840
+-- Name: scaled_model_original_model_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: willow
+--
+
+ALTER TABLE ONLY scaled_model
+    ADD CONSTRAINT scaled_model_original_model_id_fkey FOREIGN KEY (original_model_id) REFERENCES original_model(original_model_id);
+
+
+--
+-- TOC entry 1864 (class 2606 OID 27595)
+-- Dependencies: 1537 1832 1531
+-- Name: task_hand_name_fkey; Type: FK CONSTRAINT; Schema: public; Owner: willow
+--
+
+ALTER TABLE ONLY task
+    ADD CONSTRAINT task_hand_name_fkey FOREIGN KEY (hand_name) REFERENCES hand(hand_name);
+
+
+--
+-- TOC entry 1865 (class 2606 OID 27600)
+-- Dependencies: 1834 1532 1537
+-- Name: task_list_scaled_model_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: willow
+--
+
+ALTER TABLE ONLY task
+    ADD CONSTRAINT task_list_scaled_model_id_fkey FOREIGN KEY (scaled_model_id) REFERENCES scaled_model(scaled_model_id);
+
+
+--
+-- TOC entry 1866 (class 2606 OID 27605)
+-- Dependencies: 1538 1844 1537
+-- Name: task_task_outcome_name_fkey; Type: FK CONSTRAINT; Schema: public; Owner: willow
+--
+
+ALTER TABLE ONLY task
+    ADD CONSTRAINT task_task_outcome_name_fkey FOREIGN KEY (task_outcome_name) REFERENCES task_outcome(task_outcome_name);
+
+
+--
+-- TOC entry 1875 (class 0 OID 0)
+-- Dependencies: 6
+-- Name: public; Type: ACL; Schema: -; Owner: postgres
+--
+
+REVOKE ALL ON SCHEMA public FROM PUBLIC;
+REVOKE ALL ON SCHEMA public FROM postgres;
+GRANT ALL ON SCHEMA public TO postgres;
+GRANT ALL ON SCHEMA public TO PUBLIC;
+
+
+--
+-- TOC entry 1898 (class 0 OID 0)
+-- Dependencies: 1532
+-- Name: scaled_model; Type: ACL; Schema: public; Owner: willow
+--
+
+REVOKE ALL ON TABLE scaled_model FROM PUBLIC;
+REVOKE ALL ON TABLE scaled_model FROM willow;
+GRANT ALL ON TABLE scaled_model TO willow;
+
+
+-- Completed on 2010-07-27 08:54:55 PDT
+
+--
+-- PostgreSQL database dump complete
+--
+
