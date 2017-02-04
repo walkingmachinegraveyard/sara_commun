@@ -4,7 +4,7 @@
     <xacro:include filename="$(find sara_description)/urdf/torso_v1/torso.urdf.xacro"/>
     <xacro:include filename="$(find sara_description)/urdf/neck_v1/neck.urdf.xacro"/>
     <xacro:include filename="$(find sara_description)/urdf/head_v1/head.urdf.xacro"/>
-    <xacro:include filename="$(find sara_description)/urdf/grasp_v1/robotiq_c2_model_macro.xacro"/>
+    <xacro:include filename="$(find sara_description)/urdf/robotiq_c2_model/robotiq_c2_model_macro.xacro"/>
     <xacro:include filename="$(find sara_description)/urdf/arm_v1/arm.urdf.xacro"/>
     <xacro:include filename="$(find sara_description)/urdf/base_v1/base.urdf.xacro"/>
     <xacro:include filename="$(find sara_description)/urdf/wheels_v1/wheels.urdf.xacro"/>
@@ -28,5 +28,5 @@
     <xacro:sara_arm_v1 name="arm" parent="torso" end_effector="robotiq_85_base"/>
 
     <!-- End Effector -->
-    <xacro:sara_grasp_v1 prefix=""/>
+    <xacro:robotiq_c2_model prefix=""/>
 </robot>

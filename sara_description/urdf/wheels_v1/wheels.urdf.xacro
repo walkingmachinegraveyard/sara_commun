@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro" >
    <xacro:include filename="$(find sara_description)/urdf/wheels_v1/wheels.gazebo.xacro" />
-
-   <!-- Front_Wheels -->
+  <xacro:macro name="sara_wheels_v1" params="name parent" > 
+  <!-- Front_Wheels -->
   <xacro:macro name="front_wheel" params="prefix y_reflect x_reflect x_axis_rotation">
       <link name="${prefix}_wheel">
           <visual>
@@ -61,4 +61,5 @@
    <xacro:front_wheel prefix="front_right" y_reflect="1" x_reflect="-1" x_axis_rotation="1"/>
    <xacro:rear_wheel prefix="rear_left" y_reflect="-1" x_reflect="1" x_axis_rotation="-1"/>
    <xacro:rear_wheel prefix="rear_right" y_reflect="-1" x_reflect="-1" x_axis_rotation="1"/>
+ </xacro:macro>
 </robot>
