@@ -10,8 +10,9 @@
 
 
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
+<xacro:include filename="$(find sara_description)/urdf/robotiq_c2_model/robotiq_c2_model.gazebo.xacro" />
   <xacro:macro name="robotiq_c2_model" params="prefix">
-  <xacro:robotic_c2_model_gazebo prefix="${prefix}"/>
+  <xacro:robotiq_c2_model_gazebo prefix="${prefix}"/>
   <link name="${prefix}robotiq_85_base_link">
     <visual>
       <geometry>
@@ -67,7 +68,7 @@
       <origin xyz="0 0 0" rpy="1.5708 -1.5708 0"/>
       <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001" />
     </inertial>
-  </link> 
+  </link>
 
   <link name="${prefix}robotiq_85_right_knuckle_link">
     <visual>
@@ -103,7 +104,7 @@
     <axis xyz="1 0 0"/>
     <origin rpy="3.1415 0 0" xyz="0 .00508 .03134"/>
     <limit lower="0" upper="1.5707" velocity="2.0" effort="1000"/>
-  </joint> 
+  </joint>
 
   <link name="${prefix}robotiq_85_left_finger_link">
     <visual>
@@ -123,7 +124,7 @@
       <origin xyz="0 0 0" rpy="-1.5708 1.5708 0" />
       <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001" />
     </inertial>
-  </link> 
+  </link>
 
   <link name="${prefix}robotiq_85_right_finger_link">
     <visual>
@@ -143,7 +144,7 @@
       <origin xyz="0 0 0" rpy="-1.5707 -1.5707 0" />
       <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001" />
     </inertial>
-  </link> 
+  </link>
 
   <joint name="${prefix}robotiq_85_left_inner_knuckle_joint" type="revolute">
     <parent link="${prefix}robotiq_85_base_link"/>
@@ -152,7 +153,7 @@
     <origin rpy="1.5707 1.5707 0" xyz=".04843 .0127 0"/>
     <limit lower="0" upper="1.5707" velocity="2.0" effort="1000"/>
     <mimic joint="${prefix}robotiq_85_left_knuckle_joint" offset="0"/>
-  </joint> 
+  </joint>
 
   <joint name="${prefix}robotiq_85_right_inner_knuckle_joint" type="revolute">
     <parent link="${prefix}robotiq_85_base_link"/>
@@ -219,7 +220,7 @@
     <origin rpy="0 0 0" xyz="0 .04196 -.0388"/>
     <limit lower="0" upper="1.5707" velocity="2.0" effort="1000"/>
     <mimic joint="${prefix}robotiq_85_left_knuckle_joint" multiplier="-1"/>
-  </joint> 
+  </joint>
 
   <link name="${prefix}robotiq_85_left_finger_tip_link">
     <visual>
@@ -239,7 +240,7 @@
       <origin xyz="0 0 0" rpy="-1.5707 1.5707 0" />
       <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001" />
     </inertial>
-  </link> 
+  </link>
 
   <link name="${prefix}robotiq_85_right_finger_tip_link">
     <visual>
