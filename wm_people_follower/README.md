@@ -2,6 +2,11 @@
 
 This node generate move_base goal to follow someone.
 
+## Dependencies
+
+people/leg_detector
+people/face_detector
+
 ## Service
 
 ### Request
