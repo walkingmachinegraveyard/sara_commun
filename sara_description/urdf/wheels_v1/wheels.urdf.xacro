@@ -5,21 +5,6 @@
   <!-- Front_Wheels -->
   <xacro:macro name="front_wheel" params="prefix y_reflect x_reflect x_axis_rotation">
       <link name="${prefix}_wheel">
-          <visual>
-              <geometry>
-                  <cylinder length="0.04" radius="0.15"/>
-              </geometry>
-              <origin xyz="0 0 0" rpy="0 0 0"/>
-              <material name="black">
-                  <color rgba="0 0 0 0"/>
-              </material>
-          </visual>
-          <collision>
-              <geometry>
-                  <cylinder length="0.04" radius="0.15"/>
-              </geometry>
-              <origin xyz="0 0 0" rpy="0 0 0"/>
-          </collision>
       </link>
       <joint name="base_to_${prefix}_wheel" type="continuous">
           <parent link="base_link"/>
@@ -32,21 +17,6 @@
    <!-- rear_Wheels -->
   <xacro:macro name="rear_wheel" params="prefix y_reflect x_reflect x_axis_rotation">
       <link name="${prefix}_wheel">
-          <visual>
-              <geometry>
-                  <cylinder length="0.04" radius="0.15"/>
-              </geometry>
-              <origin xyz="0 0 0" rpy="0 0 0"/>
-              <material name="black">
-                  <color rgba="0 0 0 0"/>
-              </material>
-          </visual>
-          <collision>
-              <geometry>
-                  <cylinder length="0.04" radius="0.15"/>
-              </geometry>
-              <origin xyz="0 0 0" rpy="0 0 0"/>
-          </collision>
       </link>
       <joint name="base_to_${prefix}_wheel" type="continuous">
           <parent link="base_link"/>
