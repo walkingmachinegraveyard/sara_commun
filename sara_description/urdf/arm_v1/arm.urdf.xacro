@@ -133,37 +133,37 @@
       <link name="${name}_rot_lower_link">
          <visual>
             <geometry>
-               <mesh filename="package://sara_description/meshes/avant-bras.dae" scale="0.001 0.001 0.001"/>
+               <mesh filename="package://sara_description/meshes/avant-bras.STL" scale="0.001 0.001 0.001"/>
             </geometry>
-            <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
+            <origin xyz="-0.0338 0.0338 0" rpy="-1.5708 0 -1.5708" />
          </visual>
          <collision>
             <geometry>
-               <mesh filename="package://sara_description/meshes/avant-bras.dae" scale="0.001 0.001 0.001"/>
+               <mesh filename="package://sara_description/meshes/avant-bras.STL" scale="0.001 0.001 0.001"/>
             </geometry>
-            <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
+            <origin xyz="-0.0676 0.0676 0" rpy="-1.5708 0 -1.5708" />
          </collision>
           <inertial>
             <mass value="1" />
-            <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708" />
+            <origin xyz="-0.0676 0.0676 0" rpy="-1.5708 0 -1.5708" />
             <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001" />
         </inertial>
      </link>
-      <joint name="${name}_abc_joint" type="revolute">
+      <joint name="${name}_forarm-wrist_joint" type="revolute">
          <parent link="${name}_rot_lower_link"/>
          <child link="${name}_high_wrist_joint"/>
          <limit effort="1000.0" lower="-3.1416" upper="3.1416" velocity="0.5"/>
-         <origin xyz="0 0.0945 0" rpy="1.5708 -1.5708 0" />
-         <axis xyz="0 0 1" />
+	 <origin xyz="0 0 -0.11184" rpy="1.5708 -1.5708 0" />
+         <axis xyz="0 1 0" />
      </joint>
 
-
+     <!-- First wrist joint and link | forarm to wrist -->
      <link name="${name}_high_wrist_joint">
           <visual>
               <geometry>
                   <mesh filename="package://sara_description/meshes/poignet_haut.STL" scale="0.001 0.001 0.001"/>
               </geometry>
-              <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
+              <origin xyz="0.0706 0 -0.030" rpy="1.5708 -1.5708 0"/>
           </visual>
           <collision>
              <geometry>
@@ -174,23 +174,21 @@
      </link>
 
 
-
-
      <joint name="${name}_wrist_joint" type="revolute">
         <parent link="${name}_high_wrist_joint"/>
         <child link="${name}_low_wrist_joint"/>
         <limit effort="1000.0" lower="-3.1416" upper="3.1416" velocity="0.5"/>
-        <origin xyz="0 0.0945 0" rpy="1.5708 -1.5708 0" />
-        <axis xyz="0 0 1" />
+        <origin xyz="-0.084642 0 0" rpy="1.5708 -1.5708 0" />
+        <axis xyz="1 0 0" />
      </joint>
 
-
+     <!-- Second wrist joint and link | wrist to Robotiq grasp -->
      <link name="${name}_low_wrist_joint">
           <visual>
               <geometry>
                   <mesh filename="package://sara_description/meshes/poignet_bas.STL" scale="0.001 0.001 0.001"/>
               </geometry>
-              <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
+              <origin xyz="0.0275 -0.084375 0" rpy="0 -1.5708 0"/>
           </visual>
           <collision>
              <geometry>
@@ -225,7 +223,7 @@
       <joint name="grasp_joint" type="fixed" >
           <parent link="${end_effector}_link" />
          <child link="grasp_link" />
-         <origin xyz="0.075 0 -0.012" rpy="3.1416 0 1.5708" />
+         <origin xyz="0.075 0 -0.012" rpy="0 0 0" />
       </joint>
    </xacro:macro>
 </robot>
