@@ -138,6 +138,7 @@
                <mesh filename="package://sara_description/meshes/avant-bras.STL" scale="0.001 0.001 0.001"/>
             </geometry>
             <origin xyz="-0.0338 0.0338 0" rpy="-1.5708 0 -1.5708" />
+             <color rgba="0 0 1 .06"/>
          </visual>
          <collision>
             <geometry>
@@ -167,6 +168,7 @@
                   <mesh filename="package://sara_description/meshes/poignet_haut.STL" scale="0.001 0.001 0.001"/>
               </geometry>
               <origin xyz="0.0706 0.0283 -0.030" rpy="1.5708 -1.5708 0"/>
+              <color rgba="0 0 1 .06"/>
           </visual>
           <collision>
              <geometry>
@@ -190,13 +192,14 @@
               <geometry>
                   <mesh filename="package://sara_description/meshes/poignet_bas.STL" scale="0.001 0.001 0.001"/>
               </geometry>
-              <origin xyz="0.0257591 -0.014017 -0.028925" rpy="0 -1.5708 0"/>
+              <origin xyz="-0.02575  -0.01375 0.0305448" rpy=" 0 1.5708 0"/>
+              <color rgba="0 0 1 .06"/>
           </visual>
           <collision>
              <geometry>
                 <mesh filename="package://sara_description/meshes/poignet_bas.STL" scale="0.001 0.001 0.001"/>
              </geometry>
-             <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
+             <origin xyz="0 0 0" rpy="0 0 0 "/>
           </collision>
      </link>
 
@@ -205,7 +208,7 @@
              <parent link="${name}_low_wrist_link"/>
              <child link="${name}_socket_link"/>
              <limit effort="1000.0" lower="-3.1416" upper="3.1416" velocity="0.5"/>
-             <origin xyz="0 0 0" rpy="1.5708 0 0" />
+             <origin xyz="0 0.084375 0" rpy="1.5708 0 0" />
              <axis xyz="1 0 0" />
           </joint>
 
@@ -215,35 +218,36 @@
           <geometry>
               <mesh filename="package://sara_description/meshes/attache-pince.STL" scale="0.001 0.001 0.001"/>
           </geometry>
-          <origin xyz="0 0 0" rpy="0 0 0"/>
+          <origin xyz="0.028925 -0.025 -0.0362070" rpy="0 0 1.5708"/>
+          <color rgba="0 0 1 .06"/>
       </visual>
       </link>
 
       <joint name="${name}_end_effector_joint" type="fixed">
-         <parent link="${name}_socket_link"/>
-         <child link="${end_effector}_link"/>
-         <limit effort="1000.0" lower="-0.26" upper="0.26" velocity="0.5" />
-         <axis xyz="0 1 0"/>
-         <origin xyz="0 -0.004 -0.10624" rpy="0 1.5708 1.5708"/>
-      </joint>
-      <!-- Link and joint for target (grasp) -->
-      <link name="grasp_link" >
-         <visual>
-            <geometry>
-               <sphere radius="0.01" />
-            </geometry>
-            <origin xyz="0 0.05 0" rpy="0 0 0" />
-         </visual>
-         <inertial>
-            <mass value="0" />
-            <origin xyz="0 0 0" rpy="0 0 0" />
-            <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001" />
-        </inertial>
-      </link>
-      <joint name="grasp_joint" type="fixed" >
-          <parent link="${end_effector}_link" />
-         <child link="grasp_link" />
-         <origin xyz="0.075 0 -0.012" rpy="0 0 0" />
+               <parent link="${name}_socket_link"/>
+               <child link="${end_effector}_link"/>
+               <limit effort="1000.0" lower="-0.26" upper="0.26" velocity="0.5" />
+               <axis xyz="0 1 0"/>
+               <origin xyz="0 0 -0.0298927" rpy="0 1.5708 0"/>
+            </joint>
+            <!-- Link and joint for target (grasp) -->
+            <link name="grasp_link" >
+               <visual>
+                  <geometry>
+                     <sphere radius="0.01" />
+                  </geometry>
+                  <origin xyz="0 0.05 0" rpy="0 0 0" />
+               </visual>
+               <inertial>
+                  <mass value="0" />
+                  <origin xyz="0 0 0" rpy="0 0 0" />
+                  <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001" />
+              </inertial>
+            </link>
+            <joint name="grasp_joint" type="fixed" >
+                <parent link="${end_effector}_link" />
+               <child link="grasp_link" />
+               <origin xyz="0.075 0 -0.012" rpy="3.1416 0 1.5708" />
       </joint>
    </xacro:macro>
 </robot>
