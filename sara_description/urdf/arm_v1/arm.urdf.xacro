@@ -18,13 +18,13 @@
       <link name="${name}_clavicular_link">
          <visual>
             <geometry>
-               <mesh filename="package://sara_description/meshes/epaule.dae" scale="0.001 0.001 0.001"/>
+               <mesh filename="package://sara_description/meshes/epaule.STL" scale="0.001 0.001 0.001"/>
             </geometry>
             <origin xyz="0 0 0" rpy="0 3.1416 0"/>
          </visual>
          <collision>
             <geometry>
-               <mesh filename="package://sara_description/meshes/epaule.dae" scale="0.001 0.001 0.001"/>
+               <mesh filename="package://sara_description/meshes/epaule.STL" scale="0.001 0.001 0.001"/>
             </geometry>
             <origin xyz="0 0 0" rpy="0 3.1416 0"/>
         </collision>
@@ -48,13 +48,13 @@
       <link name="${name}_fix_upper_link">
          <visual>
             <geometry>
-               <mesh filename="package://sara_description/meshes/epaule.dae" scale="0.001 0.001 0.001"/>
+               <mesh filename="package://sara_description/meshes/epaule.STL" scale="0.001 0.001 0.001"/>
             </geometry>
             <origin xyz="0 0 0" rpy="3.1416 0 1.5708"/>
          </visual>
          <collision>
             <geometry>
-               <mesh filename="package://sara_description/meshes/epaule.dae" scale="0.001 0.001 0.001"/>
+               <mesh filename="package://sara_description/meshes/epaule.STL" scale="0.001 0.001 0.001"/>
             </geometry>
             <origin xyz="0 0 0" rpy="3.1416 0 1.5708"/>
          </collision>
@@ -77,13 +77,13 @@
       <link name="${name}_rot_upper_link">
          <visual>
             <geometry>
-               <mesh filename="package://sara_description/meshes/bras_haut.dae" scale="0.001 0.001 0.001"/>
+               <mesh filename="package://sara_description/meshes/bras_haut.STL" scale="0.001 0.001 0.001"/>
             </geometry>
             <origin xyz="0 0 0" rpy="1.5708 3.1416 3.1416"/>
          </visual>
          <collision>
             <geometry>
-               <mesh filename="package://sara_description/meshes/bras_haut.dae" scale="0.001 0.001 0.001"/>
+               <mesh filename="package://sara_description/meshes/bras_haut.STL" scale="0.001 0.001 0.001"/>
             </geometry>
             <origin xyz="0 0 0" rpy="1.5708 3.1416 3.1416"/>
          </collision>
@@ -106,13 +106,13 @@
       <link name="${name}_fix_lower_link">
          <visual>
             <geometry>
-               <mesh filename="package://sara_description/meshes/coude.dae" scale="0.001 0.001 0.001"/>
+               <mesh filename="package://sara_description/meshes/coude.STL" scale="0.001 0.001 0.001"/>
             </geometry>
             <origin xyz="0 0 -0.0005" rpy="3.1416 0 0"/>
          </visual>
          <collision>
             <geometry>
-               <mesh filename="package://sara_description/meshes/coude.dae" scale="0.001 0.001 0.001"/>
+               <mesh filename="package://sara_description/meshes/coude.STL" scale="0.001 0.001 0.001"/>
             </geometry>
             <origin xyz="0 0 -0.0005" rpy="3.1416 0 0"/>
          </collision>
@@ -228,7 +228,7 @@
                <child link="${end_effector}_link"/>
                <limit effort="1000.0" lower="-0.26" upper="0.26" velocity="0.5" />
                <axis xyz="0 1 0"/>
-               <origin xyz="0 0 -0.0298927" rpy="0 1.5708 0"/>
+               <origin xyz="0 0 -0.02989" rpy="0 1.5708 0"/>
             </joint>
             <!-- Link and joint for target (grasp) -->
             <link name="grasp_link" >
