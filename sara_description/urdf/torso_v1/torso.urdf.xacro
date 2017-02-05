@@ -8,7 +8,7 @@
             <geometry>
                <mesh filename="package://sara_description/meshes/torse.STL" scale="0.001 0.001 0.001"/>
             </geometry>
-            <origin xyz="0 0 0" rpy="1.5708 0 1.5708"/>
+            <origin xyz="-0.14427 -0.197233 0" rpy="1.5708 0 1.5708"/>
             <material name="black">
                <color rgba="0.12 0.12 0.12 1"/>
             </material>
@@ -29,7 +29,7 @@
          <parent link="${parent}_link"/>
          <child link="${name}_link"/>
          <limit effort="1000.0" lower="0" upper="0.5" velocity="0.2"/>
-         <origin xyz="0.199974 0 0.85635" rpy="0 0 0" />
+         <origin xyz="0.177374 0 0.70531" rpy="0 0 0" />
          <axis xyz="0 0 1" />
     </joint>
   </xacro:macro>
