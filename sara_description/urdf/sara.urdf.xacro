@@ -18,7 +18,7 @@
     <xacro:sara_wheels_v1 name="wheels" parent="base"/>
 
     <!-- Kinect -->
-    <xacro:sara_kinect_v1 name="kinect" parent="base"/>
+    <xacro:kinect2 name="kinect" parent="base"/>
 
     <!-- Torso -->
     <xacro:sara_torso_v1 name="torso" parent="base"/>

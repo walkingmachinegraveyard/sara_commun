@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro" >
    <xacro:include filename="$(find sara_description)/urdf/kinect_v1/kinect.gazebo.xacro" />
-   <xacro:macro name="sara_kinect_v1" params="name parent">
-       <xacro:sara_kinect_gazebo_v1 name="${name}" parent="${parent}"/>
+   <xacro:macro name="kinect2" params="name parent">
+       <xacro:kinect2_gazebo name="${name}" parent="${parent}"/>
        <link name="${name}_link">
          <visual>
             <geometry>
@@ -17,7 +17,7 @@
             <geometry>
                <mesh filename="package://sara_description/meshes/kinect.STL" scale="0.001 0.001 0.001"/>
             </geometry>
-            <origin xyz="0 0 0" rpy="1.5708 0 1.5708"/>
+            <origin xyz="-0.0269875 0.1321628 0" rpy="0 0 -1.5708"/>
          </collision>
          <inertial>
             <mass value="10"/>
