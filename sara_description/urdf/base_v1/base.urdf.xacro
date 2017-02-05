@@ -13,12 +13,29 @@
                <color rgba="0.12 0.12 0.12 1"/>
          </material>
       </visual>
+      <visual>
+         <geometry>
+              <box size="0.4 0.35635 0.454"/>
+         </geometry>
+         <origin xyz="-0.055 0 0.227" rpy="0 0 0"/>
+         <material name="black">
+               <color rgba="0.12 0.12 0.12 1"/>
+         </material>
+      </visual>
       <collision>
          <geometry>
             <mesh filename="package://sara_description/meshes/base.STL" scale="0.001 0.001 0.001"/>
          </geometry>
          <origin xyz="0.295 -0.250 0.85635" rpy="-1.57 0 1.57"/>
       </collision>
+      <collision>
+        <geometry>
+             <box size="0.4 0.35635 0.454"/>
+        </geometry>
+        <origin xyz="-0.055 0 0.227" rpy="0 0 0"/>
+      </collision>
+
+
     </link>
 
     <!-- Lidar -->
