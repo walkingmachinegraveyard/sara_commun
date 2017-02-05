@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro" >
+   <xacro:include filename="$(find sara_description)/urdf/neck_v1/neck.gazebo.xacro" />
+   <xacro:macro name="sara_neck_v1" params="name parent">
+     <xacro:sara_neck_gazebo_v1 name="${name}" parent="${parent}"/>
+     <link name="${name}_link">
+         <visual>
+            <geometry>
+               <mesh filename="package://sara_description/meshes/cou.STL" scale="0.001 0.001 0.001"/>
+            </geometry>
+            <origin xyz="0 0 0" rpy="1.5708 0 1.5708"/>
+            <material name="blue">
+                <color rgba="0.06 0.06 1 1"/>
+            </material>
+         </visual>
+         <collision>
+            <geometry>
+               <mesh filename="package://sara_description/meshes/cou.STL" scale="0.001 0.001 0.001"/>
+            </geometry>
+            <origin xyz="0 0 0" rpy="1.5708 0 1.5708"/>
+         </collision>
+         <inertial>
+            <mass value="2"/>
+            <origin xyz="0 0 0" rpy="1.5708 0 1.5708"/>
+            <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
+         </inertial>
+      </link>
+      <joint name="${parent}_${name}_joint" type="revolute">
+         <parent link="${parent}_link"/>
+         <child link="${name}_link"/>
+         <limit effort="1000.0" lower="-1.22173" upper="1.22173" velocity="0.5"/>
+         <!-- 1mm ajoute en z (collision) -->
+         <origin xyz="0.032295 0 0.2777" rpy="0 0 0"/>
+         <axis xyz="0 0 1"/>
+      </joint>
+   </xacro:macro>
+</robot>

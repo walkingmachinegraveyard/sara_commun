@@ -1,0 +1,89 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro" >
+   <xacro:include filename="$(find sara_description)/urdf/head_v1/head.gazebo.xacro" />
+   <xacro:macro name="sara_head_v1" params="name parent">
+     <xacro:sara_head_gazebo_v1 name="${name}" parent="${parent}"/>
+     <link name="${name}_link">
+         <visual>
+            <geometry>
+               <mesh filename="package://sara_description/meshes/tete.STL" scale="0.001 0.001 0.001" />
+            </geometry>
+            <origin xyz="0 0 0" rpy="1.5708 -1.5708 1.5708" />
+            <material name="blue">
+                <color rgba="0.06 0.06 1 1"/>
+            </material>
+         </visual>
+         <collision>
+            <geometry>
+               <mesh filename="package://sara_description/meshes/tete.STL" scale="0.001 0.001 0.001" />
+            </geometry>
+            <origin xyz="0 0 0" rpy="1.5708 -1.5708 1.5708" />
+         </collision>
+         <inertial>
+            <mass value="5" />
+            <origin xyz="0 0 0" rpy="1.5708 0 1.5708" />
+            <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001" />
+         </inertial>
+      </link>
+
+      <link name="${name}_dynamixel_link">
+         <visual>
+            <geometry>
+               <cylinder length="0.015" radius="0.02"/>
+            </geometry>
+            <origin xyz="0 0 0.018" rpy="0 0 0"/>
+            <material name="blue">
+               <color rgba="0 0 1 1"/>
+            </material>
+        </visual>
+        <inertial>
+            <mass value="5" />
+            <origin xyz="0 0 0.018" rpy="0 0 0" />
+            <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001" />
+         </inertial>
+      </link>
+
+      <joint name="${name}_dynamixel_joint" type="revolute">
+         <parent link="${name}_link"/>
+         <child link="${name}_dynamixel_link"/>
+         <limit effort="1000.0" lower="-1.5" upper="1.5" velocity="0.5"/>
+         <origin xyz="0 -0.054 0" rpy="3.1416 0 0"/>
+         <axis xyz="0 0 1"/>
+      </joint>
+      <joint name="${parent}_${name}_joint" type="revolute">
+         <parent link="${parent}_link"/>
+         <child link="${name}_link"/>
+         <limit effort="1000.0" lower="-0.40" upper="1.04" velocity="0.5"/>
+         <origin xyz="0 0 0.0927" rpy="-1.57 0 0"/>
+         <axis xyz="0 0 1" />
+      </joint>
+      <!-- xtion -->
+      <link name="camera_link">
+         <visual>
+            <geometry>
+               <mesh filename="package://sara_description/meshes/xtion.STL" scale="0.001 0.001 0.001"/>
+            </geometry>
+            <origin xyz="0 0 0" rpy="1.5708 0 1.5708"/>
+            <material name="black"/>
+         </visual>
+         <collision>
+            <geometry>
+               <mesh filename="package://sara_description/meshes/xtion.STL" scale="0.001 0.001 0.001"/>
+            </geometry>
+            <origin xyz="0 0 0" rpy="1.5708 0 1.5708"/>
+         </collision>
+
+         <inertial>
+            <mass value="0.5"/>
+            <origin xyz="0 0 0" rpy="1.5708 0 1.5708"/>
+            <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
+         </inertial>
+      </link>
+      <joint name="camera_joint" type="fixed">
+         <parent link="${name}_link"/>
+         <child link="camera_link"/>
+         <origin xyz="0.0776104 -0.13 0" rpy="1.57 0 0" />
+         <axis xyz="0 1 0" />
+      </joint>
+   </xacro:macro>
+</robot>

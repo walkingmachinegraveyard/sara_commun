@@ -1,0 +1,279 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro" >
+
+   <xacro:include filename="$(find sara_description)/urdf/arm_v1/arm.gazebo.xacro" />
+   <xacro:macro name="sara_arm_v1" params="name parent end_effector">
+       <xacro:sara_arm_gazebo_v1 name="${name}" parent="${parent}"/>
+
+       <joint name="${parent}_${name}_joint" type="revolute">
+          <parent link="${parent}_link"/>
+          <child link="${name}_clavicular_link"/>
+          <limit effort="1000.0" lower="-0.18" upper="1.21" velocity="0.5"/>
+          <origin xyz="0 -0.145 0.189" rpy="0 -1.57 0" />
+          <axis xyz="0 0 1" />
+       </joint>
+
+
+       <!-- Link and joint to raise arm at shoulder level -->
+      <link name="${name}_clavicular_link">
+         <visual>
+            <geometry>
+               <mesh filename="package://sara_description/meshes/epaule.STL" scale="0.001 0.001 0.001"/>
+            </geometry>
+            <origin xyz="0 0 0" rpy="0 3.1416 0"/>
+            <material name="black">
+               <color rgba="0.12 0.12 0.12 1"/>
+            </material>
+         </visual>
+         <collision>
+            <geometry>
+               <mesh filename="package://sara_description/meshes/epaule.STL" scale="0.001 0.001 0.001"/>
+            </geometry>
+            <origin xyz="0 0 0" rpy="0 3.1416 0"/>
+        </collision>
+        <inertial>
+            <mass value="1" />
+            <origin xyz="0 0 0" rpy="0 3.1416 0" />
+            <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001" />
+        </inertial>
+      </link>
+
+
+
+      <joint name="${name}_shoulder_joint" type="revolute">
+         <parent link="${name}_clavicular_link"/>
+         <child link="${name}_fix_upper_link"/>
+         <limit effort="1000.0" lower="-3.29" upper="0.37" velocity="0.5"/>
+         <origin xyz="0 -0.085 0" rpy="-1.57 0 0" />
+         <axis xyz="0 0 1" />
+      </joint>
+      <!-- Link and joint to rotate the upper part of the arm at shoulder level -->
+      <link name="${name}_fix_upper_link">
+         <visual>
+            <geometry>
+               <mesh filename="package://sara_description/meshes/epaule.STL" scale="0.001 0.001 0.001"/>
+            </geometry>
+            <origin xyz="0 0 0" rpy="3.1416 0 1.5708"/>
+            <material name="black">
+               <color rgba="0.12 0.12 0.12 1"/>
+            </material>
+         </visual>
+         <collision>
+            <geometry>
+               <mesh filename="package://sara_description/meshes/epaule.STL" scale="0.001 0.001 0.001"/>
+            </geometry>
+            <origin xyz="0 0 0" rpy="3.1416 0 1.5708"/>
+         </collision>
+         <inertial>
+            <mass value="1" />
+            <origin xyz="0 0 0" rpy="3.1416 0 1.5708" />
+            <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001" />
+        </inertial>
+      </link>
+
+      <joint name="${name}_rot_elbow_joint" type="revolute">
+         <parent link="${name}_fix_upper_link"/>
+         <child link="${name}_rot_upper_link"/>
+         <limit effort="1000.0" lower="-2.14" upper="1.00" velocity="0.5"/>
+         <origin xyz="-0.085 0 0" rpy="1.5708 0 1.5708" />
+         <axis xyz="0 0 1" />
+      </joint>
+
+      <!-- Link and joint to rotate the lower part of the arm at shoulder level -->
+      <link name="${name}_rot_upper_link">
+         <visual>
+            <geometry>
+               <mesh filename="package://sara_description/meshes/bras_haut.STL" scale="0.001 0.001 0.001"/>
+            </geometry>
+            <origin xyz="0 0 0" rpy="1.5708 3.1416 3.1416"/>
+            <material name="black">
+               <color rgba="0.12 0.12 0.12 1"/>
+            </material>
+         </visual>
+         <collision>
+            <geometry>
+               <mesh filename="package://sara_description/meshes/bras_haut.STL" scale="0.001 0.001 0.001"/>
+            </geometry>
+            <origin xyz="0 0 0" rpy="1.5708 3.1416 3.1416"/>
+         </collision>
+        <inertial>
+            <mass value="1" />
+            <origin xyz="0 0 0" rpy="1.5708 3.1416 3.1416" />
+            <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001" />
+        </inertial>
+      </link>
+
+      <joint name="${name}_elbow_joint" type="revolute">
+         <parent link="${name}_rot_upper_link"/>
+         <child link="${name}_fix_lower_link"/>
+         <limit effort="1000.0" lower="-2.20" upper="1.90" velocity="0.5"/>
+         <origin xyz="0 0 -0.31" rpy="-1.5708 0 0" />
+         <axis xyz="0 0 1" />
+      </joint>
+
+       <!-- Link and joint to raise arm at elbow level -->
+      <link name="${name}_fix_lower_link">
+         <visual>
+            <geometry>
+               <mesh filename="package://sara_description/meshes/coude.STL" scale="0.001 0.001 0.001"/>
+            </geometry>
+            <origin xyz="0 0 -0.0005" rpy="3.1416 0 0"/>
+            <material name="black">
+               <color rgba="0.12 0.12 0.12 1"/>
+            </material>
+         </visual>
+         <collision>
+            <geometry>
+               <mesh filename="package://sara_description/meshes/coude.STL" scale="0.001 0.001 0.001"/>
+            </geometry>
+            <origin xyz="0 0 -0.0005" rpy="3.1416 0 0"/>
+         </collision>
+         <inertial>
+            <mass value="1" />
+            <origin xyz="0 0 0" rpy="0 3.1416 0" />
+            <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001" />
+        </inertial>
+     </link>
+
+     <joint name="${name}_rot_wrist_joint" type="revolute">
+        <parent link="${name}_fix_lower_link"/>
+        <child link="${name}_rot_lower_link"/>
+        <limit effort="1000.0" lower="-3.1416" upper="3.1416" velocity="0.5"/>
+        <origin xyz="0 0.0945 0" rpy="1.5708 -1.5708 0" />
+        <axis xyz="0 0 1" />
+    </joint>
+
+      <!-- Link and joint to rotate arm at elbow level -->
+      <link name="${name}_rot_lower_link">
+         <visual>
+            <geometry>
+               <mesh filename="package://sara_description/meshes/avant-bras.STL" scale="0.001 0.001 0.001"/>
+            </geometry>
+            <origin xyz="-0.0338 0.0338 0" rpy="-1.5708 0 -1.5708" />
+            <material name="black">
+               <color rgba="0.12 0.12 0.12 1"/>
+            </material>
+         </visual>
+         <collision>
+            <geometry>
+               <mesh filename="package://sara_description/meshes/avant-bras.STL" scale="0.001 0.001 0.001"/>
+            </geometry>
+            <origin xyz="-0.0338 0.0338 0" rpy="-1.5708 0 -1.5708" />
+         </collision>
+          <inertial>
+            <mass value="1" />
+            <origin xyz="-0.0676 0.0676 0" rpy="-1.5708 0 -1.5708" />
+            <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001" />
+        </inertial>
+     </link>
+
+     <joint name="${name}_forarm-wrist_joint" type="fixed">
+        <parent link="${name}_rot_lower_link"/>
+        <child link="${name}_high_wrist_link"/>
+        <limit effort="1000.0" lower="-3.1416" upper="3.1416" velocity="0.5"/>
+        <origin xyz="0 0 -0.11184" rpy="1.5708 -1.5708 0" />
+        <axis xyz="0 1 0" />
+    </joint>
+
+
+     <link name="${name}_high_wrist_link">
+          <visual>
+              <geometry>
+                  <mesh filename="package://sara_description/meshes/poignet_haut.STL" scale="0.001 0.001 0.001"/>
+              </geometry>
+              <origin xyz="0.0706 0.0283 -0.030" rpy="1.5708 -1.5708 0"/>
+              <material name="black">
+              </material>
+              <color rgba="0 0 1 .06"/>
+          </visual>
+          <collision>
+             <geometry>
+                <mesh filename="package://sara_description/meshes/poignet_haut.STL" scale="0.001 0.001 0.001"/>
+             </geometry>
+             <origin xyz="0.0706 0.0283 -0.030" rpy="1.5708 -1.5708 0"/>
+          </collision>
+     </link>
+
+     <joint name="${name}_high_low_wrist_joint" type="revolute">
+        <parent link="${name}_high_wrist_link"/>
+        <child link="${name}_low_wrist_link"/>
+        <limit effort="1000.0" lower="-3.1416" upper="3.1416" velocity="0.5"/>
+        <origin xyz="0 0 0" rpy="1.5708 -1.5708 0" />
+        <axis xyz="0 0 1" />
+    </joint>
+
+
+     <link name="${name}_low_wrist_link">
+          <visual>
+              <geometry>
+                  <mesh filename="package://sara_description/meshes/poignet_bas.STL" scale="0.001 0.001 0.001"/>
+              </geometry>
+              <origin xyz="-0.02575  -0.01375 0.0305448" rpy=" 0 1.5708 0"/>
+              <material name="black">
+                 <color rgba="0.12 0.12 0.12 1"/>
+              </material>
+          </visual>
+          <collision>
+             <geometry>
+                <mesh filename="package://sara_description/meshes/poignet_bas.STL" scale="0.001 0.001 0.001"/>
+             </geometry>
+             <origin xyz="-0.02575  -0.01375 0.0305448" rpy=" 0 1.5708 0"/>
+          </collision>
+     </link>
+
+
+          <joint name="${name}_low_wrist_grasp_socket_joint" type="revolute">
+             <parent link="${name}_low_wrist_link"/>
+             <child link="${name}_socket_link"/>
+             <limit effort="1000.0" lower="-3.1416" upper="3.1416" velocity="0.5"/>
+             <origin xyz="0 0.084375 0" rpy="1.5708 0 0" />
+             <axis xyz="1 0 0" />
+          </joint>
+
+
+      <link name="${name}_socket_link">
+      <visual>
+          <geometry>
+              <mesh filename="package://sara_description/meshes/attache-pince.STL" scale="0.001 0.001 0.001"/>
+          </geometry>
+          <origin xyz="0.028925 -0.025 -0.0362070" rpy="0 0 1.5708"/>
+          <material name="black">
+             <color rgba="0.12 0.12 0.12 1"/>
+          </material>
+      </visual>
+      <collision>
+         <geometry>
+            <mesh filename="package://sara_description/meshes/attache-pince.STL" scale="0.001 0.001 0.001"/>
+         </geometry>
+         <origin xyz="0.028925 -0.025 -0.0362070" rpy="0 0 1.5708"/>
+      </collision>
+      </link>
+
+      <joint name="${name}_end_effector_joint" type="fixed">
+               <parent link="${name}_socket_link"/>
+               <child link="${end_effector}_link"/>
+               <limit effort="1000.0" lower="-0.26" upper="0.26" velocity="0.5" />
+               <axis xyz="0 1 0"/>
+               <origin xyz="0 0 -0.02989" rpy="0 1.5708 0"/>
+            </joint>
+            <!-- Link and joint for target (grasp) -->
+            <link name="grasp_link" >
+               <visual>
+                  <geometry>
+                     <sphere radius="0.01" />
+                  </geometry>
+                  <origin xyz="0 0.05 0" rpy="0 0 0" />
+               </visual>
+               <inertial>
+                  <mass value="0" />
+                  <origin xyz="0 0 0" rpy="0 0 0" />
+                  <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001" />
+              </inertial>
+            </link>
+            <joint name="grasp_joint" type="fixed" >
+                <parent link="${end_effector}_link" />
+               <child link="grasp_link" />
+               <origin xyz="0.075 0 -0.012" rpy="3.1416 0 1.5708" />
+      </joint>
+   </xacro:macro>
+</robot>

@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+   <xacro:macro name="robotiq_c2_model_gazebo" params="prefix">
+      <gazebo reference="${prefix}robotiq_85_base_link">
+         <gravity>false</gravity>
+      </gazebo>
+      <gazebo reference="${prefix}robotiq_85_left_knuckle_link">
+         <gravity>false</gravity>
+      </gazebo>
+      <gazebo reference="${prefix}robotiq_85_right_knuckle_link">
+         <gravity>false</gravity>
+      </gazebo>
+      <gazebo reference="${prefix}robotiq_85_left_finger_link">
+         <gravity>false</gravity>
+      </gazebo>
+      <gazebo reference="${prefix}robotiq_85_right_finger_link">
+         <gravity>false</gravity>
+      </gazebo>
+      <gazebo reference="${prefix}robotiq_85_left_inner_knuckle_link">
+         <gravity>false</gravity>
+      </gazebo>
+      <gazebo reference="${prefix}robotiq_85_right_inner_knuckle_link">
+         <gravity>false</gravity>
+      </gazebo>
+      <gazebo reference="${prefix}robotiq_85_left_finger_tip_link">
+         <gravity>false</gravity>
+      </gazebo>
+      <gazebo reference="${prefix}robotiq_85_right_finger_tip_link">
+         <gravity>false</gravity>
+      </gazebo>
+</xacro:macro>
+</robot>

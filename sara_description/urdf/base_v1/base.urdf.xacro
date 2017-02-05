@@ -1,0 +1,72 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro" >
+  <xacro:include filename="$(find sara_description)/urdf/base_v1/base.gazebo.xacro"/>
+  <xacro:macro name="sara_base_v1" params="name parent">
+    <xacro:sara_base_gazebo_v1 name="${name}" parent="${parent}"/>
+    <link name="${name}_link">
+      <visual>
+         <geometry>
+            <mesh filename="package://sara_description/meshes/base.STL" scale="0.001 0.001 0.001"/>
+         </geometry>
+         <origin xyz="0.295 -0.250 0.85635" rpy="-1.57 0 1.57"/>
+         <material name="black">
+               <color rgba="0.12 0.12 0.12 1"/>
+         </material>
+      </visual>
+      <visual>
+         <geometry>
+              <box size="0.4 0.35635 0.454"/>
+         </geometry>
+         <origin xyz="-0.055 0 0.227" rpy="0 0 0"/>
+         <material name="black">
+               <color rgba="0.12 0.12 0.12 1"/>
+         </material>
+      </visual>
+      <collision>
+         <geometry>
+            <mesh filename="package://sara_description/meshes/base.STL" scale="0.001 0.001 0.001"/>
+         </geometry>
+         <origin xyz="0.295 -0.250 0.85635" rpy="-1.57 0 1.57"/>
+      </collision>
+      <collision>
+        <geometry>
+             <box size="0.4 0.35635 0.454"/>
+        </geometry>
+        <origin xyz="-0.055 0 0.227" rpy="0 0 0"/>
+      </collision>
+
+
+    </link>
+
+    <!-- Lidar -->
+    <link name="lidar_link">
+      <visual>
+        <geometry>
+          <cylinder length="0.085" radius="0.03"/>
+        </geometry>
+        <origin xyz="0 0 0.0425" rpy="0 0 0"/>
+        <material name="orange">
+          <color rgba="1 0.5 0 1"/>
+        </material>
+      </visual>
+      <collision>
+        <geometry>
+          <cylinder length="0.085" radius="0.03"/>
+        </geometry>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+      </collision>
+      <inertial>
+        <mass value="0.5"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
+      </inertial>
+    </link>
+    <joint name="laser_joint" type="fixed">
+      <parent link="base_link"/>
+      <child link="lidar_link"/>
+      <origin xyz="0.2516879 0 -0.0288348" rpy="0 0 0" />
+    </joint>
+    </xacro:macro>
+
+
+  </robot>
